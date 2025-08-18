@@ -215,8 +215,9 @@ function addAvatarToMessage(messageElement, senderName, senderType) {
 <script>
     let userType = 'agent';
     let userId = <?= $user['id'] ?>;
+    let currentUsername = '<?= esc($user['username']) ?>';
     let currentSessionId = null;
-    let sessionId = null; // For admin, sessionId is not needed initially
+    let sessionId = null; 
 
     // Collapsible sections functionality
     function toggleSection(sectionId) {

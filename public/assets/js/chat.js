@@ -1027,8 +1027,11 @@ function getSenderName(data) {
         }
         return data.customer_name || 'Anonymous';
     } else if (data.sender_type === 'agent') {
-        // For agent, try to get the username from global variable or data
-        return data.agent_name || (typeof userId !== 'undefined' && userId ? `Agent${userId}` : 'Agent');
+        // For agent, use the current username
+        if (typeof currentUsername !== 'undefined' && currentUsername) {
+            return currentUsername;
+        }
+        return data.agent_name || 'Agent';
     }
     return 'Unknown';
 }
