@@ -26,8 +26,15 @@
     
     <div class="dashboard-content">
         <div class="sessions-panel">
+            <!-- Waiting Sessions - Collapsible -->
             <div class="panel-section">
-                <h3>Waiting Sessions <span class="count" id="waitingCount"><?= count($waitingSessions) ?></span></h3>
+                <h3 class="section-header" onclick="toggleSection('waitingSessions')">
+                    <div class="header-content">
+                        <i class="bi bi-chevron-down collapse-icon" id="waitingIcon"></i>
+                        <span>Waiting Sessions</span>
+                        <span class="count" id="waitingCount"><?= count($waitingSessions) ?></span>
+                    </div>
+                </h3>
                 <div class="sessions-list" id="waitingSessions">
                     <?php foreach ($waitingSessions as $session): ?>
                     <div class="session-item" data-session-id="<?= $session['session_id'] ?>">
@@ -42,8 +49,15 @@
                 </div>
             </div>
             
+            <!-- Active Chats - Collapsible -->
             <div class="panel-section">
-                <h3>Active Chats <span class="count" id="activeCount"><?= count($activeSessions) ?></span></h3>
+                <h3 class="section-header" onclick="toggleSection('activeSessions')">
+                    <div class="header-content">
+                        <i class="bi bi-chevron-down collapse-icon" id="activeIcon"></i>
+                        <span>Active Chats</span>
+                        <span class="count" id="activeCount"><?= count($activeSessions) ?></span>
+                    </div>
+                </h3>
                 <div class="sessions-list" id="activeSessions">
                     <?php foreach ($activeSessions as $session): ?>
                     <div class="session-item active" data-session-id="<?= $session['session_id'] ?>" onclick="openChat('<?= $session['session_id'] ?>')">
@@ -91,10 +105,65 @@
     let userType = 'agent';
     let userId = <?= $user['id'] ?>;
     let currentSessionId = null;
-    let sessionId = null; // For admin, sessionId is not needed initially
+    let sessionId = null;
+
+    // Collapsible sections functionality
+    function toggleSection(sectionId) {
+        const sessionsList = document.getElementById(sectionId);
+        const icon = document.getElementById(sectionId === 'waitingSessions' ? 'waitingIcon' : 'activeIcon');
+        const panelSection = sessionsList.closest('.panel-section');
+        
+        if (sessionsList && icon && panelSection) {
+            const isCollapsed = sessionsList.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                // Expand
+                sessionsList.classList.remove('collapsed');
+                icon.classList.remove('collapsed');
+                panelSection.classList.add('expanded');
+                // Save state
+                localStorage.setItem(sectionId + '_collapsed', 'false');
+            } else {
+                // Collapse
+                sessionsList.classList.add('collapsed');
+                icon.classList.add('collapsed');
+                panelSection.classList.remove('expanded');
+                // Save state
+                localStorage.setItem(sectionId + '_collapsed', 'true');
+            }
+        }
+    }
+
+    // Restore collapsed states on page load
+    function restoreCollapsedStates() {
+        const sections = ['waitingSessions', 'activeSessions'];
+        
+        sections.forEach(sectionId => {
+            const isCollapsed = localStorage.getItem(sectionId + '_collapsed') === 'true';
+            const sessionsList = document.getElementById(sectionId);
+            const icon = document.getElementById(sectionId === 'waitingSessions' ? 'waitingIcon' : 'activeIcon');
+            const panelSection = sessionsList ? sessionsList.closest('.panel-section') : null;
+            
+            if (isCollapsed) {
+                if (sessionsList && icon && panelSection) {
+                    sessionsList.classList.add('collapsed');
+                    icon.classList.add('collapsed');
+                    panelSection.classList.remove('expanded');
+                }
+            } else {
+                // Default to expanded, add the expanded class
+                if (panelSection) {
+                    panelSection.classList.add('expanded');
+                }
+            }
+        });
+    }
 
     // Mobile sidebar toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
+        // Restore collapsed states
+        restoreCollapsedStates();
+        
         const mobileToggle = document.getElementById('mobileSidebarToggle');
         const sessionsPanel = document.querySelector('.sessions-panel');
         const overlay = document.getElementById('mobileSidebarOverlay');
@@ -160,14 +229,14 @@
             sessionsPanel.classList.add('mobile-open');
             overlay.classList.add('active');
             mobileToggle.classList.add('active');
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            document.body.style.overflow = 'hidden';
         }
         
         function closeMobileSidebar() {
             sessionsPanel.classList.remove('mobile-open');
             overlay.classList.remove('active');
             mobileToggle.classList.remove('active');
-            document.body.style.overflow = ''; // Restore scrolling
+            document.body.style.overflow = '';
         }
         
         // Handle window resize
