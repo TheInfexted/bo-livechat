@@ -10,19 +10,9 @@ class AdminController extends General
             return redirect()->to('/login');
         }
         
-        // Get sessions with role information
-        $activeSessions = $this->chatModel->select('chat_sessions.*, users.username as agent_name, user_roles.role_description')
-                                         ->join('users', 'users.id = chat_sessions.agent_id', 'left')
-                                         ->join('user_roles', 'user_roles.role_name = chat_sessions.user_role', 'left')
-                                         ->where('chat_sessions.status', 'active')
-                                         ->orderBy('chat_sessions.created_at', 'DESC')
-                                         ->findAll();
-        
-        $waitingSessions = $this->chatModel->select('chat_sessions.*, user_roles.role_description')
-                                          ->join('user_roles', 'user_roles.role_name = chat_sessions.user_role', 'left')
-                                          ->where('chat_sessions.status', 'waiting')
-                                          ->orderBy('chat_sessions.created_at', 'ASC')
-                                          ->findAll();
+        // Get sessions using the updated model methods that handle customer names properly
+        $activeSessions = $this->chatModel->getActiveSessions();
+        $waitingSessions = $this->chatModel->getWaitingSessions();
         
         $data = [
             'title' => 'Admin Chat Dashboard',
@@ -571,13 +561,46 @@ class AdminController extends General
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
 
+        // Use the model methods that already process customer names correctly
         $waitingSessions = $this->chatModel->getWaitingSessions();
         $activeSessions = $this->chatModel->getActiveSessions();
+
+        // Double-check that customer names are properly processed
+        // (This should already be done by the model methods, but let's be sure)
+        foreach ($waitingSessions as &$session) {
+            $session['customer_name'] = $this->processCustomerName($session);
+        }
+        
+        foreach ($activeSessions as &$session) {
+            $session['customer_name'] = $this->processCustomerName($session);
+        }
 
         return $this->jsonResponse([
             'waitingSessions' => $waitingSessions,
             'activeSessions' => $activeSessions
         ]);
+    }
+    
+    /**
+     * Process customer name with the same logic as ChatModel
+     * This ensures consistency between initial load and refreshes
+     */
+    private function processCustomerName($session)
+    {
+        // Priority order for customer name - check for non-empty and non-null values
+        if (isset($session['external_fullname']) && trim($session['external_fullname']) !== '') {
+            return trim($session['external_fullname']);
+        }
+        
+        if (isset($session['customer_fullname']) && trim($session['customer_fullname']) !== '') {
+            return trim($session['customer_fullname']);
+        }
+        
+        if (isset($session['customer_name']) && trim($session['customer_name']) !== '') {
+            return trim($session['customer_name']);
+        }
+        
+        return 'Anonymous';
     }
 
     // Get quick actions (keyword responses) for customer interface

@@ -35,43 +35,14 @@ function getUserId() {
 }
 
 // Admin session refresh function
-// Admin session refresh function
 function refreshAdminSessions() {
-    // Try to use JSON API first, fallback to HTML parsing
+    // Use only JSON API for consistency
     fetch('/admin/sessions-data')
         .then(response => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                // Fallback to HTML parsing
-                return fetch('/admin/chat').then(r => r.text()).then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    
-                    const waitingSessions = [];
-                    const activeSessions = [];
-                    
-                    // Parse waiting sessions
-                    const waitingElements = doc.querySelectorAll('#waitingSessions .session-item');
-                    waitingElements.forEach(el => {
-                        const sessionId = el.getAttribute('data-session-id');
-                        const name = el.querySelector('strong')?.textContent || '';
-                        const time = el.querySelector('small')?.textContent || '';
-                        waitingSessions.push({ session_id: sessionId, customer_name: name, created_at: time });
-                    });
-                    
-                    // Parse active sessions
-                    const activeElements = doc.querySelectorAll('#activeSessions .session-item');
-                    activeElements.forEach(el => {
-                        const sessionId = el.getAttribute('data-session-id');
-                        const name = el.querySelector('strong')?.textContent || '';
-                        const agent = el.querySelector('small')?.textContent || '';
-                        activeSessions.push({ session_id: sessionId, customer_name: name, agent_name: agent });
-                    });
-                    
-                    return { waitingSessions, activeSessions };
-                });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            return response.json();
         })
         .then(data => {
             // Update waiting sessions
@@ -1263,11 +1234,9 @@ function getSenderName(data) {
         }
         return data.customer_name || 'Anonymous';
     } else if (data.sender_type === 'agent') {
-        // For agent, use the current username
-        if (typeof currentUsername !== 'undefined' && currentUsername) {
-            return currentUsername;
-        }
-        return data.agent_name || 'Agent';
+        // For agent messages, use the actual sender's name from database
+        // or fall back to current username for immediate messages
+        return data.sender_name || data.agent_name || currentUsername || 'Agent';
     }
     return 'Unknown';
 }

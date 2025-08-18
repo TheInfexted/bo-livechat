@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Models;
-
 use CodeIgniter\Model;
 
 class ChatModel extends Model
@@ -12,18 +10,32 @@ class ChatModel extends Model
     
     public function getActiveSessions()
     {
-        return $this->select('chat_sessions.*, users.username as agent_name')
-                    ->join('users', 'users.id = chat_sessions.agent_id', 'left')
-                    ->where('chat_sessions.status', 'active')
-                    ->orderBy('chat_sessions.created_at', 'DESC')
-                    ->findAll();
+        $sessions = $this->select('chat_sessions.*, users.username as agent_name')
+                         ->join('users', 'users.id = chat_sessions.agent_id', 'left')
+                         ->where('chat_sessions.status', 'active') 
+                         ->orderBy('chat_sessions.created_at', 'DESC')
+                         ->findAll();
+        
+        // Process customer names in PHP for better control
+        foreach ($sessions as &$session) {
+            $session['customer_name'] = $this->getCustomerDisplayName($session);
+        }
+        
+        return $sessions;
     }
     
     public function getWaitingSessions()
     {
-        return $this->where('status', 'waiting')
-                    ->orderBy('created_at', 'ASC')
-                    ->findAll();
+        $sessions = $this->where('chat_sessions.status', 'waiting') 
+                         ->orderBy('chat_sessions.created_at', 'ASC')
+                         ->findAll();
+        
+        // Process customer names in PHP for better control
+        foreach ($sessions as &$session) {
+            $session['customer_name'] = $this->getCustomerDisplayName($session);
+        }
+        
+        return $sessions;
     }
     
     public function assignAgent($sessionId, $agentId)
@@ -43,5 +55,23 @@ class ChatModel extends Model
     public function getSessionBySessionId($sessionId)
     {
         return $this->where('session_id', $sessionId)->first();
+    }
+    
+    private function getCustomerDisplayName($session)
+    {
+        // Priority order for customer name - check for non-empty and non-null values
+        if (isset($session['external_fullname']) && trim($session['external_fullname']) !== '') {
+            return trim($session['external_fullname']);
+        }
+        
+        if (isset($session['customer_fullname']) && trim($session['customer_fullname']) !== '') {
+            return trim($session['customer_fullname']);
+        }
+        
+        if (isset($session['customer_name']) && trim($session['customer_name']) !== '') {
+            return trim($session['customer_name']);
+        }
+        
+        return 'Anonymous';
     }
 }
