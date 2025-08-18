@@ -35,6 +35,7 @@ function getUserId() {
 }
 
 // Admin session refresh function
+// Admin session refresh function
 function refreshAdminSessions() {
     // Try to use JSON API first, fallback to HTML parsing
     fetch('/admin/sessions-data')
@@ -92,13 +93,32 @@ function refreshAdminSessions() {
                 }
                 
                 data.waitingSessions.forEach(session => {
+                    const customerName = session.customer_name || 'Anonymous';
+                    
+                    // Generate avatar initials
+                    let initials = '';
+                    let avatarClass = '';
+                    if (customerName === 'Anonymous') {
+                        initials = 'A';
+                        avatarClass = 'anonymous';
+                    } else {
+                        const words = customerName.trim().split(/\s+/);
+                        if (words.length >= 2) {
+                            initials = (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+                        } else {
+                            initials = customerName.charAt(0).toUpperCase();
+                        }
+                        avatarClass = 'customer';
+                    }
+                    
                     const item = document.createElement('div');
                     item.className = 'session-item';
                     item.setAttribute('data-session-id', session.session_id);
                     
                     item.innerHTML = `
+                        <div class="avatar ${avatarClass}">${initials}</div>
                         <div class="session-info">
-                            <strong>${escapeHtml(session.customer_name || 'Anonymous')}</strong>
+                            <strong>${escapeHtml(customerName)}</strong>
                             <small>Topic: ${escapeHtml(session.chat_topic || 'No topic specified')}</small>
                             <small>${session.created_at}</small>
                         </div>
@@ -128,14 +148,33 @@ function refreshAdminSessions() {
                 }
                 
                 data.activeSessions.forEach(session => {
+                    const customerName = session.customer_name || 'Anonymous';
+                    
+                    // Generate avatar initials
+                    let initials = '';
+                    let avatarClass = '';
+                    if (customerName === 'Anonymous') {
+                        initials = 'A';
+                        avatarClass = 'anonymous';
+                    } else {
+                        const words = customerName.trim().split(/\s+/);
+                        if (words.length >= 2) {
+                            initials = (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+                        } else {
+                            initials = customerName.charAt(0).toUpperCase();
+                        }
+                        avatarClass = 'customer';
+                    }
+                    
                     const item = document.createElement('div');
                     item.className = 'session-item active';
                     item.setAttribute('data-session-id', session.session_id);
                     item.onclick = () => openChat(session.session_id);
                     
                     item.innerHTML = `
+                        <div class="avatar ${avatarClass}">${initials}</div>
                         <div class="session-info">
-                            <strong>${escapeHtml(session.customer_name || 'Anonymous')}</strong>
+                            <strong>${escapeHtml(customerName)}</strong>
                             <small>Topic: ${escapeHtml(session.chat_topic || 'No topic specified')}</small>
                             <small>Agent: ${escapeHtml(session.agent_name || 'Unassigned')}</small>
                         </div>
@@ -151,7 +190,6 @@ function refreshAdminSessions() {
         });
 }
 
-// Auto-refresh admin sessions every 3 seconds
 function startAdminAutoRefresh() {
     if (getUserType() === 'agent') {
         setInterval(() => {
@@ -240,6 +278,7 @@ async function acceptChat(sessionId) {
     }
 }
 
+// Update openChat function to include avatar in header
 function openChat(sessionId) {
     currentSessionId = sessionId;
     const chatPanel = document.getElementById('chatPanel');
@@ -253,11 +292,13 @@ function openChat(sessionId) {
     if (sessionItem) {
         const customerName = sessionItem.querySelector('strong').textContent;
         const customerNameElement = document.getElementById('chatCustomerName');
+        
         if (customerNameElement) {
             customerNameElement.textContent = customerName;
         }
     }
     
+    // Rest of the openChat function remains the same...
     document.querySelectorAll('.session-item').forEach(item => {
         item.classList.remove('active');
     });
@@ -916,7 +957,7 @@ function handleTypingIndicator(data) {
     }
 }
 
-// Display message
+// Display message with avatar
 function displayMessage(data) {
     const container = document.getElementById('messagesContainer');
     if (!container) {
@@ -941,11 +982,9 @@ function displayMessage(data) {
     // Handle system messages specially - check for message_type = 'system'
     if (data.message_type === 'system') {
         messageDiv.className = 'message system';
-        const p = document.createElement('p');
-        p.textContent = data.message;
-        messageDiv.appendChild(p);
+        messageDiv.textContent = data.message;
     } else {
-        // Regular message handling
+        // Regular message handling with avatars
         if (userType === 'agent') {
             if (data.sender_type === 'customer') {
                 messageDiv.className = 'message customer';
@@ -956,20 +995,75 @@ function displayMessage(data) {
             messageDiv.className = `message ${data.sender_type}`;
         }
         
-        const bubble = document.createElement('div');
-        bubble.className = 'message-bubble';
-        bubble.textContent = data.message;
+        // Generate avatar
+        const senderName = getSenderName(data);
+        const avatar = createMessageAvatar(senderName, data.sender_type);
         
-        const time = document.createElement('div');
-        time.className = 'message-time';
-        time.textContent = formatTime(data.timestamp);
+        // Create message content
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        messageContent.innerHTML = `
+            <div class="message-text">${escapeHtml(data.message)}</div>
+            <div class="message-time">${formatTime(data.timestamp)}</div>
+        `;
         
-        bubble.appendChild(time);
-        messageDiv.appendChild(bubble);
+        // Add avatar and content to message
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(messageContent);
     }
     
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
+}
+
+// Helper function to get sender name from message data
+function getSenderName(data) {
+    if (data.sender_type === 'customer') {
+        // Try to get customer name from current session or use Anonymous
+        const currentSessionItem = document.querySelector(`[data-session-id="${data.session_id || currentSessionId}"]`);
+        if (currentSessionItem) {
+            const nameElement = currentSessionItem.querySelector('strong');
+            return nameElement ? nameElement.textContent : 'Anonymous';
+        }
+        return data.customer_name || 'Anonymous';
+    } else if (data.sender_type === 'agent') {
+        // For agent, try to get the username from global variable or data
+        return data.agent_name || (typeof userId !== 'undefined' && userId ? `Agent${userId}` : 'Agent');
+    }
+    return 'Unknown';
+}
+
+// Helper function to create message avatar
+function createMessageAvatar(name, senderType) {
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    
+    // Generate initials
+    let initials = '';
+    let avatarClass = '';
+    
+    if (name === 'Anonymous') {
+        initials = 'A';
+        avatarClass = 'anonymous';
+    } else if (senderType === 'agent') {
+        // For agents, get first letter of username
+        initials = name.charAt(0).toUpperCase();
+        avatarClass = 'agent';
+    } else {
+        // For customers, get initials from full name
+        const words = name.trim().split(/\s+/);
+        if (words.length >= 2) {
+            initials = (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+        } else {
+            initials = name.charAt(0).toUpperCase();
+        }
+        avatarClass = 'customer';
+    }
+    
+    avatar.classList.add(avatarClass);
+    avatar.textContent = initials;
+    
+    return avatar;
 }
 
 function updateWaitingSessions(sessions) {
@@ -981,13 +1075,32 @@ function updateWaitingSessions(sessions) {
         count.textContent = sessions.length;
         
         sessions.forEach(session => {
+            const customerName = session.customer_name || 'Anonymous';
+            
+            // Generate avatar initials
+            let initials = '';
+            let avatarClass = '';
+            if (customerName === 'Anonymous') {
+                initials = 'A';
+                avatarClass = 'anonymous';
+            } else {
+                const words = customerName.trim().split(/\s+/);
+                if (words.length >= 2) {
+                    initials = (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+                } else {
+                    initials = customerName.charAt(0).toUpperCase();
+                }
+                avatarClass = 'customer';
+            }
+            
             const item = document.createElement('div');
             item.className = 'session-item';
             item.setAttribute('data-session-id', session.session_id);
             
             item.innerHTML = `
+                <div class="avatar ${avatarClass}">${initials}</div>
                 <div class="session-info">
-                    <strong>${escapeHtml(session.customer_name)}</strong>
+                    <strong>${escapeHtml(customerName)}</strong>
                     <small>${formatTime(session.created_at)}</small>
                 </div>
                 <button class="btn btn-accept" onclick="acceptChat('${session.session_id}')">Accept</button>

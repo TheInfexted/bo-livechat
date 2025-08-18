@@ -38,8 +38,25 @@
                 <div class="sessions-list" id="waitingSessions">
                     <?php foreach ($waitingSessions as $session): ?>
                     <div class="session-item" data-session-id="<?= $session['session_id'] ?>">
+                        <?php 
+                        $customerName = $session['customer_name'] ?? 'Anonymous';
+                        $initials = '';
+                        if ($customerName === 'Anonymous') {
+                            $initials = 'A';
+                            $avatarClass = 'anonymous';
+                        } else {
+                            $words = explode(' ', trim($customerName));
+                            if (count($words) >= 2) {
+                                $initials = strtoupper($words[0][0] . $words[count($words)-1][0]);
+                            } else {
+                                $initials = strtoupper($customerName[0] ?? 'A');
+                            }
+                            $avatarClass = 'customer';
+                        }
+                        ?>
+                        <div class="avatar <?= $avatarClass ?>"><?= $initials ?></div>
                         <div class="session-info">
-                            <strong><?= esc($session['customer_name'] ?? 'Anonymous') ?></strong>
+                            <strong><?= esc($customerName) ?></strong>
                             <small>Topic: <?= esc($session['chat_topic'] ?? 'No topic specified') ?></small>
                             <small><?= date('H:i', strtotime($session['created_at'])) ?></small>
                         </div>
@@ -61,8 +78,25 @@
                 <div class="sessions-list" id="activeSessions">
                     <?php foreach ($activeSessions as $session): ?>
                     <div class="session-item active" data-session-id="<?= $session['session_id'] ?>" onclick="openChat('<?= $session['session_id'] ?>')">
+                        <?php 
+                        $customerName = $session['customer_name'] ?? 'Anonymous';
+                        $initials = '';
+                        if ($customerName === 'Anonymous') {
+                            $initials = 'A';
+                            $avatarClass = 'anonymous';
+                        } else {
+                            $words = explode(' ', trim($customerName));
+                            if (count($words) >= 2) {
+                                $initials = strtoupper($words[0][0] . $words[count($words)-1][0]);
+                            } else {
+                                $initials = strtoupper($customerName[0] ?? 'A');
+                            }
+                            $avatarClass = 'customer';
+                        }
+                        ?>
+                        <div class="avatar <?= $avatarClass ?>"><?= $initials ?></div>
                         <div class="session-info">
-                            <strong><?= esc($session['customer_name'] ?? 'Anonymous') ?></strong>
+                            <strong><?= esc($customerName) ?></strong>
                             <small>Topic: <?= esc($session['chat_topic'] ?? 'No topic specified') ?></small>
                             <small>Agent: <?= esc($session['agent_name'] ?? 'Unassigned') ?></small>
                         </div>
@@ -102,10 +136,87 @@
 </div>
 
 <script>
+// Avatar generation functions
+function generateInitials(name, isAgent = false) {
+    if (!name || name.trim() === '') {
+        return 'A';
+    }
+    
+    // Handle Anonymous users
+    if (name.toLowerCase() === 'anonymous') {
+        return 'A';
+    }
+    
+    // Split name into words and get first letter of each
+    const words = name.trim().split(/\s+/);
+    
+    if (words.length === 1) {
+        // Single word - get first letter
+        return words[0].charAt(0).toUpperCase();
+    } else if (words.length >= 2) {
+        // Multiple words - get first letter of first and last word
+        return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+    }
+    
+    return name.charAt(0).toUpperCase();
+}
+
+function createAvatar(name, type = 'customer', size = 'normal') {
+    const initials = generateInitials(name, type === 'agent');
+    const sizeClass = size === 'small' ? 'small' : '';
+    const typeClass = name && name.toLowerCase() === 'anonymous' ? 'anonymous' : type;
+    
+    return `<div class="avatar ${typeClass} ${sizeClass}">${initials}</div>`;
+}
+
+// Function to add avatars to session items
+function addAvatarsToSessions() {
+    // Add avatars to waiting sessions
+    const waitingSessions = document.querySelectorAll('#waitingSessions .session-item');
+    waitingSessions.forEach(item => {
+        const nameElement = item.querySelector('.session-info strong');
+        if (nameElement && !item.querySelector('.avatar')) {
+            const customerName = nameElement.textContent.trim();
+            const avatarHTML = createAvatar(customerName, 'customer');
+            item.insertAdjacentHTML('afterbegin', avatarHTML);
+        }
+    });
+    
+    // Add avatars to active sessions
+    const activeSessions = document.querySelectorAll('#activeSessions .session-item');
+    activeSessions.forEach(item => {
+        const nameElement = item.querySelector('.session-info strong');
+        if (nameElement && !item.querySelector('.avatar')) {
+            const customerName = nameElement.textContent.trim();
+            const avatarHTML = createAvatar(customerName, 'customer');
+            item.insertAdjacentHTML('afterbegin', avatarHTML);
+        }
+    });
+}
+
+// Function to add avatar to messages
+function addAvatarToMessage(messageElement, senderName, senderType) {
+    if (!messageElement.querySelector('.avatar')) {
+        const avatarHTML = createAvatar(senderName, senderType, 'small');
+        
+        if (messageElement.classList.contains('system')) {
+            return; // Don't add avatars to system messages
+        }
+        
+        messageElement.insertAdjacentHTML('afterbegin', avatarHTML);
+        
+        // Wrap the text content in a div for proper flex layout
+        const textContent = messageElement.innerHTML.replace(avatarHTML, '');
+        messageElement.innerHTML = avatarHTML + `<div class="message-content">${textContent}</div>`;
+    }
+}
+</script>
+
+<script>
     let userType = 'agent';
     let userId = <?= $user['id'] ?>;
     let currentSessionId = null;
-    let sessionId = null;
+    let sessionId = null; // For admin, sessionId is not needed initially
 
     // Collapsible sections functionality
     function toggleSection(sectionId) {
@@ -229,14 +340,14 @@
             sessionsPanel.classList.add('mobile-open');
             overlay.classList.add('active');
             mobileToggle.classList.add('active');
-            document.body.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
         }
         
         function closeMobileSidebar() {
             sessionsPanel.classList.remove('mobile-open');
             overlay.classList.remove('active');
             mobileToggle.classList.remove('active');
-            document.body.style.overflow = '';
+            document.body.style.overflow = ''; // Restore scrolling
         }
         
         // Handle window resize
