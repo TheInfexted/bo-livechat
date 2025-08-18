@@ -1,0 +1,956 @@
+CRITICAL - 2025-08-01 08:08:35 --> CodeIgniter\View\Exceptions\ViewException: Invalid file: "admin/dashboard.php"
+[Method: GET, Route: admin]
+in SYSTEMPATH/Exceptions/FrameworkException.php on line 39.
+ 1 SYSTEMPATH/View/View.php(214): CodeIgniter\Exceptions\FrameworkException::forInvalidFile('admin/dashboard.php')
+ 2 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('admin/dashboard', [], true)
+ 3 APPPATH/Controllers/AdminController.php(39): view('admin/dashboard', [...])
+ 4 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->dashboard()
+ 5 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 6 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 08:08:45 --> CodeIgniter\View\Exceptions\ViewException: Invalid file: "admin/dashboard.php"
+[Method: GET, Route: admin]
+in SYSTEMPATH/Exceptions/FrameworkException.php on line 39.
+ 1 SYSTEMPATH/View/View.php(214): CodeIgniter\Exceptions\FrameworkException::forInvalidFile('admin/dashboard.php')
+ 2 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('admin/dashboard', [], true)
+ 3 APPPATH/Controllers/AdminController.php(39): view('admin/dashboard', [...])
+ 4 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->dashboard()
+ 5 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 6 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 19:07:33 --> mysqli_sql_exception: Column 'status' in where clause is ambiguous in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_se...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_se...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_se...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_se...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+#6 /Applications/MAMP/htdocs/livechat-cs/app/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 19:07:33 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+[Method: GET, Route: admin/chat]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 2 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:07:33 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 4 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:07:33 --> [Caused by] mysqli_sql_exception: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 5 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 19:08:33 --> mysqli_sql_exception: Column 'status' in where clause is ambiguous in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_se...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_se...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_se...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_se...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+#6 /Applications/MAMP/htdocs/livechat-cs/app/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 19:08:33 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+[Method: GET, Route: admin/chat]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 2 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:08:33 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 4 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:08:33 --> [Caused by] mysqli_sql_exception: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 5 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 19:09:33 --> mysqli_sql_exception: Column 'status' in where clause is ambiguous in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_se...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_se...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_se...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_se...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+#6 /Applications/MAMP/htdocs/livechat-cs/app/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 19:09:33 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+[Method: GET, Route: admin/chat]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 2 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:09:33 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 4 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:09:33 --> [Caused by] mysqli_sql_exception: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 5 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 19:10:33 --> mysqli_sql_exception: Column 'status' in where clause is ambiguous in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_se...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_se...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_se...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_se...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+#6 /Applications/MAMP/htdocs/livechat-cs/app/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 19:10:33 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+[Method: GET, Route: admin/chat]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 2 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:10:33 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 4 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:10:33 --> [Caused by] mysqli_sql_exception: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 5 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 19:11:33 --> mysqli_sql_exception: Column 'status' in where clause is ambiguous in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_se...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_se...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_se...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_se...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+#6 /Applications/MAMP/htdocs/livechat-cs/app/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 19:11:33 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+[Method: GET, Route: admin/chat]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 2 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:11:33 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 4 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:11:33 --> [Caused by] mysqli_sql_exception: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 5 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 19:12:01 --> mysqli_sql_exception: Column 'status' in where clause is ambiguous in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_se...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_se...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_se...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_se...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+#6 /Applications/MAMP/htdocs/livechat-cs/app/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 19:12:01 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+[Method: GET, Route: admin/chat]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 2 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:12:01 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 4 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:12:01 --> [Caused by] mysqli_sql_exception: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 5 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 19:40:31 --> mysqli_sql_exception: Column 'status' in where clause is ambiguous in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_se...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_se...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_se...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_se...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+#6 /Applications/MAMP/htdocs/livechat-cs/app/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 19:40:31 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+[Method: GET, Route: admin/chat]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 2 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:40:31 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 4 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:40:31 --> [Caused by] mysqli_sql_exception: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 5 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 19:40:49 --> mysqli_sql_exception: Column 'status' in where clause is ambiguous in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_se...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_se...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_se...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_se...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+#6 /Applications/MAMP/htdocs/livechat-cs/app/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 19:40:49 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+[Method: GET, Route: admin/chat]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 2 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:40:49 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 4 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:40:49 --> [Caused by] mysqli_sql_exception: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 5 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 19:41:36 --> mysqli_sql_exception: Column 'status' in where clause is ambiguous in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_se...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_se...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_se...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_se...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+#6 /Applications/MAMP/htdocs/livechat-cs/app/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 19:41:36 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+[Method: GET, Route: admin/chat]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 2 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 3 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 4 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 5 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:41:36 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 4 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 5 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 6 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 7 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:41:36 --> [Caused by] mysqli_sql_exception: Column 'status' in where clause is ambiguous
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = \'active\'
+ORDER BY `created_at` DESC')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(1649): CodeIgniter\Database\BaseConnection->query('SELECT `chat_sessions`.*, `users`.`username` as `agent_name`
+FROM `chat_sessions`
+LEFT JOIN `users` ON `users`.`id` = `chat_sessions`.`agent_id`
+WHERE `status` = :status:
+ORDER BY `created_at` DESC', [...], false)
+ 5 SYSTEMPATH/Model.php(286): CodeIgniter\Database\BaseBuilder->get()
+ 6 SYSTEMPATH/BaseModel.php(677): CodeIgniter\Model->doFindAll(0, 0)
+ 7 APPPATH/Models/ChatModel.php(19): CodeIgniter\BaseModel->findAll()
+ 8 APPPATH/Controllers/AdminController.php(16): App\Models\ChatModel->getActiveSessions()
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->chat()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:53:45 --> ErrorException: finfo_file(/Applications/MAMP/tmp/php/phpx3SfZe): Failed to open stream: No such file or directory
+[Method: POST, Route: chat/upload-file]
+in SYSTEMPATH/Files/File.php on line 137.
+ 1 [internal function]: CodeIgniter\Debug\Exceptions->errorHandler(2, 'finfo_file(/Applications/MAMP/tmp/php/phpx3SfZe): Failed to open stream: No such file or directory', '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Files/File.php', 137)
+ 2 SYSTEMPATH/Files/File.php(137): finfo_file(Object(finfo), '/Applications/MAMP/tmp/php/phpx3SfZe')
+ 3 APPPATH/Controllers/ChatController.php(142): CodeIgniter\Files\File->getMimeType()
+ 4 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatController->uploadFile()
+ 5 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatController))
+ 6 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 19:53:55 --> ErrorException: finfo_file(/Applications/MAMP/tmp/php/phphXowiM): Failed to open stream: No such file or directory
+[Method: POST, Route: chat/upload-file]
+in SYSTEMPATH/Files/File.php on line 137.
+ 1 [internal function]: CodeIgniter\Debug\Exceptions->errorHandler(2, 'finfo_file(/Applications/MAMP/tmp/php/phphXowiM): Failed to open stream: No such file or directory', '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Files/File.php', 137)
+ 2 SYSTEMPATH/Files/File.php(137): finfo_file(Object(finfo), '/Applications/MAMP/tmp/php/phphXowiM')
+ 3 APPPATH/Controllers/ChatController.php(142): CodeIgniter\Files\File->getMimeType()
+ 4 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatController->uploadFile()
+ 5 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatController))
+ 6 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-08-01 21:27:28 --> mysqli_sql_exception: Column 'message_id' cannot be null in /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('INSERT INTO `ch...', 0)
+#1 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO `ch...')
+#2 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO `ch...')
+#3 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(2345): CodeIgniter\Database\BaseConnection->query('INSERT INTO `ch...', Array, false)
+#4 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(394): CodeIgniter\Database\BaseBuilder->insert()
+#5 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/BaseModel.php(838): CodeIgniter\Model->doInsert(Array)
+#6 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Model.php(797): CodeIgniter\BaseModel->insert(Array, true)
+#7 /Applications/MAMP/htdocs/livechat-cs/app/Controllers/ChatController.php(165): CodeIgniter\Model->insert(Array)
+#8 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(933): App\Controllers\ChatController->uploadFile()
+#9 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatController))
+#10 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#11 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(363): CodeIgniter\CodeIgniter->run()
+#12 /Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#13 /Applications/MAMP/htdocs/livechat-cs/public/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#14 {main}
+CRITICAL - 2025-08-01 21:27:28 --> CodeIgniter\Database\Exceptions\DatabaseException: Column 'message_id' cannot be null
+[Method: POST, Route: chat/upload-file]
+in SYSTEMPATH/Database/BaseConnection.php on line 684.
+ 1 SYSTEMPATH/Database/BaseBuilder.php(2345): CodeIgniter\Database\BaseConnection->query('INSERT INTO `chat_files` (`message_id`, `original_name`, `file_path`, `file_size`, `mime_type`) VALUES (:message_id:, :original_name:, :file_path:, :file_size:, :mime_type:)', [...], false)
+ 2 SYSTEMPATH/Model.php(394): CodeIgniter\Database\BaseBuilder->insert()
+ 3 SYSTEMPATH/BaseModel.php(838): CodeIgniter\Model->doInsert([...])
+ 4 SYSTEMPATH/Model.php(797): CodeIgniter\BaseModel->insert([...], true)
+ 5 APPPATH/Controllers/ChatController.php(165): CodeIgniter\Model->insert([...])
+ 6 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatController->uploadFile()
+ 7 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatController))
+ 8 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 21:27:28 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Column 'message_id' cannot be null
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 332.
+ 1 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO `chat_files` (`message_id`, `original_name`, `file_path`, `file_size`, `mime_type`) VALUES (NULL, \'Screenshot 2025-08-01 at 7.53.36 PM.png\', \'uploads/chat/1754054848_225b0f8db1af407333de.png\', 365123, \'image/png\')')
+ 2 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO `chat_files` (`message_id`, `original_name`, `file_path`, `file_size`, `mime_type`) VALUES (NULL, \'Screenshot 2025-08-01 at 7.53.36 PM.png\', \'uploads/chat/1754054848_225b0f8db1af407333de.png\', 365123, \'image/png\')')
+ 3 SYSTEMPATH/Database/BaseBuilder.php(2345): CodeIgniter\Database\BaseConnection->query('INSERT INTO `chat_files` (`message_id`, `original_name`, `file_path`, `file_size`, `mime_type`) VALUES (:message_id:, :original_name:, :file_path:, :file_size:, :mime_type:)', [...], false)
+ 4 SYSTEMPATH/Model.php(394): CodeIgniter\Database\BaseBuilder->insert()
+ 5 SYSTEMPATH/BaseModel.php(838): CodeIgniter\Model->doInsert([...])
+ 6 SYSTEMPATH/Model.php(797): CodeIgniter\BaseModel->insert([...], true)
+ 7 APPPATH/Controllers/ChatController.php(165): CodeIgniter\Model->insert([...])
+ 8 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatController->uploadFile()
+ 9 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatController))
+10 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-01 21:27:28 --> [Caused by] mysqli_sql_exception: Column 'message_id' cannot be null
+in SYSTEMPATH/Database/MySQLi/Connection.php on line 327.
+ 1 SYSTEMPATH/Database/MySQLi/Connection.php(327): mysqli->query('INSERT INTO `chat_files` (`message_id`, `original_name`, `file_path`, `file_size`, `mime_type`) VALUES (NULL, \'Screenshot 2025-08-01 at 7.53.36 PM.png\', \'uploads/chat/1754054848_225b0f8db1af407333de.png\', 365123, \'image/png\')', 0)
+ 2 SYSTEMPATH/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO `chat_files` (`message_id`, `original_name`, `file_path`, `file_size`, `mime_type`) VALUES (NULL, \'Screenshot 2025-08-01 at 7.53.36 PM.png\', \'uploads/chat/1754054848_225b0f8db1af407333de.png\', 365123, \'image/png\')')
+ 3 SYSTEMPATH/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO `chat_files` (`message_id`, `original_name`, `file_path`, `file_size`, `mime_type`) VALUES (NULL, \'Screenshot 2025-08-01 at 7.53.36 PM.png\', \'uploads/chat/1754054848_225b0f8db1af407333de.png\', 365123, \'image/png\')')
+ 4 SYSTEMPATH/Database/BaseBuilder.php(2345): CodeIgniter\Database\BaseConnection->query('INSERT INTO `chat_files` (`message_id`, `original_name`, `file_path`, `file_size`, `mime_type`) VALUES (:message_id:, :original_name:, :file_path:, :file_size:, :mime_type:)', [...], false)
+ 5 SYSTEMPATH/Model.php(394): CodeIgniter\Database\BaseBuilder->insert()
+ 6 SYSTEMPATH/BaseModel.php(838): CodeIgniter\Model->doInsert([...])
+ 7 SYSTEMPATH/Model.php(797): CodeIgniter\BaseModel->insert([...], true)
+ 8 APPPATH/Controllers/ChatController.php(165): CodeIgniter\Model->insert([...])
+ 9 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatController->uploadFile()
+10 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatController))
+11 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))

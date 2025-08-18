@@ -1,0 +1,132 @@
+
+CRITICAL - 2025-08-06 16:48:41 --> Error: Call to a member function links() on string
+[Method: GET, Route: chat-history]
+in APPPATH/Views/chat_history/index.php on line 139.
+ 1 SYSTEMPATH/View/View.php(226): include()
+ 2 SYSTEMPATH/View/View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+ 3 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('chat_history/index', [], true)
+ 4 APPPATH/Controllers/ChatHistoryController.php(91): view('chat_history/index', [...])
+ 5 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatHistoryController->index()
+ 6 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatHistoryController))
+ 7 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 16:49:06 --> Error: Call to a member function links() on string
+[Method: GET, Route: chat-history]
+in APPPATH/Views/chat_history/index.php on line 139.
+ 1 SYSTEMPATH/View/View.php(226): include()
+ 2 SYSTEMPATH/View/View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+ 3 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('chat_history/index', [], true)
+ 4 APPPATH/Controllers/ChatHistoryController.php(91): view('chat_history/index', [...])
+ 5 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatHistoryController->index()
+ 6 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatHistoryController))
+ 7 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 16:49:40 --> Error: Call to a member function links() on string
+[Method: GET, Route: chat-history]
+in APPPATH/Views/chat_history/index.php on line 139.
+ 1 SYSTEMPATH/View/View.php(226): include()
+ 2 SYSTEMPATH/View/View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+ 3 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('chat_history/index', [], true)
+ 4 APPPATH/Controllers/ChatHistoryController.php(91): view('chat_history/index', [...])
+ 5 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatHistoryController->index()
+ 6 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatHistoryController))
+ 7 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 16:49:45 --> Error: Call to a member function links() on string
+[Method: GET, Route: chat-history]
+in APPPATH/Views/chat_history/index.php on line 139.
+ 1 SYSTEMPATH/View/View.php(226): include()
+ 2 SYSTEMPATH/View/View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+ 3 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('chat_history/index', [], true)
+ 4 APPPATH/Controllers/ChatHistoryController.php(91): view('chat_history/index', [...])
+ 5 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatHistoryController->index()
+ 6 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatHistoryController))
+ 7 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 16:53:24 --> Error: Call to a member function links() on string
+[Method: GET, Route: chat-history]
+in APPPATH/Views/chat_history/index.php on line 139.
+ 1 SYSTEMPATH/View/View.php(226): include()
+ 2 SYSTEMPATH/View/View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+ 3 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('chat_history/index', [], true)
+ 4 APPPATH/Controllers/ChatHistoryController.php(91): view('chat_history/index', [...])
+ 5 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatHistoryController->index()
+ 6 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatHistoryController))
+ 7 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 16:53:26 --> Error: Call to a member function links() on string
+[Method: GET, Route: chat-history]
+in APPPATH/Views/chat_history/index.php on line 139.
+ 1 SYSTEMPATH/View/View.php(226): include()
+ 2 SYSTEMPATH/View/View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+ 3 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('chat_history/index', [], true)
+ 4 APPPATH/Controllers/ChatHistoryController.php(91): view('chat_history/index', [...])
+ 5 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatHistoryController->index()
+ 6 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatHistoryController))
+ 7 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 16:53:37 --> Error: Call to a member function links() on string
+[Method: GET, Route: chat-history]
+in APPPATH/Views/chat_history/index.php on line 139.
+ 1 SYSTEMPATH/View/View.php(226): include()
+ 2 SYSTEMPATH/View/View.php(229): CodeIgniter\View\View->CodeIgniter\View\{closure}()
+ 3 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('chat_history/index', [], true)
+ 4 APPPATH/Controllers/ChatHistoryController.php(91): view('chat_history/index', [...])
+ 5 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatHistoryController->index()
+ 6 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatHistoryController))
+ 7 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+10 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 17:32:00 --> Error: Call to undefined method App\Controllers\ChatController::notifyAgentsOfCustomerLeft()
+[Method: POST, Route: chat/end-customer-session]
+in APPPATH/Controllers/ChatController.php on line 178.
+ 1 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatController->endCustomerSession()
+ 2 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatController))
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 17:32:03 --> Error: Call to undefined method App\Controllers\ChatController::notifyAgentsOfCustomerLeft()
+[Method: POST, Route: chat/end-customer-session]
+in APPPATH/Controllers/ChatController.php on line 178.
+ 1 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatController->endCustomerSession()
+ 2 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatController))
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 18:06:10 --> CodeIgniter\Pager\Exceptions\PagerException: "custom_full" is not a valid Pager template.
+[Method: GET, Route: chat-history]
+in SYSTEMPATH/Pager/Pager.php on line 124.
+ 1 SYSTEMPATH/Pager/Pager.php(124): CodeIgniter\Pager\Exceptions\PagerException::forInvalidTemplate('custom_full')
+ 2 SYSTEMPATH/Pager/Pager.php(114): CodeIgniter\Pager\Pager->displayLinks('default', 'custom_full')
+ 3 APPPATH/Controllers/ChatHistoryController.php(76): CodeIgniter\Pager\Pager->makeLinks(1, 20, 10, 'custom_full')
+ 4 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatHistoryController->index()
+ 5 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatHistoryController))
+ 6 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-06 18:07:15 --> ErrorException: Undefined variable $paginateData
+[Method: GET, Route: chat-history]
+in APPPATH/Controllers/ChatHistoryController.php on line 93.
+ 1 APPPATH/Controllers/ChatHistoryController.php(93): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $paginateData', '/Applications/MAMP/htdocs/livechat-cs/app/Controllers/ChatHistoryController.php', 93)
+ 2 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\ChatHistoryController->index()
+ 3 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ChatHistoryController))
+ 4 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))

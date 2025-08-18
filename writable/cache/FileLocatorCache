@@ -1,0 +1,304 @@
+<?php return array (
+  'search' => 
+  array (
+    'Config/Services' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/app/Config/Services.php',
+          1 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Config/Services.php',
+        ),
+      ),
+    ),
+    'Config/Registrar.php' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+        ),
+      ),
+    ),
+    'Helpers/kint_helper' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Helpers/kint_helper.php',
+        ),
+      ),
+    ),
+    'Helpers/url_helper' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Helpers/url_helper.php',
+        ),
+      ),
+    ),
+    'Helpers/filesystem_helper' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Helpers/filesystem_helper.php',
+        ),
+      ),
+    ),
+    'Config/Events.php' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/app/Config/Events.php',
+        ),
+      ),
+    ),
+    'Config/Filters.php' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/app/Config/Filters.php',
+          1 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Config/Filters.php',
+        ),
+      ),
+    ),
+    'Helpers/array_helper' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Helpers/array_helper.php',
+        ),
+      ),
+    ),
+    'Config/Routes.php' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/app/Config/Routes.php',
+        ),
+      ),
+    ),
+    'Helpers/form_helper' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Helpers/form_helper.php',
+        ),
+      ),
+    ),
+    'Language/en/HTTP.php' => 
+    array (
+      'php' => 
+      array (
+        0 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Language/en/HTTP.php',
+        ),
+      ),
+    ),
+    'Config/Factory' => 
+    array (
+      'php' => 
+      array (
+        1 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Config/Factory.php',
+        ),
+      ),
+    ),
+    'Language/en/Errors.php' => 
+    array (
+      'php' => 
+      array (
+        0 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Language/en/Errors.php',
+        ),
+      ),
+    ),
+    'Language/en/Pager.php' => 
+    array (
+      'php' => 
+      array (
+        0 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Language/en/Pager.php',
+        ),
+      ),
+    ),
+    'Language/en/Core.php' => 
+    array (
+      'php' => 
+      array (
+        0 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Language/en/Core.php',
+        ),
+      ),
+    ),
+  ),
+  'findQualifiedNameFromPath' => 
+  array (
+    '/Applications/MAMP/htdocs/livechat-cs/app/Config/Services.php' => 'Config\\Services',
+    '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Config/Factory.php' => 'CodeIgniter\\Config\\Factory',
+    '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Config/Services.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Cache/ClearCache.php' => 'CodeIgniter\\Commands\\Cache\\ClearCache',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Cache/InfoCache.php' => 'CodeIgniter\\Commands\\Cache\\InfoCache',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/CreateDatabase.php' => 'CodeIgniter\\Commands\\Database\\CreateDatabase',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/Migrate.php' => 'CodeIgniter\\Commands\\Database\\Migrate',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/MigrateRefresh.php' => 'CodeIgniter\\Commands\\Database\\MigrateRefresh',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/MigrateRollback.php' => 'CodeIgniter\\Commands\\Database\\MigrateRollback',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/MigrateStatus.php' => 'CodeIgniter\\Commands\\Database\\MigrateStatus',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/Seed.php' => 'CodeIgniter\\Commands\\Database\\Seed',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/ShowTableInfo.php' => 'CodeIgniter\\Commands\\Database\\ShowTableInfo',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Encryption/GenerateKey.php' => 'CodeIgniter\\Commands\\Encryption\\GenerateKey',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/CellGenerator.php' => 'CodeIgniter\\Commands\\Generators\\CellGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/CommandGenerator.php' => 'CodeIgniter\\Commands\\Generators\\CommandGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ConfigGenerator.php' => 'CodeIgniter\\Commands\\Generators\\ConfigGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ControllerGenerator.php' => 'CodeIgniter\\Commands\\Generators\\ControllerGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/EntityGenerator.php' => 'CodeIgniter\\Commands\\Generators\\EntityGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/FilterGenerator.php' => 'CodeIgniter\\Commands\\Generators\\FilterGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/MigrationGenerator.php' => 'CodeIgniter\\Commands\\Generators\\MigrationGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ModelGenerator.php' => 'CodeIgniter\\Commands\\Generators\\ModelGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ScaffoldGenerator.php' => 'CodeIgniter\\Commands\\Generators\\ScaffoldGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/SeederGenerator.php' => 'CodeIgniter\\Commands\\Generators\\SeederGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/TestGenerator.php' => 'CodeIgniter\\Commands\\Generators\\TestGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ValidationGenerator.php' => 'CodeIgniter\\Commands\\Generators\\ValidationGenerator',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/cell.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/cell_view.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/command.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/config.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/controller.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/entity.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/filter.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/migration.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/model.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/seeder.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/test.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/validation.tpl.php' => false,
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Help.php' => 'CodeIgniter\\Commands\\Help',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Housekeeping/ClearDebugbar.php' => 'CodeIgniter\\Commands\\Housekeeping\\ClearDebugbar',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Housekeeping/ClearLogs.php' => 'CodeIgniter\\Commands\\Housekeeping\\ClearLogs',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/ListCommands.php' => 'CodeIgniter\\Commands\\ListCommands',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Server/Serve.php' => 'CodeIgniter\\Commands\\Server\\Serve',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Translation/LocalizationFinder.php' => 'CodeIgniter\\Commands\\Translation\\LocalizationFinder',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Translation/LocalizationSync.php' => 'CodeIgniter\\Commands\\Translation\\LocalizationSync',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/ConfigCheck.php' => 'CodeIgniter\\Commands\\Utilities\\ConfigCheck',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Environment.php' => 'CodeIgniter\\Commands\\Utilities\\Environment',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/FilterCheck.php' => 'CodeIgniter\\Commands\\Utilities\\FilterCheck',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Namespaces.php' => 'CodeIgniter\\Commands\\Utilities\\Namespaces',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Optimize.php' => 'CodeIgniter\\Commands\\Utilities\\Optimize',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/PhpIniCheck.php' => 'CodeIgniter\\Commands\\Utilities\\PhpIniCheck',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Publish.php' => 'CodeIgniter\\Commands\\Utilities\\Publish',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes.php' => 'CodeIgniter\\Commands\\Utilities\\Routes',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/AutoRouteCollector.php' => 'CodeIgniter\\Commands\\Utilities\\Routes\\AutoRouteCollector',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/AutoRouterImproved/AutoRouteCollector.php' => 'CodeIgniter\\Commands\\Utilities\\Routes\\AutoRouterImproved\\AutoRouteCollector',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/AutoRouterImproved/ControllerMethodReader.php' => 'CodeIgniter\\Commands\\Utilities\\Routes\\AutoRouterImproved\\ControllerMethodReader',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/ControllerFinder.php' => 'CodeIgniter\\Commands\\Utilities\\Routes\\ControllerFinder',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/ControllerMethodReader.php' => 'CodeIgniter\\Commands\\Utilities\\Routes\\ControllerMethodReader',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/FilterCollector.php' => 'CodeIgniter\\Commands\\Utilities\\Routes\\FilterCollector',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/FilterFinder.php' => 'CodeIgniter\\Commands\\Utilities\\Routes\\FilterFinder',
+    '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/SampleURIGenerator.php' => 'CodeIgniter\\Commands\\Utilities\\Routes\\SampleURIGenerator',
+  ),
+  'getClassname' => 
+  array (
+    '/Applications/MAMP/htdocs/livechat-cs/app/Config/Filters.php' => 'Config\\Filters',
+    '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Config/Filters.php' => 'CodeIgniter\\Config\\Filters',
+  ),
+  'locateFile' => 
+  array (
+    'CodeIgniter\\Pager\\Views\\default_full.php' => 
+    array (
+      'Views' => 
+      array (
+        'php' => '/Applications/MAMP/htdocs/livechat-cs/vendor/codeigniter4/framework/system/Pager/Views/default_full.php',
+      ),
+    ),
+    'admin/api_key_usage.php' => 
+    array (
+      'Views' => 
+      array (
+        'php' => false,
+      ),
+    ),
+  ),
+  'listFiles' => 
+  array (
+    'Commands/' => 
+    array (
+      0 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Cache/ClearCache.php',
+      1 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Cache/InfoCache.php',
+      2 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/CreateDatabase.php',
+      3 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/Migrate.php',
+      4 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/MigrateRefresh.php',
+      5 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/MigrateRollback.php',
+      6 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/MigrateStatus.php',
+      7 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/Seed.php',
+      8 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Database/ShowTableInfo.php',
+      9 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Encryption/GenerateKey.php',
+      10 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/CellGenerator.php',
+      11 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/CommandGenerator.php',
+      12 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ConfigGenerator.php',
+      13 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ControllerGenerator.php',
+      14 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/EntityGenerator.php',
+      15 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/FilterGenerator.php',
+      16 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/MigrationGenerator.php',
+      17 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ModelGenerator.php',
+      18 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ScaffoldGenerator.php',
+      19 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/SeederGenerator.php',
+      20 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/TestGenerator.php',
+      21 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/ValidationGenerator.php',
+      22 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/cell.tpl.php',
+      23 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/cell_view.tpl.php',
+      24 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/command.tpl.php',
+      25 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/config.tpl.php',
+      26 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/controller.tpl.php',
+      27 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/entity.tpl.php',
+      28 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/filter.tpl.php',
+      29 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/migration.tpl.php',
+      30 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/model.tpl.php',
+      31 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/seeder.tpl.php',
+      32 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/test.tpl.php',
+      33 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Generators/Views/validation.tpl.php',
+      34 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Help.php',
+      35 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Housekeeping/ClearDebugbar.php',
+      36 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Housekeeping/ClearLogs.php',
+      37 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/ListCommands.php',
+      38 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Server/Serve.php',
+      39 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Translation/LocalizationFinder.php',
+      40 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Translation/LocalizationSync.php',
+      41 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/ConfigCheck.php',
+      42 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Environment.php',
+      43 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/FilterCheck.php',
+      44 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Namespaces.php',
+      45 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Optimize.php',
+      46 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/PhpIniCheck.php',
+      47 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Publish.php',
+      48 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes.php',
+      49 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/AutoRouteCollector.php',
+      50 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/AutoRouterImproved/AutoRouteCollector.php',
+      51 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/AutoRouterImproved/ControllerMethodReader.php',
+      52 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/ControllerFinder.php',
+      53 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/ControllerMethodReader.php',
+      54 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/FilterCollector.php',
+      55 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/FilterFinder.php',
+      56 => '/Applications/MAMP/htdocs/livechat-bo/vendor/codeigniter4/framework/system/Commands/Utilities/Routes/SampleURIGenerator.php',
+    ),
+  ),
+);

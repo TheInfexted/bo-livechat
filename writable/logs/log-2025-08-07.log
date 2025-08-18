@@ -1,0 +1,141 @@
+CRITICAL - 2025-08-07 16:27:14 --> CodeIgniter\View\Exceptions\ViewException: Invalid file: "admin/api_key_usage.php"
+[Method: GET, Route: admin/api-keys/usage/1]
+in SYSTEMPATH/Exceptions/FrameworkException.php on line 39.
+ 1 SYSTEMPATH/View/View.php(214): CodeIgniter\Exceptions\FrameworkException::forInvalidFile('admin/api_key_usage.php')
+ 2 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('admin/api_key_usage', [], true)
+ 3 APPPATH/Controllers/AdminController.php(399): view('admin/api_key_usage', [...])
+ 4 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->apiKeyUsage('1')
+ 5 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 6 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 16:30:21 --> CodeIgniter\View\Exceptions\ViewException: Invalid file: "admin/api_key_usage.php"
+[Method: GET, Route: admin/api-keys/usage/1]
+in SYSTEMPATH/Exceptions/FrameworkException.php on line 39.
+ 1 SYSTEMPATH/View/View.php(214): CodeIgniter\Exceptions\FrameworkException::forInvalidFile('admin/api_key_usage.php')
+ 2 SYSTEMPATH/Common.php(1167): CodeIgniter\View\View->render('admin/api_key_usage', [], true)
+ 3 APPPATH/Controllers/AdminController.php(399): view('admin/api_key_usage', [...])
+ 4 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\AdminController->apiKeyUsage('1')
+ 5 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AdminController))
+ 6 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 16:58:07 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 16:58:10 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 16:58:53 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 16:59:18 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 16:59:21 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 17:00:39 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 17:00:44 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 17:01:22 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 17:02:07 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 17:02:17 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 17:02:26 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 17:02:37 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-08-07 17:03:01 --> Error: Class "App\Models\ApiKeyUsageModel" not found
+[Method: POST, Route: api/widget/validate]
+in APPPATH/Controllers/WidgetAuthController.php on line 16.
+ 1 SYSTEMPATH/CodeIgniter.php(903): App\Controllers\WidgetAuthController->__construct()
+ 2 SYSTEMPATH/CodeIgniter.php(498): CodeIgniter\CodeIgniter->createController()
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))

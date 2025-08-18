@@ -1,0 +1,516 @@
+/* Responsive CSS for Admin Chat Interface */
+
+/* Header Left Layout */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Mobile Sidebar Toggle */
+.mobile-sidebar-toggle {
+    display: none;
+    background: #ffffff;
+    color: #333333;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-sidebar-toggle:hover {
+    background: #f8f9fa;
+    border-color: #d0d0d0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-sidebar-toggle:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: #e9ecef;
+}
+
+.mobile-sidebar-toggle.active {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #495057;
+}
+
+/* Mobile Sidebar Overlay */
+.mobile-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.mobile-sidebar-overlay.active {
+    display: block;
+}
+
+/* Sessions Panel Mobile Modifications */
+@media (max-width: 768px) {
+    .mobile-sidebar-toggle {
+        display: block;
+    }
+
+    .dashboard-content {
+        flex-direction: row;
+        height: calc(100vh - 60px);
+    }
+
+    .sessions-panel {
+        position: fixed;
+        top: 0;
+        left: -350px;
+        width: 300px;
+        height: 100vh;
+        background: white;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        border-right: 2px solid #dee2e6;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+
+    .sessions-panel.mobile-open {
+        left: 0;
+    }
+
+    .sessions-panel .panel-section {
+        height: calc(50% - 30px);
+    }
+
+    .sessions-panel .panel-section h3 {
+        padding: 12px 15px;
+        font-size: 14px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .sessions-panel .sessions-list {
+        max-height: calc(100% - 45px);
+        overflow-y: auto;
+    }
+
+    .session-item {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .session-item .session-info strong {
+        font-size: 13px;
+    }
+
+    .session-item .session-info small {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    .btn-accept {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .chat-panel {
+        width: 100%;
+        height: calc(100vh - 60px);
+    }
+
+    .chat-header {
+        padding: 12px 15px;
+        position: relative;
+    }
+
+    .chat-header h3 {
+        font-size: 16px;
+        margin: 0;
+        padding-right: 100px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .btn-close-chat {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .messages-container {
+        height: calc(100vh - 160px);
+        padding: 15px;
+    }
+
+    .message {
+        margin-bottom: 12px;
+        max-width: 85%;
+    }
+
+    .message-bubble {
+        padding: 10px 12px;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .message-time {
+        font-size: 10px;
+        margin-top: 4px;
+    }
+
+    .chat-input-area {
+        padding: 10px 15px;
+        background: white;
+        border-top: 1px solid #e1e8ed;
+    }
+
+    .chat-input-area form {
+        display: flex;
+        gap: 8px;
+    }
+
+    .chat-input-area input[type="text"] {
+        flex: 1;
+        padding: 10px 12px;
+        border: 1px solid #e1e8ed;
+        border-radius: 20px;
+        font-size: 14px;
+    }
+
+    .btn-send {
+        padding: 10px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        min-width: 60px;
+    }
+
+    /* Dashboard Header Mobile */
+    .dashboard-header {
+        padding: 10px 15px;
+        position: relative;
+    }
+
+    .dashboard-header h2 {
+        font-size: 18px;
+        margin: 0;
+    }
+
+    .user-info {
+        gap: 8px;
+    }
+
+    .user-info span {
+        font-size: 12px;
+        display: none;
+    }
+
+    .btn-home,
+    .btn-logout {
+        padding: 8px 12px;
+        font-size: 12px;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .status-indicator {
+        padding: 3px 6px;
+        font-size: 10px;
+    }
+
+    /* Count badges mobile styling */
+    .count {
+        font-size: 11px;
+        padding: 2px 6px;
+        margin-left: 5px;
+    }
+
+    /* Quick actions mobile */
+    .quick-actions {
+        padding: 8px 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .quick-action-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+        border-radius: 15px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #495057;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .quick-action-btn:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+    }
+
+    /* Typing indicator mobile */
+    .typing-indicator {
+        padding: 8px 15px;
+        margin: 5px 15px;
+    }
+
+    .typing-indicator span {
+        width: 6px;
+        height: 6px;
+    }
+}
+
+/* Extra small devices (phones, 480px and down) */
+@media (max-width: 480px) {
+    .mobile-sidebar-toggle {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+
+    .sessions-panel {
+        width: 280px;
+        left: -300px;
+    }
+
+    .header-left {
+        gap: 10px;
+    }
+
+    .dashboard-header {
+        padding: 8px 12px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 16px;
+    }
+
+    .btn-home,
+    .btn-logout {
+        padding: 6px 10px;
+        font-size: 11px;
+        min-width: 55px;
+        text-align: center;
+    }
+
+    .chat-header h3 {
+        font-size: 14px;
+        padding-right: 80px;
+    }
+
+    .btn-close-chat {
+        padding: 5px 8px;
+        font-size: 11px;
+    }
+
+    .messages-container {
+        height: calc(100vh - 140px);
+        padding: 10px;
+    }
+
+    .message-bubble {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .chat-input-area {
+        padding: 8px 10px;
+    }
+
+    .chat-input-area input[type="text"] {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .btn-send {
+        padding: 8px 12px;
+        font-size: 13px;
+        min-width: 50px;
+    }
+
+    .session-item {
+        padding: 10px 12px;
+    }
+
+    .session-item .session-info strong {
+        font-size: 12px;
+    }
+
+    .session-item .session-info small {
+        font-size: 10px;
+    }
+
+    .btn-accept {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+    .messages-container {
+        height: calc(100vh - 120px);
+    }
+
+    .chat-header {
+        padding: 8px 15px;
+    }
+
+    .chat-input-area {
+        padding: 6px 15px;
+    }
+}
+
+/* Hide desktop responsive styles when mobile styles are active */
+@media (max-width: 768px) {
+    .dashboard-content {
+        flex-direction: row !important;
+    }
+
+    .sessions-panel {
+        width: 300px !important;
+        height: 100vh !important;
+        border-right: 2px solid #dee2e6 !important;
+        border-bottom: none !important;
+    }
+
+    .chat-panel {
+        height: calc(100vh - 60px) !important;
+        width: 100% !important;
+    }
+}
+
+/* Animation for smooth transitions */
+.sessions-panel,
+.mobile-sidebar-toggle {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dashboard Mobile Responsive Styles - Only apply to mobile */
+@media (max-width: 768px) {
+    .admin-dashboard:not(.chat-dashboard) {
+        padding: 0px;
+    }
+
+    .admin-dashboard:not(.chat-dashboard) .dashboard-header {
+        padding: 15px 10px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 20px;
+        margin: 0;
+        flex: 1;
+    }
+
+    .user-info {
+        flex-shrink: 0;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .user-info span {
+        display: none; /* Hide welcome text on mobile */
+    }
+
+    .btn-logout {
+        white-space: nowrap;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .stat-card h3 {
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+    }
+
+    .dashboard-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .dashboard-actions .btn {
+        width: 100%;
+        text-align: center;
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .stat-card {
+        padding: 0.8rem;
+    }
+
+    .stat-card h3 {
+        font-size: 0.7rem;
+    }
+
+    .stat-number {
+        font-size: 1.3rem;
+    }
+
+    .dashboard-header h2 {
+        font-size: 18px;
+    }
+
+    .user-info span {
+        font-size: 11px;
+    }
+
+    .btn-logout {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+
+/* Ensure proper scrolling on mobile */
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    .sessions-list {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .messages-container {
+        -webkit-overflow-scrolling: touch;
+    }
+}
