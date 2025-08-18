@@ -209,26 +209,6 @@
     word-wrap: break-word;
 }
 
-.message.customer {
-    color: #333;
-    align-self: flex-start;
-}
-
-.message.agent {
-    color: #333;
-    align-self: flex-end;
-    margin-left: auto;
-}
-
-.message.system {
-    color: white;
-    align-self: center;
-    margin: 0 auto;
-    text-align: center;
-    font-style: italic;
-    font-size: 12px;
-}
-
 /* Typing Indicator */
 .typing-indicator {
     padding: 10px 15px;
@@ -722,29 +702,6 @@
     gap: 8px;
 }
 
-.message.customer {
-    color: #333;
-    align-self: flex-start;
-    flex-direction: row;
-}
-
-.message.agent {
-    color: #333;
-    align-self: flex-end;
-    margin-left: auto;
-    flex-direction: row-reverse;
-}
-
-.message.system {
-    color: white;
-    align-self: center;
-    margin: 0 auto;
-    text-align: center;
-    font-style: italic;
-    font-size: 12px;
-    justify-content: center;
-}
-
 .message-content {
     flex: 1;
 }
@@ -783,7 +740,6 @@
 }
 
 .message.system {
-    background: #6c757d;
     color: white;
     align-self: center;
     margin: 10px auto;
