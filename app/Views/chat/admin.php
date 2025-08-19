@@ -9,6 +9,7 @@
 <!-- Mobile Sidebar Overlay -->
 <div class="mobile-sidebar-overlay" id="mobileSidebarOverlay"></div>
 
+
 <div class="admin-dashboard">
     <div class="dashboard-header">
         <div class="header-left">
@@ -16,12 +17,11 @@
                 <i class="bi bi-list"></i>
             </button>
             <h2>Chat Dashboard</h2>
+            <a href="<?= base_url('admin/dashboard') ?>" class="btn btn-home">Home</a>
         </div>
         <div class="user-info">
             <span>Welcome, <?= esc($user['username']) ?></span>
             <span class="status-indicator" id="connectionStatus">Offline</span>
-            <a href="<?= base_url('admin/dashboard') ?>" class="btn btn-home">Home</a>
-            <a href="<?= base_url('logout') ?>" class="btn btn-logout">Logout</a>
         </div>
     </div>
     
@@ -116,7 +116,9 @@
             <div class="chat-header-with-panel">
                 <div class="chat-header">
                     <h3 id="chatCustomerName">Select a chat</h3>
-                    <button class="btn btn-close-chat" onclick="closeCurrentChat()">Close Chat</button>
+                    <div class="chat-header-buttons">
+                        <button class="btn btn-close-chat" onclick="closeCurrentChat()">Close Chat</button>
+                    </div>
                 </div>
                 
                 <!-- Customer Info Side Panel Header -->
@@ -124,6 +126,9 @@
                     <div class="customer-header">
                         <div class="customer-avatar-large" id="customerAvatarLarge">?</div>
                         <h4 class="customer-name-large" id="customerNameLarge">Select a customer</h4>
+                        <button class="btn customer-info-toggle" id="customerInfoToggle" onclick="toggleCustomerInfo()">
+                            <i class="bi bi-info-circle"></i> Info
+                        </button>
                     </div>
                 </div>
             </div>
@@ -185,6 +190,66 @@
                             <label>Status:</label>
                             <span class="status-badge" id="chatStatusDetail">-</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+</div>
+
+<!-- Bootstrap Modal for Mobile Customer Info -->
+<div class="modal fade" id="customerInfoModal" tabindex="-1" aria-labelledby="customerInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center w-100">
+                    <div class="customer-avatar-large me-3" id="customerAvatarLargeModal">?</div>
+                    <div class="flex-grow-1">
+                        <h5 class="modal-title mb-0" id="customerInfoModalLabel">Customer Information</h5>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="customer-details">
+                    <div class="detail-item mb-3">
+                        <label class="fw-bold mb-1">Customer Name:</label>
+                        <span id="customerNameDetailModal">-</span>
+                    </div>
+                    
+                    <div class="detail-item mb-3">
+                        <label class="fw-bold mb-1">Chat Topic:</label>
+                        <span id="chatTopicDetailModal">-</span>
+                    </div>
+                    
+                    <div class="detail-item mb-3">
+                        <label class="fw-bold mb-1">Email:</label>
+                        <span id="customerEmailDetailModal">-</span>
+                    </div>
+                    
+                    <div class="detail-item mb-3">
+                        <label class="fw-bold mb-1">Started At:</label>
+                        <span id="chatStartedDetailModal">-</span>
+                    </div>
+                    
+                    <div class="detail-item mb-3">
+                        <label class="fw-bold mb-1">Accepted At:</label>
+                        <span id="chatAcceptedDetailModal">-</span>
+                    </div>
+                    
+                    <div class="detail-item mb-3">
+                        <label class="fw-bold mb-1">Accepted By:</label>
+                        <span id="chatAcceptedByDetailModal">-</span>
+                    </div>
+                    
+                    <div class="detail-item mb-3">
+                        <label class="fw-bold mb-1">Last Reply By:</label>
+                        <span id="lastReplyByDetailModal">-</span>
+                    </div>
+                    
+                    <div class="detail-item mb-3">
+                        <label class="fw-bold mb-1">Status:</label>
+                        <span class="status-badge" id="chatStatusDetailModal">-</span>
                     </div>
                 </div>
             </div>
@@ -277,16 +342,29 @@ function addAvatarToMessage(messageElement, senderName, senderType) {
     let sessionId = null;
     
     
-    // Populate customer info panel with session data
+    // Populate customer info panel with session data (both desktop sidepanel and mobile modal)
     function populateCustomerInfo(sessionData) {
         // Customer name and avatar
-        const customerName = sessionData.customer_name || 'Anonymous';
+        let customerName = sessionData.customer_name;
+        
+        // Handle empty or null customer names
+        if (!customerName || customerName.trim() === '') {
+            customerName = 'Anonymous';
+        }
+        
         document.getElementById('customerNameLarge').textContent = customerName;
+        
+        // Update chat header with topic instead of customer name
+        const chatTopic = sessionData.chat_topic || 'No topic specified';
+        document.getElementById('chatCustomerName').textContent = chatTopic;
         
         // Generate avatar initials for large avatar
         let initials = '';
-        if (customerName === 'Anonymous') {
+        let avatarClass = '';
+        
+        if (customerName === 'Anonymous' || !customerName || customerName.trim() === '') {
             initials = 'A';
+            avatarClass = 'anonymous';
         } else {
             const words = customerName.trim().split(/\s+/);
             if (words.length >= 2) {
@@ -294,18 +372,29 @@ function addAvatarToMessage(messageElement, senderName, senderType) {
             } else {
                 initials = customerName.charAt(0).toUpperCase();
             }
+            avatarClass = 'customer';
         }
-        document.getElementById('customerAvatarLarge').textContent = initials;
         
-        // Chat topic
+        // Update desktop sidepanel
+        const desktopAvatar = document.getElementById('customerAvatarLarge');
+        desktopAvatar.textContent = initials;
+        desktopAvatar.className = `customer-avatar-large ${avatarClass}`;
+        
         document.getElementById('chatTopicDetail').textContent = sessionData.chat_topic || '-';
-        
-        // Customer email
         document.getElementById('customerEmailDetail').textContent = sessionData.customer_email || '-';
+        
+        // Update mobile modal elements
+        const modalAvatar = document.getElementById('customerAvatarLargeModal');
+        modalAvatar.textContent = initials;
+        modalAvatar.className = `customer-avatar-large ${avatarClass}`;
+        
+        document.getElementById('customerNameDetailModal').textContent = customerName;
+        document.getElementById('chatTopicDetailModal').textContent = sessionData.chat_topic || '-';
+        document.getElementById('customerEmailDetailModal').textContent = sessionData.customer_email || '-';
         
         // Chat started time
         const startedDate = new Date(sessionData.created_at);
-        document.getElementById('chatStartedDetail').textContent = startedDate.toLocaleString('en-US', {
+        const formattedStartedDate = startedDate.toLocaleString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -313,10 +402,12 @@ function addAvatarToMessage(messageElement, senderName, senderType) {
             minute: '2-digit',
             hour12: true
         });
+        document.getElementById('chatStartedDetail').textContent = formattedStartedDate;
+        document.getElementById('chatStartedDetailModal').textContent = formattedStartedDate;
         
         // Accepted at time (when agent was assigned)
         const acceptedDate = sessionData.accepted_at ? new Date(sessionData.accepted_at) : null;
-        document.getElementById('chatAcceptedDetail').textContent = acceptedDate ? 
+        const formattedAcceptedDate = acceptedDate ? 
             acceptedDate.toLocaleString('en-US', {
                 year: 'numeric',
                 month: 'short',
@@ -325,40 +416,56 @@ function addAvatarToMessage(messageElement, senderName, senderType) {
                 minute: '2-digit',
                 hour12: true
             }) : '-';
+        document.getElementById('chatAcceptedDetail').textContent = formattedAcceptedDate;
+        document.getElementById('chatAcceptedDetailModal').textContent = formattedAcceptedDate;
         
         // Accepted by (agent name)
-        document.getElementById('chatAcceptedByDetail').textContent = sessionData.agent_name || '-';
+        const agentName = sessionData.agent_name || '-';
+        document.getElementById('chatAcceptedByDetail').textContent = agentName;
+        document.getElementById('chatAcceptedByDetailModal').textContent = agentName;
         
         // Last reply by (this will be updated when messages are loaded)
         document.getElementById('lastReplyByDetail').textContent = 'Loading...';
+        document.getElementById('lastReplyByDetailModal').textContent = 'Loading...';
         
         // Chat status with proper styling
-        const statusElement = document.getElementById('chatStatusDetail');
         const status = sessionData.status || 'unknown';
-        statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-        statusElement.className = 'status-badge ' + status.toLowerCase();
+        const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+        const statusClass = 'status-badge ' + status.toLowerCase();
+        
+        // Update desktop sidepanel status
+        const statusElement = document.getElementById('chatStatusDetail');
+        statusElement.textContent = statusText;
+        statusElement.className = statusClass;
+        
+        // Update mobile modal status
+        const statusElementModal = document.getElementById('chatStatusDetailModal');
+        statusElementModal.textContent = statusText;
+        statusElementModal.className = statusClass;
     }
     
-    // Update last reply information
+    // Update last reply information (both desktop sidepanel and mobile modal)
     function updateLastReplyInfo(messages) {
+        let senderName = '-';
+        
         if (!messages || messages.length === 0) {
-            document.getElementById('lastReplyByDetail').textContent = '-';
-            return;
-        }
-        
-        // Find the most recent non-system message
-        const lastMessage = messages
-            .filter(msg => msg.sender_type !== 'system')
-            .sort((a, b) => new Date(b.created_at || b.timestamp) - new Date(a.created_at || a.timestamp))[0];
-        
-        if (lastMessage) {
-            const senderName = lastMessage.sender_type === 'agent' ? 
-                (lastMessage.sender_name || lastMessage.agent_name || 'Agent') :
-                (lastMessage.customer_name || 'Customer');
-            document.getElementById('lastReplyByDetail').textContent = senderName;
+            senderName = '-';
         } else {
-            document.getElementById('lastReplyByDetail').textContent = '-';
+            // Find the most recent non-system message
+            const lastMessage = messages
+                .filter(msg => msg.sender_type !== 'system')
+                .sort((a, b) => new Date(b.created_at || b.timestamp) - new Date(a.created_at || a.timestamp))[0];
+            
+            if (lastMessage) {
+                senderName = lastMessage.sender_type === 'agent' ? 
+                    (lastMessage.sender_name || lastMessage.agent_name || 'Agent') :
+                    (lastMessage.customer_name || 'Customer');
+            }
         }
+        
+        // Update both desktop and mobile versions
+        document.getElementById('lastReplyByDetail').textContent = senderName;
+        document.getElementById('lastReplyByDetailModal').textContent = senderName;
     }
 
     // Collapsible sections functionality
@@ -413,10 +520,41 @@ function addAvatarToMessage(messageElement, senderName, senderType) {
         });
     }
 
+    // Customer info toggle functionality for mobile/desktop
+    function toggleCustomerInfo() {
+        if (window.innerWidth <= 768) {
+            // Mobile: Use Bootstrap modal
+            const customerInfoModal = new bootstrap.Modal(document.getElementById('customerInfoModal'));
+            customerInfoModal.show();
+        } else {
+            // Desktop: Use existing sidepanel toggle logic
+            const customerInfoPanel = document.getElementById('customerInfoPanel');
+            const toggleButton = document.getElementById('customerInfoToggle');
+            const toggleIcon = toggleButton.querySelector('i');
+            
+            if (customerInfoPanel) {
+                const isShowing = customerInfoPanel.classList.contains('mobile-show');
+                
+                if (isShowing) {
+                    // Hide customer info panel
+                    customerInfoPanel.classList.remove('mobile-show');
+                    toggleIcon.className = 'bi bi-info-circle';
+                } else {
+                    // Show customer info panel
+                    customerInfoPanel.classList.add('mobile-show');
+                    toggleIcon.className = 'bi bi-x-circle';
+                }
+            }
+        }
+    }
+
     // Mobile sidebar toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
         // Restore collapsed states
         restoreCollapsedStates();
+        
+        // Make toggleCustomerInfo globally available
+        window.toggleCustomerInfo = toggleCustomerInfo;
         
         const mobileToggle = document.getElementById('mobileSidebarToggle');
         const sessionsPanel = document.querySelector('.sessions-panel');
@@ -457,24 +595,6 @@ function addAvatarToMessage(messageElement, senderName, senderType) {
                 // Close mobile sidebar on mobile devices
                 if (window.innerWidth <= 768) {
                     closeMobileSidebar();
-                }
-            };
-            
-            // Close sidebar when accepting chat (mobile)
-            window.acceptChatMobile = window.acceptChat;
-            window.acceptChat = function(sessionId) {
-                // Call original acceptChat function
-                if (window.acceptChatMobile) {
-                    return window.acceptChatMobile(sessionId);
-                } else {
-                    // Fallback to original acceptChat logic
-                    return fetch('/api/chat/assign-agent', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `session_id=${sessionId}`
-                    });
                 }
             };
         }

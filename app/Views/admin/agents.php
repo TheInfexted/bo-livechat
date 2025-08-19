@@ -29,7 +29,7 @@
                 <?php foreach ($agents as $agent): ?>
                 <tr>
                     <td><?= esc($agent['username']) ?></td>
-                    <td><?= esc($agent['email']) ?></td>
+                    <td><?= !empty($agent['email']) ? esc($agent['email']) : '<em>No email</em>' ?></td>
                     <td>
                         <span class="role-badge role-<?= $agent['role'] ?>">
                             <?= ucfirst($agent['role']) ?>
@@ -70,8 +70,8 @@
                     <input type="text" id="editUsername" name="username" required>
                 </div>
                 <div class="form-group">
-                    <label for="editEmail">Email</label>
-                    <input type="email" id="editEmail" name="email" required>
+                    <label for="editEmail">Email (optional)</label>
+                    <input type="email" id="editEmail" name="email">
                 </div>
                 <div class="form-group">
                     <label for="editRole">Role</label>
@@ -107,8 +107,8 @@
                     <input type="text" id="addUsername" name="username" required>
                 </div>
                 <div class="form-group">
-                    <label for="addEmail">Email</label>
-                    <input type="email" id="addEmail" name="email" required>
+                    <label for="addEmail">Email (optional)</label>
+                    <input type="email" id="addEmail" name="email">
                 </div>
                 <div class="form-group">
                     <label for="addRole">Role</label>
@@ -135,7 +135,7 @@
 function openEditModal(agentId, username, email, role) {
     document.getElementById('editAgentId').value = agentId;
     document.getElementById('editUsername').value = username;
-    document.getElementById('editEmail').value = email;
+    document.getElementById('editEmail').value = email || ''; // Handle null/empty emails
     document.getElementById('editRole').value = role;
     document.getElementById('editPassword').value = '';
     document.getElementById('editAgentModal').style.display = 'block';

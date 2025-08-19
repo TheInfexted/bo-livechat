@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/admin.css?v=' . time()) ?>">
 <link rel="stylesheet" href="<?= base_url('assets/css/chat-history.css?v=' . time()) ?>">
 <link rel="stylesheet" href="<?= base_url('assets/css/api-keys.css?v=' . time()) ?>">
+<link rel="stylesheet" href="<?= base_url('assets/css/responsive.css?v=' . time()) ?>">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
 <div class="chat-history-container">
@@ -83,6 +84,11 @@
                                 <span class="date-time"><?= date('M j, Y', strtotime($key['created_at'])) ?></span>
                             </td>
                             <td class="actions">
+                                <button class="btn btn-sm btn-info" 
+                                        onclick="openViewModal('<?= esc($key['api_key']) ?>', '<?= esc($key['client_name']) ?>', '<?= esc($key['client_email']) ?>', '<?= esc($key['status']) ?>', '<?= esc($key['client_domain']) ?>', '<?= esc($key['created_at']) ?>')" 
+                                        title="View & Get Integration Code">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                                 <button class="btn btn-sm btn-secondary" onclick="editApiKey(<?= $key['id'] ?>)" title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </button>
@@ -112,6 +118,78 @@
                 <?php endif; ?>
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- View API Key Modal -->
+<div id="viewModal" class="modal view-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="bi bi-eye"></i> API Key Details & Integration</h3>
+            <button class="close-modal" onclick="closeViewModal()">×</button>
+        </div>
+        <div style="padding: 20px;">
+            <!-- API Key Information -->
+            <div class="api-key-info">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Client Name</label>
+                        <div class="value" id="viewClientName"></div>
+                    </div>
+                    <div class="info-item">
+                        <label>Client Email</label>
+                        <div class="value" id="viewClientEmail"></div>
+                    </div>
+                    <div class="info-item">
+                        <label>API Key</label>
+                        <div class="value api-key" id="viewApiKey"></div>
+                    </div>
+                    <div class="info-item">
+                        <label>Status</label>
+                        <div class="value" id="viewStatus"></div>
+                    </div>
+                    <div class="info-item">
+                        <label>Allowed Domains</label>
+                        <div class="value" id="viewDomain"></div>
+                    </div>
+                    <div class="info-item">
+                        <label>Created Date</label>
+                        <div class="value" id="viewCreated"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integration Options -->
+            <h4><i class="bi bi-code-slash"></i> Choose Integration Style</h4>
+            <div class="integration-options">
+                <div class="option-card active" onclick="changeIntegration('basic')" data-type="basic">
+                    <h5>🚀 Basic Chat Button</h5>
+                    <p>Simple chat button without welcome bubble</p>
+                </div>
+                <div class="option-card" onclick="changeIntegration('welcome')" data-type="welcome">
+                    <h5>💬 With Welcome Bubble</h5>
+                    <p>Chat button with proactive welcome message</p>
+                </div>
+                <div class="option-card" onclick="changeIntegration('ecommerce')" data-type="ecommerce">
+                    <h5>🛍️ E-commerce Optimized</h5>
+                    <p>Perfect for online stores with shopping context</p>
+                </div>
+            </div>
+
+            <!-- Script Section -->
+            <div class="script-section">
+                <h4><i class="bi bi-file-code"></i> Integration Code</h4>
+                <textarea id="scriptCode" class="script-textarea" readonly></textarea>
+                <div class="script-actions">
+                    <button class="copy-script-btn" onclick="copyScriptCode()">
+                        <i class="bi bi-clipboard"></i> Copy Script
+                    </button>
+                    <div class="script-info">
+                        Copy this code and paste it before the closing &lt;/body&gt; tag on your website
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -184,9 +262,143 @@
     </div>
 </div>
 
-
 <script>
-// Modal functions
+var globalApiKey = '';
+var selectedType = 'basic';
+
+var basicTemplate = [
+    '<script>',
+    'window.LiveChatConfig = {',
+    '    baseUrl: \'https://livechat.kopisugar.cc\',',
+    '    apiKey: \'API_KEY_PLACEHOLDER\',',
+    '    theme: \'blue\',',
+    '    position: \'bottom-right\'',
+    '};',
+    '',
+    'var script = document.createElement(\'script\');',
+    'script.src = \'https://livechat.kopisugar.cc/assets/js/widget.js\';',
+    'document.head.appendChild(script);',
+    '<\/script>'
+];
+
+var welcomeTemplate = [
+    '<script>',
+    'window.LiveChatConfig = {',
+    '    baseUrl: \'https://livechat.kopisugar.cc\',',
+    '    apiKey: \'API_KEY_PLACEHOLDER\',',
+    '    theme: \'blue\',',
+    '    position: \'bottom-right\',',
+    '    welcomeBubble: {',
+    '        enabled: true,',
+    '        message: \'Hi! I\\\'m here to help. How can I assist you?\',',
+    '        avatar: \'👋\',',
+    '        delay: 3000,',
+    '        autoHide: true,',
+    '        autoHideDelay: 10000',
+    '    }',
+    '};',
+    '',
+    'var script = document.createElement(\'script\');',
+    'script.src = \'https://livechat.kopisugar.cc/assets/js/widget.js\';',
+    'document.head.appendChild(script);',
+    '<\/script>'
+];
+
+var ecommerceTemplate = [
+    '<script>',
+    'window.LiveChatConfig = {',
+    '    baseUrl: \'https://livechat.kopisugar.cc\',',
+    '    apiKey: \'API_KEY_PLACEHOLDER\',',
+    '    theme: \'green\',',
+    '    position: \'bottom-right\',',
+    '    welcomeBubble: {',
+    '        enabled: true,',
+    '        message: \'Hi! Need help with your order or have questions?\',',
+    '        avatar: \'🛍️\',',
+    '        delay: 2000,',
+    '        autoHide: true,',
+    '        autoHideDelay: 15000',
+    '    },',
+    '    callbacks: {',
+    '        onOpen: function() {',
+    '            if (typeof gtag !== \'undefined\') {',
+    '                gtag(\'event\', \'chat_opened\', {',
+    '                    \'event_category\': \'customer_support\'',
+    '                });',
+    '            }',
+    '        }',
+    '    }',
+    '};',
+    '',
+    'var script = document.createElement(\'script\');',
+    'script.src = \'https://livechat.kopisugar.cc/assets/js/widget.js\';',
+    'document.head.appendChild(script);',
+    '<\/script>'
+];
+
+function openViewModal(apiKey, clientName, clientEmail, status, domain, createdAt) {
+    globalApiKey = apiKey;
+    
+    document.getElementById('viewClientName').textContent = clientName;
+    document.getElementById('viewClientEmail').textContent = clientEmail;
+    document.getElementById('viewApiKey').textContent = apiKey;
+    document.getElementById('viewStatus').textContent = status.charAt(0).toUpperCase() + status.slice(1);
+    document.getElementById('viewDomain').textContent = domain || 'All domains allowed';
+    
+    var date = new Date(createdAt);
+    document.getElementById('viewCreated').textContent = date.toLocaleDateString();
+    
+    changeIntegration('basic');
+    document.getElementById('viewModal').style.display = 'block';
+}
+
+function closeViewModal() {
+    document.getElementById('viewModal').style.display = 'none';
+    globalApiKey = '';
+}
+
+function changeIntegration(type) {
+    selectedType = type;
+    
+    var cards = document.querySelectorAll('.option-card');
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].classList.remove('active');
+    }
+    document.querySelector('[data-type="' + type + '"]').classList.add('active');
+    
+    updateScript();
+}
+
+function updateScript() {
+    var template = basicTemplate;
+    
+    if (selectedType === 'welcome') {
+        template = welcomeTemplate;
+    } else if (selectedType === 'ecommerce') {
+        template = ecommerceTemplate;
+    }
+    
+    var script = template.join('\n').replace('API_KEY_PLACEHOLDER', globalApiKey);
+    document.getElementById('scriptCode').value = script;
+}
+
+function copyScriptCode() {
+    var textarea = document.getElementById('scriptCode');
+    var button = document.querySelector('.copy-script-btn');
+    
+    textarea.select();
+    document.execCommand('copy');
+    
+    var originalText = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+    button.classList.add('copied');
+    
+    setTimeout(function() {
+        button.innerHTML = originalText;
+        button.classList.remove('copied');
+    }, 2000);
+}
+
 function showCreateApiKeyModal() {
     document.getElementById('createApiKeyModal').style.display = 'block';
 }
@@ -196,46 +408,36 @@ function hideCreateApiKeyModal() {
     document.getElementById('createApiKeyForm').reset();
 }
 
-
-// API Key functions
 function copyApiKey(apiKey) {
-    navigator.clipboard.writeText(apiKey).then(function() {
-        alert('API Key copied to clipboard!');
-    }).catch(function() {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = apiKey;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        alert('API Key copied to clipboard!');
-    });
+    var textArea = document.createElement('textarea');
+    textArea.value = apiKey;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert('API Key copied to clipboard!');
 }
 
-
-async function editApiKey(keyId) {
-    try {
-        const response = await fetch(`<?= base_url('admin/api-keys/edit') ?>/${keyId}`);
-        const apiKey = await response.json();
-        
-        if (apiKey.error) {
-            alert('Error: ' + apiKey.error);
-            return;
-        }
-        
-        // Populate edit form
-        document.getElementById('edit_key_id').value = apiKey.id;
-        document.getElementById('edit_client_name').value = apiKey.client_name;
-        document.getElementById('edit_client_email').value = apiKey.client_email;
-        document.getElementById('edit_client_domain').value = apiKey.client_domain || '';
-        document.getElementById('edit_status').value = apiKey.status;
-        
-        // Show edit modal
-        document.getElementById('editApiKeyModal').style.display = 'block';
-    } catch (error) {
-        alert('Error loading API key data');
-    }
+function editApiKey(keyId) {
+    fetch('<?= base_url('admin/api-keys/edit') ?>/' + keyId)
+        .then(function(response) { return response.json(); })
+        .then(function(apiKey) {
+            if (apiKey.error) {
+                alert('Error: ' + apiKey.error);
+                return;
+            }
+            
+            document.getElementById('edit_key_id').value = apiKey.id;
+            document.getElementById('edit_client_name').value = apiKey.client_name;
+            document.getElementById('edit_client_email').value = apiKey.client_email;
+            document.getElementById('edit_client_domain').value = apiKey.client_domain || '';
+            document.getElementById('edit_status').value = apiKey.status;
+            
+            document.getElementById('editApiKeyModal').style.display = 'block';
+        })
+        .catch(function(error) {
+            alert('Error loading API key data');
+        });
 }
 
 function hideEditApiKeyModal() {
@@ -243,116 +445,92 @@ function hideEditApiKeyModal() {
     document.getElementById('editApiKeyForm').reset();
 }
 
-
 function suspendApiKey(keyId) {
     if (confirm('Are you sure you want to suspend this API key?')) {
-        fetch(`<?= base_url('admin/api-keys/suspend') ?>/${keyId}`, {
+        fetch('<?= base_url('admin/api-keys/suspend') ?>/' + keyId, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
+            headers: { 'Content-Type': 'application/json' }
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
             if (data.success) {
                 alert('API key suspended successfully!');
                 location.reload();
             } else {
                 alert('Error: ' + data.error);
             }
-        })
-        .catch(error => {
-            alert('Error suspending API key');
         });
     }
 }
 
 function activateApiKey(keyId) {
     if (confirm('Are you sure you want to activate this API key?')) {
-        fetch(`<?= base_url('admin/api-keys/activate') ?>/${keyId}`, {
+        fetch('<?= base_url('admin/api-keys/activate') ?>/' + keyId, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
+            headers: { 'Content-Type': 'application/json' }
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
             if (data.success) {
                 alert('API key activated successfully!');
                 location.reload();
             } else {
                 alert('Error: ' + data.error);
             }
-        })
-        .catch(error => {
-            alert('Error activating API key');
         });
     }
 }
 
 function revokeApiKey(keyId) {
     if (confirm('Are you sure you want to revoke this API key? This action cannot be undone!')) {
-        fetch(`<?= base_url('admin/api-keys/revoke') ?>/${keyId}`, {
+        fetch('<?= base_url('admin/api-keys/revoke') ?>/' + keyId, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
+            headers: { 'Content-Type': 'application/json' }
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
             if (data.success) {
                 alert('API key revoked successfully!');
                 location.reload();
             } else {
                 alert('Error: ' + data.error);
             }
-        })
-        .catch(error => {
-            alert('Error revoking API key');
         });
     }
 }
 
-// Form submission
-document.getElementById('createApiKeyForm').addEventListener('submit', async function(e) {
+document.getElementById('createApiKeyForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const formData = new FormData(this);
+    var formData = new FormData(this);
     
-    try {
-        const response = await fetch('<?= base_url('admin/api-keys/create') ?>', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
-        
+    fetch('<?= base_url('admin/api-keys/create') ?>', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
         if (result.success) {
-            alert(`API Key created successfully!\n\nAPI Key: ${result.api_key}\n\nMake sure to save this key - you won't be able to see it again!`);
+            alert('API Key created successfully!\n\nAPI Key: ' + result.api_key + '\n\nMake sure to save this key!');
             hideCreateApiKeyModal();
             location.reload();
         } else {
             alert('Error: ' + result.error);
         }
-    } catch (error) {
-        alert('Error creating API key');
-    }
+    });
 });
 
-// Edit form submission
-document.getElementById('editApiKeyForm').addEventListener('submit', async function(e) {
+document.getElementById('editApiKeyForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const formData = new FormData(this);
+    var formData = new FormData(this);
     
-    try {
-        const response = await fetch('<?= base_url('admin/api-keys/update') ?>', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
-        
+    fetch('<?= base_url('admin/api-keys/update') ?>', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
         if (result.success) {
             alert('API Key updated successfully!');
             hideEditApiKeyModal();
@@ -360,18 +538,17 @@ document.getElementById('editApiKeyForm').addEventListener('submit', async funct
         } else {
             alert('Error: ' + result.error);
         }
-    } catch (error) {
-        alert('Error updating API key');
-    }
+    });
 });
 
-
-// Close modal when clicking outside
 window.onclick = function(event) {
-    const modal = document.getElementById('createApiKeyModal');
-    if (event.target == modal) {
-        hideCreateApiKeyModal();
-    }
+    var createModal = document.getElementById('createApiKeyModal');
+    var editModal = document.getElementById('editApiKeyModal');
+    var viewModal = document.getElementById('viewModal');
+    
+    if (event.target == createModal) hideCreateApiKeyModal();
+    if (event.target == editModal) hideEditApiKeyModal();
+    if (event.target == viewModal) closeViewModal();
 }
 </script>
 

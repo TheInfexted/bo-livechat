@@ -82,7 +82,7 @@ class AdminController extends General
         $role = $this->request->getPost('role');
         $password = $this->request->getPost('password');
         
-        if (!$agentId || !$username || !$email || !$role) {
+        if (!$agentId || !$username || !$role) {
             return $this->jsonResponse(['error' => 'Missing required fields'], 400);
         }
         
@@ -97,10 +97,12 @@ class AdminController extends General
             return $this->jsonResponse(['error' => 'Username already exists'], 400);
         }
         
-        // Check if email already exists (excluding current user)
-        $existingEmail = $this->userModel->where('email', $email)->where('id !=', $agentId)->first();
-        if ($existingEmail) {
-            return $this->jsonResponse(['error' => 'Email already exists'], 400);
+        // Check if email already exists (excluding current user, only if email is provided)
+        if (!empty($email)) {
+            $existingEmail = $this->userModel->where('email', $email)->where('id !=', $agentId)->first();
+            if ($existingEmail) {
+                return $this->jsonResponse(['error' => 'Email already exists'], 400);
+            }
         }
         
         $data = [
@@ -139,7 +141,7 @@ class AdminController extends General
         $role = $this->request->getPost('role');
         $password = $this->request->getPost('password');
         
-        if (!$username || !$email || !$role || !$password) {
+        if (!$username || !$role || !$password) {
             return $this->jsonResponse(['error' => 'Missing required fields'], 400);
         }
         
@@ -154,10 +156,12 @@ class AdminController extends General
             return $this->jsonResponse(['error' => 'Username already exists'], 400);
         }
         
-        // Check if email already exists
-        $existingEmail = $this->userModel->where('email', $email)->first();
-        if ($existingEmail) {
-            return $this->jsonResponse(['error' => 'Email already exists'], 400);
+        // Check if email already exists (only if email is provided)
+        if (!empty($email)) {
+            $existingEmail = $this->userModel->where('email', $email)->first();
+            if ($existingEmail) {
+                return $this->jsonResponse(['error' => 'Email already exists'], 400);
+            }
         }
         
         $data = [

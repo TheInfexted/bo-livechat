@@ -279,6 +279,12 @@
     font-size: 16px;
 }
 
+.chat-header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .chat-window {
     flex: 1;
     display: flex;
@@ -290,6 +296,7 @@
     padding: 20px;
     overflow-y: auto;
     background: #f8f9fa;
+    max-height: 450px; /* Set max height to prevent chat from growing too large */
 }
 
 /* Message Styles */
@@ -445,11 +452,97 @@
     text-decoration: none;
 }
 
+/* Mobile Sidebar Overlay */
+.mobile-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* Mobile Sidebar Toggle Button */
+.mobile-sidebar-toggle {
+    display: none;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    margin-right: 15px;
+}
+
+.mobile-sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.mobile-sidebar-toggle.active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Header Left for mobile */
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .mobile-sidebar-toggle {
+        display: inline-block;
+    }
+}
+
 /* Enhanced Responsive Design */
 @media (max-width: 768px) {
     .dashboard-content {
         flex-direction: row;
         position: relative;
+    }
+    
+    /* Fix header button spacing on mobile */
+    .user-info {
+        flex-wrap: wrap;
+        gap: 4px;
+        min-width: 0;
+        flex-shrink: 1;
+    }
+    
+    .btn-home, .btn-logout {
+        font-size: 10px;
+        padding: 3px 6px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    /* Additional header spacing fixes */
+    .dashboard-header {
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    
+    .header-left {
+        flex-shrink: 0;
+        min-width: 0;
+    }
+    
+    .header-left h2 {
+        font-size: 16px;
+        margin-right: 8px;
     }
     
     .sessions-panel {
@@ -483,7 +576,7 @@
         margin: 0;
     }
     
-    /* User info mobile adjustments */
+    /* User info mobile adjustments - Hide Home and Logout buttons in main header */
     .user-info {
         gap: 8px;
     }
@@ -497,9 +590,22 @@
         padding: 3px 6px;
     }
     
-    .btn-home, .btn-logout {
-        font-size: 12px;
-        padding: 6px 10px;
+    
+    /* Customer info panel mobile adjustments */
+    .customer-info-panel {
+        width: 100%;
+        position: fixed;
+        top: 0;
+        right: -100%;
+        height: 100vh;
+        z-index: 1100;
+        transition: right 0.3s ease;
+        background: white;
+        box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    }
+    
+    .customer-info-panel.mobile-show {
+        right: 0;
     }
     
     /* Mobile chat header improvements */
@@ -1142,6 +1248,52 @@
     width: 0;
     min-width: 0;
     overflow: hidden;
+}
+
+/* Customer Info Toggle Button */
+.customer-info-toggle {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    position: absolute;
+    right: 15px;
+}
+
+.customer-info-toggle:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: white;
+}
+
+.customer-info-toggle i {
+    font-size: 12px;
+}
+
+/* Hide toggle button on desktop */
+@media (min-width: 769px) {
+    .customer-info-toggle {
+        display: none;
+    }
+}
+
+/* Show toggle button on mobile */
+@media (max-width: 768px) {
+    .customer-info-toggle {
+        display: inline-flex;
+    }
 }
 
 .customer-header {
