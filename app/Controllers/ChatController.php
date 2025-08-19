@@ -471,4 +471,55 @@ class ChatController extends General
         // Future enhancement: Send WebSocket message to close session for all connected clients
         // For now, admins will see the session as closed when they refresh or check status
     }
+    
+    /**
+     * Get detailed session information for customer info panel
+     */
+    public function getSessionDetails($sessionId)
+    {
+        if (!$this->isAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        if (!$sessionId) {
+            return $this->jsonResponse(['error' => 'Session ID is required'], 400);
+        }
+        
+        // Get session with agent information
+        $session = $this->chatModel->select('chat_sessions.*, users.username as agent_name')
+                                   ->join('users', 'users.id = chat_sessions.agent_id', 'left')
+                                   ->where('chat_sessions.session_id', $sessionId)
+                                   ->first();
+        
+        if (!$session) {
+            return $this->jsonResponse(['error' => 'Session not found'], 404);
+        }
+        
+        // Process customer name using the same logic as ChatModel
+        $customerName = 'Anonymous';
+        if (!empty($session['external_fullname'])) {
+            $customerName = trim($session['external_fullname']);
+        } elseif (!empty($session['customer_fullname'])) {
+            $customerName = trim($session['customer_fullname']);
+        } elseif (!empty($session['customer_name'])) {
+            $customerName = trim($session['customer_name']);
+        }
+        
+        // Add processed customer name to session data
+        $session['customer_name'] = $customerName;
+        
+        // Add accepted_at timestamp (when agent was assigned)
+        // For now, we'll use updated_at when status changed to active
+        // In the future, we could add a separate accepted_at column
+        if ($session['status'] === 'active' && $session['agent_id']) {
+            $session['accepted_at'] = $session['updated_at'];
+        } else {
+            $session['accepted_at'] = null;
+        }
+        
+        return $this->jsonResponse([
+            'success' => true,
+            'session' => $session
+        ]);
+    }
 }

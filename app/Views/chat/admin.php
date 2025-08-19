@@ -98,8 +98,12 @@
                         <div class="avatar <?= $avatarClass ?>"><?= $initials ?></div>
                         <div class="session-info">
                             <strong><?= esc($customerName) ?></strong>
-                            <small>Topic: <?= esc($session['chat_topic'] ?? 'No topic specified') ?></small>
-                            <small>Agent: <?= esc($session['agent_name'] ?? 'Unassigned') ?></small>
+                            <?php 
+                            $lastMessageInfo = $session['last_message_info'] ?? ['display_text' => 'No messages yet', 'is_waiting' => false];
+                            $messageClass = $lastMessageInfo['is_waiting'] ? 'waiting-reply' : 'last-message';
+                            ?>
+                            <small class="<?= $messageClass ?>"><?= esc($lastMessageInfo['display_text']) ?></small>
+                            <small><?= date('H:i', strtotime($session['created_at'])) ?></small>
                         </div>
                         <span class="unread-badge" style="display: none;">0</span>
                     </div>
@@ -109,27 +113,79 @@
         </div>
         
         <div class="chat-panel" id="chatPanel" style="display: none;">
-            <div class="chat-header">
-                <h3 id="chatCustomerName">Select a chat</h3>
-                <button class="btn btn-close-chat" onclick="closeCurrentChat()">Close Chat</button>
+            <div class="chat-header-with-panel">
+                <div class="chat-header">
+                    <h3 id="chatCustomerName">Select a chat</h3>
+                    <button class="btn btn-close-chat" onclick="closeCurrentChat()">Close Chat</button>
+                </div>
+                
+                <!-- Customer Info Side Panel Header -->
+                <div class="customer-info-panel-header" id="customerInfoPanelHeader">
+                    <div class="customer-header">
+                        <div class="customer-avatar-large" id="customerAvatarLarge">?</div>
+                        <h4 class="customer-name-large" id="customerNameLarge">Select a customer</h4>
+                    </div>
+                </div>
             </div>
             
-            <div class="chat-window">
-                <div class="messages-container" id="messagesContainer">
-                    <!-- Messages will be loaded here -->
+            <div class="chat-main-content">
+                <div class="chat-window">
+                    <div class="messages-container" id="messagesContainer">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                    
+                    <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    
+                    <div class="chat-input-area">
+                        <form id="messageForm">
+                            <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off">
+                            <button type="submit" class="btn btn-send">Send</button>
+                        </form>
+                    </div>
                 </div>
                 
-                <div class="typing-indicator" id="typingIndicator" style="display: none;">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-                
-                <div class="chat-input-area">
-                    <form id="messageForm">
-                        <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off">
-                        <button type="submit" class="btn btn-send">Send</button>
-                    </form>
+                <!-- Customer Info Side Panel Details -->
+                <div class="customer-info-panel" id="customerInfoPanel">
+                    <div class="customer-details">
+                        <div class="detail-item">
+                            <label>Chat Topic:</label>
+                            <span id="chatTopicDetail">-</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Email:</label>
+                            <span id="customerEmailDetail">-</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Started At:</label>
+                            <span id="chatStartedDetail">-</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Accepted At:</label>
+                            <span id="chatAcceptedDetail">-</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Accepted By:</label>
+                            <span id="chatAcceptedByDetail">-</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Last Reply By:</label>
+                            <span id="lastReplyByDetail">-</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Status:</label>
+                            <span class="status-badge" id="chatStatusDetail">-</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -218,7 +274,92 @@ function addAvatarToMessage(messageElement, senderName, senderType) {
     let userId = <?= $user['id'] ?>;
     let currentUsername = '<?= esc($user['username']) ?>';
     let currentSessionId = null;
-    let sessionId = null; 
+    let sessionId = null;
+    
+    
+    // Populate customer info panel with session data
+    function populateCustomerInfo(sessionData) {
+        // Customer name and avatar
+        const customerName = sessionData.customer_name || 'Anonymous';
+        document.getElementById('customerNameLarge').textContent = customerName;
+        
+        // Generate avatar initials for large avatar
+        let initials = '';
+        if (customerName === 'Anonymous') {
+            initials = 'A';
+        } else {
+            const words = customerName.trim().split(/\s+/);
+            if (words.length >= 2) {
+                initials = (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+            } else {
+                initials = customerName.charAt(0).toUpperCase();
+            }
+        }
+        document.getElementById('customerAvatarLarge').textContent = initials;
+        
+        // Chat topic
+        document.getElementById('chatTopicDetail').textContent = sessionData.chat_topic || '-';
+        
+        // Customer email
+        document.getElementById('customerEmailDetail').textContent = sessionData.customer_email || '-';
+        
+        // Chat started time
+        const startedDate = new Date(sessionData.created_at);
+        document.getElementById('chatStartedDetail').textContent = startedDate.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        
+        // Accepted at time (when agent was assigned)
+        const acceptedDate = sessionData.accepted_at ? new Date(sessionData.accepted_at) : null;
+        document.getElementById('chatAcceptedDetail').textContent = acceptedDate ? 
+            acceptedDate.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }) : '-';
+        
+        // Accepted by (agent name)
+        document.getElementById('chatAcceptedByDetail').textContent = sessionData.agent_name || '-';
+        
+        // Last reply by (this will be updated when messages are loaded)
+        document.getElementById('lastReplyByDetail').textContent = 'Loading...';
+        
+        // Chat status with proper styling
+        const statusElement = document.getElementById('chatStatusDetail');
+        const status = sessionData.status || 'unknown';
+        statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        statusElement.className = 'status-badge ' + status.toLowerCase();
+    }
+    
+    // Update last reply information
+    function updateLastReplyInfo(messages) {
+        if (!messages || messages.length === 0) {
+            document.getElementById('lastReplyByDetail').textContent = '-';
+            return;
+        }
+        
+        // Find the most recent non-system message
+        const lastMessage = messages
+            .filter(msg => msg.sender_type !== 'system')
+            .sort((a, b) => new Date(b.created_at || b.timestamp) - new Date(a.created_at || a.timestamp))[0];
+        
+        if (lastMessage) {
+            const senderName = lastMessage.sender_type === 'agent' ? 
+                (lastMessage.sender_name || lastMessage.agent_name || 'Agent') :
+                (lastMessage.customer_name || 'Customer');
+            document.getElementById('lastReplyByDetail').textContent = senderName;
+        } else {
+            document.getElementById('lastReplyByDetail').textContent = '-';
+        }
+    }
 
     // Collapsible sections functionality
     function toggleSection(sectionId) {

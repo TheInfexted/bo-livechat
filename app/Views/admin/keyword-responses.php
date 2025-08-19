@@ -26,7 +26,8 @@
     
     <div class="keyword-responses-container">
         <div class="responses-table">
-            <table class="table">
+            <div class="table-wrapper">
+                <table class="table">
                 <thead>
                     <tr>
                         <th>Keyword</th>
@@ -60,7 +61,8 @@
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
-            </table>
+                </table>
+            </div>
         </div>
     </div>
 </div>

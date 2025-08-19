@@ -10,9 +10,9 @@
 /* Mobile Sidebar Toggle */
 .mobile-sidebar-toggle {
     display: none;
-    background: #ffffff;
-    color: #333333;
-    border: 1px solid #e0e0e0;
+    background: rgba(0, 0, 0, 0.15);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     width: 40px;
     height: 40px;
@@ -21,12 +21,14 @@
     transition: all 0.3s ease;
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .mobile-sidebar-toggle:hover {
-    background: #f8f9fa;
-    border-color: #d0d0d0;
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.3);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -34,13 +36,11 @@
 .mobile-sidebar-toggle:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    background: #e9ecef;
 }
 
 .mobile-sidebar-toggle.active {
-    background: #e9ecef;
-    border-color: #adb5bd;
-    color: #495057;
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* Mobile Sidebar Overlay */
@@ -258,8 +258,9 @@
     }
 
     .quick-action-btn:hover {
-        background: #e9ecef;
-        border-color: #adb5bd;
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
     }
 
     /* Typing indicator mobile */
@@ -301,8 +302,8 @@
 
     .btn-home,
     .btn-logout {
-        padding: 6px 10px;
-        font-size: 11px;
+        padding: 8px 12px;
+        font-size: 12px;
         min-width: 55px;
         text-align: center;
     }
@@ -512,5 +513,538 @@
 
     .messages-container {
         -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ===== ADMIN PAGES MOBILE RESPONSIVE STYLES ===== */
+
+/* Manage Agents Page Mobile Styles */
+@media (max-width: 768px) {
+    .admin-agents {
+        padding: 10px;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+        padding-bottom: 15px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 20px;
+        text-align: center;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .header-actions .btn {
+        width: 100%;
+        text-align: center;
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+
+    /* Agents table mobile adaptations */
+    .agents-list {
+        margin-top: 15px;
+        border-radius: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .agents-table {
+        min-width: 600px; /* Prevent table from becoming too narrow */
+        font-size: 14px;
+    }
+
+    .agents-table th,
+    .agents-table td {
+        padding: 8px 10px;
+        white-space: nowrap;
+    }
+
+    .agents-table th {
+        font-size: 12px;
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
+    }
+
+    /* Make action buttons more mobile friendly */
+    .agents-table .btn-sm {
+        padding: 4px 8px;
+        font-size: 11px;
+        margin-right: 2px;
+    }
+
+    /* Badge adjustments */
+    .role-badge,
+    .status-badge {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+
+    /* Modal adjustments for agents */
+    .modal-content {
+        width: 95%;
+        max-width: 400px;
+        margin: 10px auto;
+        max-height: 90vh;
+    }
+
+    .modal-header {
+        padding: 15px;
+    }
+
+    .modal-header h3 {
+        font-size: 16px;
+    }
+
+    .modal-body {
+        padding: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .modal-actions {
+        padding: 15px;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* API Keys Page Mobile Styles */
+@media (max-width: 768px) {
+    .chat-history-container {
+        padding: 10px;
+    }
+
+    .dashboard-header .header-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 18px;
+        text-align: center;
+        margin: 0;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .header-actions .btn {
+        width: 100%;
+        text-align: center;
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+
+    /* API Keys table mobile adaptations */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 10px -10px; /* Extend to screen edges */
+        border-radius: 0;
+    }
+
+    .chat-history-table {
+        min-width: 800px; /* Prevent table from becoming too narrow */
+        font-size: 13px;
+    }
+
+    .chat-history-table th,
+    .chat-history-table td {
+        padding: 8px 10px;
+        white-space: nowrap;
+    }
+
+    .chat-history-table th {
+        font-size: 12px;
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
+    }
+
+    /* API key display mobile adjustments */
+    .api-key-text {
+        font-size: 10px;
+        padding: 6px 8px;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Action buttons mobile */
+    .actions .btn-sm {
+        padding: 4px 6px;
+        font-size: 11px;
+        margin-right: 2px;
+    }
+
+    .actions .btn-sm i {
+        font-size: 12px;
+        margin: 0;
+    }
+
+    /* Status badges mobile */
+    .status-badge {
+        font-size: 9px;
+        padding: 2px 4px;
+    }
+
+    /* Modal adjustments for API keys */
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        padding: 15px;
+    }
+
+    .modal form {
+        padding: 15px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .modal-actions {
+        padding: 15px;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+    }
+
+    /* Alert messages mobile */
+    .alert {
+        margin: 10px 0;
+        padding: 10px 12px;
+        font-size: 14px;
+        border-radius: 4px;
+    }
+}
+
+/* Canned/Automated Responses Page Mobile Styles */
+@media (max-width: 768px) {
+    .admin-canned-responses {
+        padding: 10px;
+    }
+
+    /* Response cards grid mobile */
+    .responses-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .response-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .response-header {
+        padding: 15px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .response-header h3 {
+        margin: 0;
+        font-size: 16px;
+        color: #495057;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .response-actions {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .response-actions .btn-sm {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    .response-content {
+        padding: 15px;
+    }
+
+    .response-content p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #495057;
+        overflow-wrap: break-word;
+    }
+
+    .response-meta {
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .response-meta .category {
+        font-size: 12px;
+        color: #6c757d;
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
+
+    .response-meta .badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .response-meta .badge.global {
+        background: #28a745;
+        color: white;
+    }
+
+    /* Modal adjustments for responses */
+    .admin-modal-content {
+        width: 95%;
+        max-width: 500px;
+        margin: 5% auto;
+        border-radius: 8px;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+
+    .admin-modal-header {
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .admin-modal-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .admin-modal-body {
+        padding: 15px;
+    }
+
+    .admin-modal-body textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .admin-modal-body .form-group label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+
+    .admin-modal-body .form-group label input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+    }
+
+    .modal-actions {
+        padding: 15px;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+        padding: 12px;
+        text-align: center;
+    }
+}
+
+/* Extra small devices (phones, 480px and down) - Admin Pages */
+@media (max-width: 480px) {
+    /* Agents page extra small */
+    .admin-agents {
+        padding: 5px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 18px;
+    }
+
+    .agents-table {
+        font-size: 12px;
+        min-width: 550px;
+    }
+
+    .agents-table th,
+    .agents-table td {
+        padding: 6px 8px;
+    }
+
+    .agents-table .btn-sm {
+        padding: 3px 6px;
+        font-size: 10px;
+    }
+
+    .role-badge,
+    .status-badge {
+        font-size: 9px;
+        padding: 2px 4px;
+    }
+
+    /* API Keys page extra small */
+    .chat-history-container {
+        padding: 5px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 16px;
+    }
+
+    .chat-history-table {
+        font-size: 11px;
+        min-width: 700px;
+    }
+
+    .api-key-text {
+        font-size: 9px;
+        max-width: 100px;
+    }
+
+    .actions .btn-sm {
+        padding: 3px 4px;
+        margin-right: 1px;
+    }
+
+    .actions .btn-sm i {
+        font-size: 10px;
+    }
+
+    /* Responses page extra small */
+    .admin-canned-responses {
+        padding: 5px;
+    }
+
+    .response-header {
+        padding: 12px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .response-header h3 {
+        font-size: 14px;
+        min-width: auto;
+    }
+
+    .response-actions {
+        justify-content: center;
+    }
+
+    .response-content {
+        padding: 12px;
+    }
+
+    .response-content p {
+        font-size: 13px;
+    }
+
+    .response-meta {
+        padding: 8px 12px;
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        gap: 6px;
+    }
+
+    .modal-content,
+    .admin-modal-content {
+        width: 98%;
+        margin: 2% auto;
+    }
+}
+
+/* Landscape orientation adjustments for admin pages */
+@media (max-width: 768px) and (orientation: landscape) {
+    .modal-content,
+    .admin-modal-content {
+        max-height: 80vh;
+        margin: 2% auto;
+    }
+
+    .dashboard-header {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .header-actions {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .header-actions .btn {
+        width: auto;
+        padding: 8px 12px;
+        font-size: 12px;
     }
 }

@@ -91,7 +91,7 @@ function refreshAdminSessions() {
                         <div class="session-info">
                             <strong>${escapeHtml(customerName)}</strong>
                             <small>Topic: ${escapeHtml(session.chat_topic || 'No topic specified')}</small>
-                            <small>${session.created_at}</small>
+                            <small>${formatTime(session.created_at)}</small>
                         </div>
                         <button class="btn btn-accept" onclick="acceptChat('${session.session_id}')">Accept</button>
                     `;
@@ -146,8 +146,15 @@ function refreshAdminSessions() {
                         <div class="avatar ${avatarClass}">${initials}</div>
                         <div class="session-info">
                             <strong>${escapeHtml(customerName)}</strong>
-                            <small>Topic: ${escapeHtml(session.chat_topic || 'No topic specified')}</small>
-                            <small>Agent: ${escapeHtml(session.agent_name || 'Unassigned')}</small>
+                            ${(() => {
+                                // Display last message info instead of topic and agent
+                                if (session.last_message_info && session.last_message_info.display_text) {
+                                    const cssClass = session.last_message_info.is_waiting ? 'waiting-reply' : 'last-message';
+                                    return `<small class="${cssClass}">${escapeHtml(session.last_message_info.display_text)}</small>`;
+                                } else {
+                                    return '<small class="last-message">No messages yet</small>';
+                                }
+                            })()} 
                         </div>
                         <span class="unread-badge" style="display: none;">0</span>
                     `;
@@ -319,7 +326,7 @@ async function acceptChat(sessionId) {
     }
 }
 
-// Update openChat function to include avatar in header
+// Update openChat function to include avatar in header and populate customer info panel
 function openChat(sessionId) {
     currentSessionId = sessionId;
     const chatPanel = document.getElementById('chatPanel');
@@ -337,6 +344,9 @@ function openChat(sessionId) {
         if (customerNameElement) {
             customerNameElement.textContent = customerName;
         }
+        
+        // Fetch detailed session data for customer info panel
+        fetchSessionDetailsAndPopulate(sessionId);
     }
     
     // Rest of the openChat function remains the same...
@@ -1226,13 +1236,34 @@ function addDateSeparatorIfNeeded(newMessage) {
 // Helper function to get sender name from message data
 function getSenderName(data) {
     if (data.sender_type === 'customer') {
-        // Try to get customer name from current session or use Anonymous
-        const currentSessionItem = document.querySelector(`[data-session-id="${data.session_id || currentSessionId}"]`);
-        if (currentSessionItem) {
-            const nameElement = currentSessionItem.querySelector('strong');
-            return nameElement ? nameElement.textContent : 'Anonymous';
+        // Priority: data from backend first
+        if (data.customer_name && data.customer_name.trim() !== '') {
+            return data.customer_name;
         }
-        return data.customer_name || 'Anonymous';
+        
+        // For admin interface, get customer name from the active session data
+        if (getUserType() === 'agent' && currentSessionId) {
+            // Look for the customer name in the session sidebar (this gets updated by refreshAdminSessions)
+            const currentSessionItem = document.querySelector(`[data-session-id="${data.session_id || currentSessionId}"]`);
+            if (currentSessionItem) {
+                const nameElement = currentSessionItem.querySelector('strong');
+                const domName = nameElement ? nameElement.textContent.trim() : '';
+                if (domName && domName !== '' && domName !== 'Anonymous') {
+                    return domName;
+                }
+            }
+            
+            // Also check if we have customer name in the chat header
+            const chatCustomerName = document.getElementById('chatCustomerName');
+            if (chatCustomerName) {
+                const headerName = chatCustomerName.textContent.trim();
+                if (headerName && headerName !== '' && headerName !== 'Anonymous') {
+                    return headerName;
+                }
+            }
+        }
+        
+        return 'Anonymous';
     } else if (data.sender_type === 'agent') {
         // For agent messages, use the actual sender's name from database
         // or fall back to current username for immediate messages
@@ -1552,6 +1583,46 @@ async function sendQuickResponse(type) {
                 sender_type: getUserType(),
                 sender_id: getUserId()
             }));
+        }
+    }
+}
+
+// Fetch session details and populate customer info panel
+async function fetchSessionDetailsAndPopulate(sessionId) {
+    if (!sessionId || getUserType() !== 'agent') return;
+    
+    try {
+        const response = await fetch(`/api/chat/session-details/${sessionId}`);
+        const sessionData = await response.json();
+        
+        if (sessionData.success && sessionData.session) {
+            // Use the populateCustomerInfo function if it exists in the admin view
+            if (typeof populateCustomerInfo === 'function') {
+                populateCustomerInfo(sessionData.session);
+            }
+            
+            // Also load messages to update last reply information
+            const messagesResponse = await fetch(`/api/chat/messages/${sessionId}`);
+            const messages = await messagesResponse.json();
+            
+            if (messages && typeof updateLastReplyInfo === 'function') {
+                updateLastReplyInfo(messages);
+            }
+        }
+    } catch (error) {
+        // Error loading session details - populate with basic info from DOM
+        const sessionItem = document.querySelector(`[data-session-id="${sessionId}"]`);
+        if (sessionItem && typeof populateCustomerInfo === 'function') {
+            const customerName = sessionItem.querySelector('strong')?.textContent || 'Anonymous';
+            const basicSessionData = {
+                customer_name: customerName,
+                chat_topic: 'Unable to load',
+                customer_email: '-',
+                created_at: new Date().toISOString(),
+                status: 'active',
+                agent_name: currentUsername || 'Agent'
+            };
+            populateCustomerInfo(basicSessionData);
         }
     }
 }

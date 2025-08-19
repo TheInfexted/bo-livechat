@@ -16,9 +16,10 @@ class ChatModel extends Model
                          ->orderBy('chat_sessions.created_at', 'DESC')
                          ->findAll();
         
-        // Process customer names in PHP for better control
+        // Process customer names and last messages
         foreach ($sessions as &$session) {
             $session['customer_name'] = $this->getCustomerDisplayName($session);
+            $session['last_message_info'] = $this->getLastMessageInfo($session['id']);
         }
         
         return $sessions;
@@ -73,5 +74,48 @@ class ChatModel extends Model
         }
         
         return 'Anonymous';
+    }
+    
+    private function getLastMessageInfo($chatSessionId)
+    {
+        $db = \Config\Database::connect();
+        
+        // Get the last message for this chat session
+        $query = $db->query("
+            SELECT m.message, m.sender_type, m.created_at, u.username as sender_name
+            FROM messages m
+            LEFT JOIN users u ON u.id = m.sender_id
+            WHERE m.session_id = ?
+            ORDER BY m.created_at DESC
+            LIMIT 1
+        ", [$chatSessionId]);
+        
+        $lastMessage = $query->getRow();
+        
+        if (!$lastMessage) {
+            return [
+                'display_text' => 'No messages yet',
+                'is_waiting' => false
+            ];
+        }
+        
+        // Determine what to display based on sender type
+        if ($lastMessage->sender_type === 'customer') {
+            // Show the customer's message (truncated if too long)
+            $message = $lastMessage->message;
+            if (strlen($message) > 50) {
+                $message = substr($message, 0, 47) . '...';
+            }
+            return [
+                'display_text' => $message,
+                'is_waiting' => false
+            ];
+        } else {
+            // Last message was from agent/admin, show "Waiting for reply"
+            return [
+                'display_text' => 'Waiting for reply',
+                'is_waiting' => true
+            ];
+        }
     }
 }

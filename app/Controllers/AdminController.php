@@ -561,7 +561,7 @@ class AdminController extends General
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
 
-        // Use the model methods that already process customer names correctly
+        // Use the model methods that already process customer names and last messages
         $waitingSessions = $this->chatModel->getWaitingSessions();
         $activeSessions = $this->chatModel->getActiveSessions();
 
@@ -573,6 +573,7 @@ class AdminController extends General
         
         foreach ($activeSessions as &$session) {
             $session['customer_name'] = $this->processCustomerName($session);
+            // last_message_info is already included from the model method
         }
 
         return $this->jsonResponse([

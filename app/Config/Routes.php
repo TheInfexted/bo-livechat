@@ -12,6 +12,7 @@ $routes->get('/', 'AdminController::dashboard');
 // API routes for customer chat support (minimal, for data access)
 $routes->post('/api/chat/assign-agent', 'ChatController::assignAgent');
 $routes->get('/api/chat/messages/(:segment)', 'ChatController::getMessages/$1');
+$routes->get('/api/chat/session-details/(:segment)', 'ChatController::getSessionDetails/$1');
 $routes->post('/api/chat/close-session', 'ChatController::closeSession');
 $routes->get('/api/chat/check-session-status/(:segment)', 'ChatController::checkSessionStatus/$1');
 $routes->post('/api/chat/canned-response', 'ChatController::sendCannedResponse');
