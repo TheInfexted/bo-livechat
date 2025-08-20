@@ -17,9 +17,9 @@ if (!function_exists('formatChatDate')) {
         $yesterday = new DateTime('-1 day');
         
         if ($date->format('Y-m-d') === $today->format('Y-m-d')) {
-            return 'Today, ' . $date->format('M j Y');
+            return 'Today, ' . $date->format('d-m-Y');
         } elseif ($date->format('Y-m-d') === $yesterday->format('Y-m-d')) {
-            return 'Yesterday, ' . $date->format('M j Y');
+            return 'Yesterday, ' . $date->format('d-m-Y');
         } else {
             return $date->format('l, M j Y'); // Sunday, Aug 17 2025
         }

@@ -1129,21 +1129,21 @@ function formatChatDate(timestamp) {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     
+    // Helper function to format date as DD-MM-YYYY
+    const formatDDMMYYYY = (d) => {
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
+    
     // Check if it's today
     if (date.toDateString() === today.toDateString()) {
-        return `Today, ${date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-        })}`;
+        return `Today, ${formatDDMMYYYY(date)}`;
     } 
     // Check if it's yesterday
     else if (date.toDateString() === yesterday.toDateString()) {
-        return `Yesterday, ${date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-        })}`;
+        return `Yesterday, ${formatDDMMYYYY(date)}`;
     } 
     // For other dates, show full date with day name
     else {
