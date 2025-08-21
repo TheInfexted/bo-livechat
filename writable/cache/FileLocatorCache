@@ -152,6 +152,16 @@
         ),
       ),
     ),
+    'Language/en/CLI.php' => 
+    array (
+      'php' => 
+      array (
+        0 => 
+        array (
+          0 => '/Applications/MAMP/htdocs/bo-livechat/vendor/codeigniter4/framework/system/Language/en/CLI.php',
+        ),
+      ),
+    ),
   ),
   'findQualifiedNameFromPath' => 
   array (

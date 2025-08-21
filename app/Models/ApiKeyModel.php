@@ -96,4 +96,9 @@ class ApiKeyModel extends Model
     {
         return $this->update($keyId, ['status' => 'active']);
     }
+    
+    public function updateLastUsed($keyId)
+    {
+        return $this->update($keyId, ['last_used_at' => date('Y-m-d H:i:s')]);
+    }
 }

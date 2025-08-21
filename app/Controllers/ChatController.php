@@ -473,6 +473,130 @@ class ChatController extends General
     }
     
     /**
+     * Get chatroom link for frontend integration
+     * This method handles requests from website frontends to get a chatroom link
+     */
+    public function getChatroomLink()
+    {
+        // Get request data (support both POST and GET)
+        $userId = $this->sanitizeInput($this->request->getPost('user_id')) ?: 
+                 $this->sanitizeInput($this->request->getGet('user_id'));
+        
+        $sessionInfo = $this->sanitizeInput($this->request->getPost('session_info')) ?: 
+                      $this->sanitizeInput($this->request->getGet('session_info'));
+        
+        $apiKey = $this->sanitizeInput($this->request->getPost('api_key')) ?: 
+                 $this->sanitizeInput($this->request->getGet('api_key'));
+        
+        // Get domain for API key validation
+        $domain = $this->request->getServer('HTTP_ORIGIN') ?: $this->request->getServer('HTTP_REFERER');
+        if ($domain) {
+            $parsedUrl = parse_url($domain);
+            $domain = $parsedUrl['host'] ?? $domain;
+        }
+        
+        // Validate API key if provided
+        if ($apiKey) {
+            $apiKeyModel = new \App\Models\ApiKeyModel();
+            $validation = $apiKeyModel->validateApiKey($apiKey, $domain);
+            
+            if (!$validation['valid']) {
+                return $this->jsonResponse([
+                    'error' => 'Invalid API key',
+                    'details' => $validation['error']
+                ], 403);
+            }
+        }
+        
+        // Prepare data for LiveChat API request
+        $requestData = [
+            'user_id' => $userId ?: 'anonymous_' . uniqid(),
+            'session_info' => $sessionInfo ?: '',
+            'timestamp' => time(),
+            'source' => 'website_frontend'
+        ];
+        
+        // Make POST request to LiveChat system
+        $liveChatUrl = 'https://livechat.kopisugar.cc/api/getChatroomLink';
+        
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $liveChatUrl,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($requestData),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'User-Agent: BO-LiveChat-Backend/1.0'
+            ],
+            CURLOPT_SSL_VERIFYPEER => false // Only for development
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+        
+        // Handle curl errors
+        if ($curlError) {
+            return $this->jsonResponse([
+                'error' => 'Failed to connect to LiveChat system',
+                'details' => 'Connection error occurred'
+            ], 500);
+        }
+        
+        // Handle HTTP errors
+        if ($httpCode !== 200) {
+            return $this->jsonResponse([
+                'error' => 'LiveChat system returned error',
+                'http_code' => $httpCode,
+                'response' => $response
+            ], 502);
+        }
+        
+        // Parse response
+        $responseData = json_decode($response, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return $this->jsonResponse([
+                'error' => 'Invalid response from LiveChat system',
+                'details' => 'Failed to parse JSON response'
+            ], 502);
+        }
+        
+        // Check if LiveChat system returned an error
+        if (isset($responseData['error'])) {
+            return $this->jsonResponse([
+                'error' => 'LiveChat system error',
+                'details' => $responseData['error']
+            ], 400);
+        }
+        
+        // Extract chatroom link
+        $chatroomLink = $responseData['chatroom_link'] ?? null;
+        
+        if (!$chatroomLink) {
+            return $this->jsonResponse([
+                'error' => 'No chatroom link received from LiveChat system'
+            ], 502);
+        }
+        
+        // Update API key usage if provided
+        if ($apiKey && isset($apiKeyModel)) {
+            $apiKeyModel->updateLastUsed($validation['key_data']['id']);
+        }
+        
+        // Return successful response
+        return $this->jsonResponse([
+            'success' => true,
+            'chatroom_link' => $chatroomLink,
+            'user_id' => $requestData['user_id'],
+            'timestamp' => $requestData['timestamp']
+        ]);
+    }
+    
+    /**
      * Get detailed session information for customer info panel
      */
     public function getSessionDetails($sessionId)

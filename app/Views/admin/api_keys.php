@@ -174,6 +174,10 @@
                     <h5>🛍️ E-commerce Optimized</h5>
                     <p>Perfect for online stores with shopping context</p>
                 </div>
+                <div class="option-card" onclick="changeIntegration('helper')" data-type="helper">
+                    <h5>🔗 API Helper Method</h5>
+                    <p>No widget button - use your own buttons with API calls</p>
+                </div>
             </div>
 
             <!-- Script Section -->
@@ -336,6 +340,44 @@ var ecommerceTemplate = [
     '<\/script>'
 ];
 
+var helperTemplate = [
+    '<!-- LiveChat Helper - API Integration -->',
+    '<script src="https://livechat.kopisugar.cc/assets/js/livechat-helper.js"><\/script>',
+    '<script>',
+    '// Initialize the LiveChat Helper',
+    'LiveChatHelper.init({',
+    '    apiKey: \'API_KEY_PLACEHOLDER\'',
+    '});',
+    '',
+    '// Example usage - call from your own buttons:',
+    '// For logged-in users:',
+    '// LiveChatHelper.openChat({',
+    '//     userId: currentUser.id,',
+    '//     name: currentUser.name,',
+    '//     email: currentUser.email',
+    '// });',
+    '',
+    '// For anonymous visitors:',
+    '// LiveChatHelper.openAnonymousChat();',
+    '',
+    '// Attach to your custom buttons:',
+    'document.addEventListener(\'DOMContentLoaded\', function() {',
+    '    // Example: Attach to a button with class "chat-support"',
+    '    var chatButtons = document.querySelectorAll(\'.chat-support\');',
+    '    for (var i = 0; i < chatButtons.length; i++) {',
+    '        chatButtons[i].addEventListener(\'click\', function() {',
+    '            // Replace with your user data logic',
+    '            LiveChatHelper.openChat({',
+    '                userId: \'user_\' + Date.now(),',
+    '                name: \'Website User\',',
+    '                email: \'user@example.com\'',
+    '            });',
+    '        });',
+    '    }',
+    '});',
+    '<\/script>'
+];
+
 function openViewModal(apiKey, clientName, clientEmail, status, domain, createdAt) {
     globalApiKey = apiKey;
     
@@ -376,6 +418,8 @@ function updateScript() {
         template = welcomeTemplate;
     } else if (selectedType === 'ecommerce') {
         template = ecommerceTemplate;
+    } else if (selectedType === 'helper') {
+        template = helperTemplate;
     }
     
     var script = template.join('\n').replace('API_KEY_PLACEHOLDER', globalApiKey);

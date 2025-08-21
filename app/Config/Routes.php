@@ -19,6 +19,9 @@ $routes->post('/api/chat/canned-response', 'ChatController::sendCannedResponse')
 $routes->get('/api/agent/workload', 'ChatController::getAgentWorkload');
 $routes->post('/api/admin/close-inactive', 'ChatController::closeInactiveSessions');
 
+// Frontend integration route for getting chatroom links
+$routes->match(['get', 'post'], '/api/getChatroomLink', 'ChatController::getChatroomLink');
+
 // Chat History routes (accessible to authenticated users)
 $routes->group('chat-history', ['filter' => 'authfilter'], function($routes) {
     $routes->get('/', 'ChatHistoryController::index');
