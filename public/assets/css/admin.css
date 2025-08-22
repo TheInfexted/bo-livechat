@@ -221,19 +221,6 @@ textarea#content {
     padding: 0.25rem 0.5rem;
 }
 
-/* Special styling for delete buttons with trash icon */
-.btn-sm.btn-danger:has(.bi-trash) {
-    background-color: #dc3545;
-    border-color: #dc3545;
-}
-
-.btn-sm.btn-danger:has(.bi-trash):hover {
-    background-color: #c82333;
-    border-color: #bd2130;
-    transform: scale(1.05);
-    transition: all 0.2s ease;
-}
-
 /* Badge Styles */
 .badge {
     display: inline-block;
@@ -679,6 +666,4 @@ textarea#content {
         flex-direction: column;
         align-items: stretch;
     }
-} 
-
- 
+}

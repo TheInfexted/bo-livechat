@@ -6,6 +6,19 @@
     gap: 5px;
 }
 
+/* Special styling for delete buttons with trash icon */
+.btn-sm.btn-danger:has(.bi-trash) {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-sm.btn-danger:has(.bi-trash):hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+
 .api-key-text {
     background: #f8f9fa;
     padding: 8px 12px;

@@ -91,6 +91,10 @@
                                 <button class="btn btn-sm btn-primary" onclick="editApiKey(<?= $key['id'] ?>)" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
+                                <button class="btn btn-sm btn-danger" 
+                                        onclick="deleteApiKey(<?= $key['id'] ?>)" title="Delete Permanently">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                                 <?php if ($key['status'] === 'active'): ?>
                                     <button class="btn btn-sm btn-warning" 
                                             onclick="suspendApiKey(<?= $key['id'] ?>)" title="Suspend">
@@ -101,10 +105,6 @@
                                         <i class="bi bi-check-circle"></i>
                                     </button>
                                 <?php endif; ?>
-                                <button class="btn btn-sm btn-danger" 
-                                        onclick="deleteApiKey(<?= $key['id'] ?>)" title="Delete Permanently">
-                                    <i class="bi bi-trash"></i>
-                                </button>
                             </td>
                         </tr>
                     <?php endforeach; ?>

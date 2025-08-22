@@ -35,7 +35,7 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'Access denied');
         }
         
-        // Verify password (assuming passwords are hashed)
+        // Verify password
         if (password_verify($password, $user['password'])) {
             // Set session
             $this->session->set([

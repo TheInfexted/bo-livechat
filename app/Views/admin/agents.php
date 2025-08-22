@@ -3,14 +3,15 @@
 <?= $this->section('content') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/admin.css?v=' . time()) ?>">
 <link rel="stylesheet" href="<?= base_url('assets/css/agents.css?v=' . time()) ?>">
+<link rel="stylesheet" href="<?= base_url('assets/css/responsive.css?v=' . time()) ?>">
 <div class="admin-agents">
     <div class="dashboard-header">
         <h2>Manage Agents</h2>
         <div class="header-actions">
+            <a href="<?= base_url('admin') ?>" class="btn btn-secondary">← Back to Dashboard</a>
             <?php if ($user['role'] === 'admin'): ?>
-                <button class="btn btn-primary" onclick="openAddModal()">Add New Agent</button>
+                <button class="btn btn-primary" onclick="openAddModal()">+ Add New Agent</button>
             <?php endif; ?>
-            <a href="<?= base_url('admin') ?>" class="btn btn-secondary">Back to Dashboard</a>
         </div>
     </div>
     

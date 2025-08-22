@@ -16,7 +16,7 @@ class WidgetAuthController extends BaseController
     public function validateWidget()
     {
         // Handle JSON request body
-        $input = $this->request->getJSON(true); // Get as associative array
+        $input = $this->request->getJSON(true);
         
         // Handle both POST and GET requests for flexibility
         $apiKey = $input['api_key'] ?? $this->request->getPost('api_key') ?? $this->request->getGet('api_key');

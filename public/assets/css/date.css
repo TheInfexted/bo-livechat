@@ -47,7 +47,7 @@
 }
 
 .admin-chat .date-separator .date-badge {
-    background: #667eea;
+    background: #797979;
     color: white;
     font-size: 11px;
     padding: 5px 10px;
@@ -63,13 +63,13 @@
 
 /* Today indicator special styling */
 .date-separator.today .date-badge {
-    background: #797979;
+    background: #667eea;
     color: white;
 }
 
 /* Yesterday indicator */
 .date-separator.yesterday .date-badge {
-    background: #ff9800;
+    background: #797979;
     color: white;
 }
 

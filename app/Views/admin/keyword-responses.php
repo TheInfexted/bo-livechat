@@ -19,8 +19,8 @@
     <div class="dashboard-header">
         <h2><?= esc($title) ?></h2>
         <div class="header-actions">
-            <button class="btn btn-primary" onclick="showAddModal()">Add New Response</button>
-            <a href="<?= base_url('admin') ?>" class="btn btn-secondary">Back to Dashboard</a>
+            <a href="<?= base_url('admin') ?>" class="btn btn-secondary">← Back to Dashboard</a>
+            <button class="btn btn-primary" onclick="showAddModal()">+ New Response</button>
         </div>
     </div>
     

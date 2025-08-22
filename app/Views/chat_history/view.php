@@ -1,8 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('content') ?>
-<link rel="stylesheet" href="<?= base_url('assets/css/admin.css') ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/chat-history.css') ?>">
+<link rel="stylesheet" href="<?= base_url('assets/css/admin.css?v=' . time()) ?>">
+<link rel="stylesheet" href="<?= base_url('assets/css/chat-history.css?v=' . time()) ?>">
+<link rel="stylesheet" href="<?= base_url('assets/css/responsive.css?v=' . time()) ?>">
 
 <div class="chat-view-container">
     <?php if (session()->getFlashdata('error')): ?>
@@ -22,12 +23,8 @@
         <div class="header-content">
             <h2><?= esc($title) ?></h2>
             <div class="header-actions">
-                <a href="<?= base_url('chat-history') ?>" class="btn btn-secondary">Back to History</a>
+                <a href="<?= base_url('chat-history') ?>" class="btn btn-secondary">← Back to History</a>
             </div>
-        </div>
-        <div class="user-info">
-            <span>Welcome, <?= esc($user['username']) ?> (<?= ucfirst($user['role']) ?>)</span>
-            <a href="<?= base_url('logout') ?>" class="btn btn-logout">Logout</a>
         </div>
     </div>
 

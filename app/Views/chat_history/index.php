@@ -3,6 +3,7 @@
 <?= $this->section('content') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/admin.css') ?>">
 <link rel="stylesheet" href="<?= base_url('assets/css/chat-history.css') ?>?v=<?= time() ?>">
+<link rel="stylesheet" href="<?= base_url('assets/css/responsive.css?v=' . time()) ?>">
 
 <div class="chat-history-container">
     <?php if (session()->getFlashdata('error')): ?>
@@ -22,7 +23,7 @@
         <div class="header-content">
             <h2><?= esc($title) ?></h2>
             <div class="header-actions">
-                <a href="<?= base_url('admin/dashboard') ?>" class="btn btn-secondary">Back to Dashboard</a>
+                <a href="<?= base_url('admin/dashboard') ?>" class="btn btn-secondary">← Back to Dashboard</a>
                 <button type="button" id="exportBtn" class="btn btn-success">Export CSV</button>
             </div>
         </div>

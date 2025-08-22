@@ -91,13 +91,13 @@ class AdminController extends General
             return $this->jsonResponse(['error' => 'Invalid role'], 400);
         }
         
-        // Check if username already exists (excluding current user)
+        // Check if username already exists
         $existingUser = $this->userModel->where('username', $username)->where('id !=', $agentId)->first();
         if ($existingUser) {
             return $this->jsonResponse(['error' => 'Username already exists'], 400);
         }
         
-        // Check if email already exists (excluding current user, only if email is provided)
+        // Check if email already exists
         if (!empty($email)) {
             $existingEmail = $this->userModel->where('email', $email)->where('id !=', $agentId)->first();
             if ($existingEmail) {
@@ -593,19 +593,16 @@ class AdminController extends General
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
 
-        // Use the model methods that already process customer names and last messages
         $waitingSessions = $this->chatModel->getWaitingSessions();
         $activeSessions = $this->chatModel->getActiveSessions();
 
         // Double-check that customer names are properly processed
-        // (This should already be done by the model methods, but let's be sure)
         foreach ($waitingSessions as &$session) {
             $session['customer_name'] = $this->processCustomerName($session);
         }
         
         foreach ($activeSessions as &$session) {
             $session['customer_name'] = $this->processCustomerName($session);
-            // last_message_info is already included from the model method
         }
 
         return $this->jsonResponse([
@@ -657,7 +654,6 @@ class AdminController extends General
     
     private function getSystemSettings()
     {
-        // This would typically come from a settings table
         return [
             'max_queue_size' => 50,
             'auto_close_inactive' => 30, // minutes
