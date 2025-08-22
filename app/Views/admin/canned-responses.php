@@ -25,8 +25,8 @@
                 <div class="response-header">
                     <h3><?= esc($response['title']) ?></h3>
                     <div class="response-actions">
-                        <button class="btn btn-sm btn-primary" onclick="editResponse(<?= $response['id'] ?>)">Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteResponse(<?= $response['id'] ?>)">Delete</button>
+                        <button class="btn btn-sm btn-primary" onclick="editResponse(<?= $response['id'] ?>)" title="Edit Response"><i class="bi bi-pencil-square"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteResponse(<?= $response['id'] ?>)" title="Delete Response"><i class="bi bi-trash"></i></button>
                     </div>
                 </div>
                 <div class="response-content">

@@ -5,7 +5,6 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/chat-history.css?v=' . time()) ?>">
 <link rel="stylesheet" href="<?= base_url('assets/css/api-keys.css?v=' . time()) ?>">
 <link rel="stylesheet" href="<?= base_url('assets/css/responsive.css?v=' . time()) ?>">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
 <div class="chat-history-container">
     <?php if (session()->getFlashdata('error')): ?>
@@ -89,8 +88,8 @@
                                         title="View & Get Integration Code">
                                     <i class="bi bi-eye"></i>
                                 </button>
-                                <button class="btn btn-sm btn-secondary" onclick="editApiKey(<?= $key['id'] ?>)" title="Edit">
-                                    <i class="bi bi-pencil"></i>
+                                <button class="btn btn-sm btn-primary" onclick="editApiKey(<?= $key['id'] ?>)" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
                                 </button>
                                 <?php if ($key['status'] === 'active'): ?>
                                     <button class="btn btn-sm btn-suspend" 

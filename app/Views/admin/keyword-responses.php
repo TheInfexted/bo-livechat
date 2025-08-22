@@ -54,8 +54,8 @@
                                 </td>
                                 <td><?= date('M d, Y', strtotime($response['created_at'])) ?></td>
                                 <td>
-                                    <button class="btn btn-sm btn-info" onclick="editResponse(<?= $response['id'] ?>)">Edit</button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteResponse(<?= $response['id'] ?>)">Delete</button>
+                                    <button class="btn btn-sm btn-info" onclick="editResponse(<?= $response['id'] ?>)" title="Edit Response"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteResponse(<?= $response['id'] ?>)" title="Delete Response"><i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

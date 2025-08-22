@@ -118,8 +118,8 @@
                                 <?= $chat['agent_last_reply'] ? date('M d, Y H:i', strtotime($chat['agent_last_reply'])) : '<span class="no-reply">-</span>' ?>
                             </td>
                             <td class="actions">
-                                <a href="<?= base_url('chat-history/view/' . $chat['id']) ?>" class="btn btn-sm btn-primary" title="View Chat">
-                                    <i class="icon-eye"></i> View
+                                <a href="<?= base_url('chat-history/view/' . $chat['id']) ?>" class="btn btn-sm btn-info" title="View Chat">
+                                    <i class="bi bi-eye"></i>
                                 </a>
                             </td>
                         </tr>

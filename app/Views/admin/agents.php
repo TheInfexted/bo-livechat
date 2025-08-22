@@ -42,8 +42,8 @@
                     </td>
                     <td>
                         <?php if ($user['role'] === 'admin'): ?>
-                            <button class="btn btn-sm btn-primary" onclick="openEditModal(<?= $agent['id'] ?>, '<?= esc($agent['username']) ?>', '<?= esc($agent['email']) ?>', '<?= esc($agent['role']) ?>')">Edit</button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteAgent(<?= $agent['id'] ?>, '<?= esc($agent['username']) ?>')">Delete</button>
+                            <button class="btn btn-sm btn-primary" onclick="openEditModal(<?= $agent['id'] ?>, '<?= esc($agent['username']) ?>', '<?= esc($agent['email']) ?>', '<?= esc($agent['role']) ?>')" title="Edit Agent"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteAgent(<?= $agent['id'] ?>, '<?= esc($agent['username']) ?>')" title="Delete Agent"><i class="bi bi-trash"></i></button>
                         <?php else: ?>
                             <span class="text-muted">View Only</span>
                         <?php endif; ?>
