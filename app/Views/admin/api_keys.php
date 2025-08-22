@@ -92,25 +92,19 @@
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
                                 <?php if ($key['status'] === 'active'): ?>
-                                    <button class="btn btn-sm btn-suspend" 
+                                    <button class="btn btn-sm btn-warning" 
                                             onclick="suspendApiKey(<?= $key['id'] ?>)" title="Suspend">
                                         <i class="bi bi-pause-circle"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" 
-                                            onclick="revokeApiKey(<?= $key['id'] ?>)" title="Revoke">
-                                        <i class="bi bi-x-circle"></i>
                                     </button>
                                 <?php elseif ($key['status'] === 'suspended'): ?>
                                     <button class="btn btn-sm btn-success" onclick="activateApiKey(<?= $key['id'] ?>)" title="Activate">
                                         <i class="bi bi-check-circle"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-danger" 
-                                            onclick="revokeApiKey(<?= $key['id'] ?>)" title="Revoke">
-                                        <i class="bi bi-x-circle"></i>
-                                    </button>
-                                <?php else: ?>
-                                    <span class="no-data">Revoked</span>
                                 <?php endif; ?>
+                                <button class="btn btn-sm btn-danger" 
+                                        onclick="deleteApiKey(<?= $key['id'] ?>)" title="Delete Permanently">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -204,19 +198,19 @@
             <button class="close-modal" onclick="hideCreateApiKeyModal()">×</button>
         </div>
         <form id="createApiKeyForm">
-            <div class="form-group">
-                <label for="client_name">Client Name *</label>
-                <input type="text" id="client_name" name="client_name" required>
+            <div class="mb-3">
+                <label for="client_name" class="form-label">Client Name *</label>
+                <input type="text" id="client_name" name="client_name" class="form-control" required>
             </div>
-            <div class="form-group">
-                <label for="client_email">Client Email *</label>
-                <input type="email" id="client_email" name="client_email" required>
+            <div class="mb-3">
+                <label for="client_email" class="form-label">Client Email *</label>
+                <input type="email" id="client_email" name="client_email" class="form-control" required>
             </div>
-            <div class="form-group">
-                <label for="client_domain">Allowed Domains (Optional)</label>
-                <input type="text" id="client_domain" name="client_domain" 
+            <div class="mb-3">
+                <label for="client_domain" class="form-label">Allowed Domains (Optional)</label>
+                <input type="text" id="client_domain" name="client_domain" class="form-control"
                        placeholder="example.com, *.example.com, localhost">
-                <small>Leave blank to allow all domains. Use comma to separate multiple domains.</small>
+                <div class="form-text">Leave blank to allow all domains. Use comma to separate multiple domains.</div>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="hideCreateApiKeyModal()">Cancel</button>
@@ -235,26 +229,25 @@
         </div>
         <form id="editApiKeyForm">
             <input type="hidden" id="edit_key_id" name="key_id">
-            <div class="form-group">
-                <label for="edit_client_name">Client Name *</label>
-                <input type="text" id="edit_client_name" name="client_name" required>
+            <div class="mb-3">
+                <label for="edit_client_name" class="form-label">Client Name *</label>
+                <input type="text" id="edit_client_name" name="client_name" class="form-control" required>
             </div>
-            <div class="form-group">
-                <label for="edit_client_email">Client Email *</label>
-                <input type="email" id="edit_client_email" name="client_email" required>
+            <div class="mb-3">
+                <label for="edit_client_email" class="form-label">Client Email *</label>
+                <input type="email" id="edit_client_email" name="client_email" class="form-control" required>
             </div>
-            <div class="form-group">
-                <label for="edit_client_domain">Allowed Domains (Optional)</label>
-                <input type="text" id="edit_client_domain" name="client_domain" 
+            <div class="mb-3">
+                <label for="edit_client_domain" class="form-label">Allowed Domains (Optional)</label>
+                <input type="text" id="edit_client_domain" name="client_domain" class="form-control"
                        placeholder="example.com, *.example.com, localhost">
-                <small>Leave blank to allow all domains. Use comma to separate multiple domains.</small>
+                <div class="form-text">Leave blank to allow all domains. Use comma to separate multiple domains.</div>
             </div>
-            <div class="form-group">
-                <label for="edit_status">Status</label>
-                <select id="edit_status" name="status">
+            <div class="mb-3">
+                <label for="edit_status" class="form-label">Status</label>
+                <select id="edit_status" name="status" class="form-select">
                     <option value="active">Active</option>
                     <option value="suspended">Suspended</option>
-                    <option value="revoked">Revoked</option>
                 </select>
             </div>
             <div class="modal-actions">
@@ -524,20 +517,24 @@ function activateApiKey(keyId) {
     }
 }
 
-function revokeApiKey(keyId) {
-    if (confirm('Are you sure you want to revoke this API key? This action cannot be undone!')) {
-        fetch('<?= base_url('admin/api-keys/revoke') ?>/' + keyId, {
+function deleteApiKey(keyId) {
+    if (confirm('⚠️ WARNING: This will permanently DELETE the API key from the database!\n\nThis action cannot be undone and is different from revoking.\n\nAre you absolutely sure you want to delete this API key?')) {
+        fetch('<?= base_url('admin/api-keys/delete') ?>/' + keyId, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         })
         .then(function(response) { return response.json(); })
         .then(function(data) {
             if (data.success) {
-                alert('API key revoked successfully!');
+                alert('API key deleted permanently!');
                 location.reload();
             } else {
                 alert('Error: ' + data.error);
             }
+        })
+        .catch(function(error) {
+            alert('Error deleting API key');
+            console.error('Error:', error);
         });
     }
 }

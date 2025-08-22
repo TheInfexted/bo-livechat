@@ -398,6 +398,34 @@ class AdminController extends General
         return $this->jsonResponse(['error' => 'Failed to activate API key'], 500);
     }
     
+    public function deleteApiKey($keyId)
+    {
+        if (!$this->isAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        if (!$this->isAdmin()) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        $apiKeyModel = new \App\Models\ApiKeyModel();
+        
+        // Check if the API key exists before attempting to delete
+        $apiKey = $apiKeyModel->find($keyId);
+        if (!$apiKey) {
+            return $this->jsonResponse(['error' => 'API key not found'], 404);
+        }
+        
+        // Permanently delete the API key from the database
+        $deleted = $apiKeyModel->delete($keyId);
+        
+        if ($deleted) {
+            return $this->jsonResponse(['success' => true, 'message' => 'API key deleted permanently']);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to delete API key'], 500);
+    }
+    
     // Manage automated keyword responses
     public function keywordResponses()
     {

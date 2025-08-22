@@ -66,6 +66,7 @@ $routes->group('admin', ['filter' => 'authfilter'], function($routes) {
     $routes->post('api-keys/suspend/(:num)', 'AdminController::suspendApiKey/$1');
     $routes->post('api-keys/activate/(:num)', 'AdminController::activateApiKey/$1');
     $routes->post('api-keys/revoke/(:num)', 'AdminController::revokeApiKey/$1');
+    $routes->post('api-keys/delete/(:num)', 'AdminController::deleteApiKey/$1');
 
 });
 
