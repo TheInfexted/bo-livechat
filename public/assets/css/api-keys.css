@@ -80,7 +80,9 @@
     max-width: 800px;
     width: 90vw;
     max-height: 90vh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .modal-header {
@@ -91,6 +93,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+/* Modal body should be scrollable */
+.view-modal .modal-content > div:not(.modal-header) {
+    flex: 1;
+    overflow-y: auto;
 }
 
 .modal-header h3 {
