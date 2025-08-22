@@ -111,6 +111,9 @@ class ChatHistoryController extends General
             return redirect()->to('/login');
         }
         
+        // Load chat helper for makeLinksClickable function
+        helper('chat');
+        
         if (!$sessionId) {
             return redirect()->to('/chat-history')->with('error', 'Session ID is required');
         }

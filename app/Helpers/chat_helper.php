@@ -109,3 +109,31 @@ if (!function_exists('addDateSeparatorsToMessages')) {
         return $result;
     }
 }
+
+if (!function_exists('makeLinksClickable')) {
+    /**
+     * Convert URLs in text to clickable links
+     * 
+     * @param string $text
+     * @return string
+     */
+    function makeLinksClickable($text) {
+        if (!$text) return $text;
+        
+        // Enhanced URL regex pattern to catch various URL formats
+        $pattern = '/(https?:\/\/(?:[-\w.])+(?:\.[a-zA-Z]{2,})+(?:[\/#?][-\w._~:\/#\[\]@!$&\'()*+,;=?%]*)?|www\.(?:[-\w.])+(?:\.[a-zA-Z]{2,})+(?:[\/#?][-\w._~:\/#\[\]@!$&\'()*+,;=?%]*)?|(?:(?:[a-zA-Z0-9][-\w]*[a-zA-Z0-9]*\.)+[a-zA-Z]{2,})(?:[\/#?][-\w._~:\/#\[\]@!$&\'()*+,;=?%]*)?)/i';
+        
+        return preg_replace_callback($pattern, function($matches) {
+            $url = $matches[0];
+            
+            // Add protocol if missing
+            $href = $url;
+            if (!preg_match('/^https?:\/\//i', $url)) {
+                $href = 'https://' . $url;
+            }
+            
+            // Create clickable link with security attributes
+            return '<a href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer">' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '</a>';
+        }, $text);
+    }
+}

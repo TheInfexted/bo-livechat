@@ -1068,7 +1068,7 @@ function displayMessage(data) {
         const messageContentDiv = document.createElement('div');
         messageContentDiv.className = 'message-content';
         messageContentDiv.innerHTML = `
-            <div class="message-text">${escapeHtml(data.message)}</div>
+            <div class="message-text">${makeLinksClickable(data.message)}</div>
             <div class="message-time">${formatTime(data.timestamp || data.created_at)}</div>
         `;
         
@@ -1348,6 +1348,30 @@ function updateWaitingSessions(sessions) {
             container.appendChild(item);
         });
     }
+}
+
+// URL detection utility function
+function makeLinksClickable(text) {
+    if (!text) return text;
+    
+    // First escape HTML to prevent XSS attacks
+    const div = document.createElement('div');
+    div.textContent = text;
+    const escapedText = div.innerHTML;
+    
+    // Enhanced URL regex pattern to catch various URL formats
+    const urlPattern = /(https?:\/\/(?:[-\w.])+(?:\.[a-zA-Z]{2,})+(?:[\/#?][-\w._~:/#[\]@!$&'()*+,;=?%]*)?|www\.(?:[-\w.])+(?:\.[a-zA-Z]{2,})+(?:[\/#?][-\w._~:/#[\]@!$&'()*+,;=?%]*)?|(?:(?:[a-zA-Z0-9][-\w]*[a-zA-Z0-9]*\.)+[a-zA-Z]{2,})(?:[\/#?][-\w._~:/#[\]@!$&'()*+,;=?%]*)?)/gi;
+    
+    return escapedText.replace(urlPattern, function(url) {
+        // Add protocol if missing
+        let href = url;
+        if (!url.match(/^https?:\/\//)) {
+            href = 'https://' + url;
+        }
+        
+        // Create clickable link with security attributes
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
 }
 
 // Utility functions

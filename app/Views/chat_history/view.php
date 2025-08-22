@@ -176,7 +176,7 @@
                         </div>
                         <div class="message-content">
                             <?php if ($message['message_type'] === 'text'): ?>
-                                <p><?= nl2br(esc($message['message'])) ?></p>
+                                <p><?= nl2br(makeLinksClickable(esc($message['message']))) ?></p>
                             <?php elseif ($message['message_type'] === 'file'): ?>
                                 <div class="file-message">
                                     <i class="icon-file"></i>
