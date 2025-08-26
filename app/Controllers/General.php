@@ -65,4 +65,22 @@ class General extends BaseController
         $user = $this->getCurrentUser();
         return $user && $user['role'] === 'admin';
     }
+    
+    /**
+     * Check if current user is client
+     */
+    public function isClient()
+    {
+        $user = $this->getCurrentUser();
+        return $user && $user['role'] === 'client';
+    }
+    
+    /**
+     * Check if current user is admin or support
+     */
+    public function isAdminOrSupport()
+    {
+        $user = $this->getCurrentUser();
+        return $user && in_array($user['role'], ['admin', 'support']);
+    }
 }

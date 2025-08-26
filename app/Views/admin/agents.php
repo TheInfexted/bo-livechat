@@ -6,11 +6,11 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/responsive.css?v=' . time()) ?>">
 <div class="admin-agents">
     <div class="dashboard-header">
-        <h2>Manage Agents</h2>
+        <h2>Manage Users</h2>
         <div class="header-actions">
             <a href="<?= base_url('admin') ?>" class="btn btn-secondary">← Back to Dashboard</a>
             <?php if ($user['role'] === 'admin'): ?>
-                <button class="btn btn-primary" onclick="openAddModal()">+ Add New Agent</button>
+                <button class="btn btn-primary" onclick="openAddModal()">+ Add New User</button>
             <?php endif; ?>
         </div>
     </div>
@@ -60,7 +60,7 @@
 <div id="editAgentModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Edit Agent</h3>
+            <h3>Edit User</h3>
             <span class="close-modal" onclick="closeEditModal()">&times;</span>
         </div>
         <div class="modal-body">
@@ -79,6 +79,7 @@
                     <select id="editRole" name="role" required>
                         <option value="admin">Admin</option>
                         <option value="support">Support</option>
+                        <option value="client">Client</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -98,7 +99,7 @@
 <div id="addAgentModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Add New Agent</h3>
+            <h3>Add New User</h3>
             <span class="close-modal" onclick="closeAddModal()">&times;</span>
         </div>
         <div class="modal-body">
@@ -116,6 +117,7 @@
                     <select id="addRole" name="role" required>
                         <option value="admin">Admin</option>
                         <option value="support">Support</option>
+                        <option value="client">Client</option>
                     </select>
                 </div>
                 <div class="form-group">

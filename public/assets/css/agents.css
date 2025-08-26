@@ -54,6 +54,10 @@
     background-color: #17a2b8;
 }
 
+.role-badge.role-client {
+    background-color: #28a745;
+}
+
 /* Status badges */
 .status-badge {
     display: inline-block;

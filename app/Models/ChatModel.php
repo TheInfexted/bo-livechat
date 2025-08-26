@@ -6,7 +6,11 @@ class ChatModel extends Model
 {
     protected $table = 'chat_sessions';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['session_id', 'customer_name', 'customer_fullname', 'chat_topic', 'customer_email', 'user_role', 'external_username', 'external_fullname', 'external_system_id', 'agent_id', 'status', 'closed_at'];
+    protected $allowedFields = [
+        'session_id', 'customer_name', 'customer_fullname', 'chat_topic', 'customer_email', 
+        'user_role', 'external_username', 'external_fullname', 'external_system_id', 
+        'agent_id', 'status', 'closed_at', 'api_key'
+    ];
     
     public function getActiveSessions()
     {
@@ -118,4 +122,84 @@ class ChatModel extends Model
             ];
         }
     }
+    
+    /**
+     * Get chat sessions for specific API keys (for client filtering)
+     */
+    public function getSessionsByApiKeys($apiKeys)
+    {
+        if (empty($apiKeys)) {
+            return [];
+        }
+        
+        $apiKeysList = is_array($apiKeys) ? $apiKeys : [$apiKeys];
+        
+        return $this->select('chat_sessions.*, users.username as agent_name')
+                    ->join('users', 'users.id = chat_sessions.agent_id', 'left')
+                    ->whereIn('chat_sessions.api_key', $apiKeysList)
+                    ->orderBy('chat_sessions.created_at', 'DESC')
+                    ->findAll();
+    }
+    
+    /**
+     * Get active sessions for specific API keys
+     */
+    public function getActiveSessionsByApiKeys($apiKeys)
+    {
+        if (empty($apiKeys)) {
+            return [];
+        }
+        
+        $apiKeysList = is_array($apiKeys) ? $apiKeys : [$apiKeys];
+        
+        $sessions = $this->select('chat_sessions.*, users.username as agent_name')
+                         ->join('users', 'users.id = chat_sessions.agent_id', 'left')
+                         ->where('chat_sessions.status', 'active')
+                         ->whereIn('chat_sessions.api_key', $apiKeysList)
+                         ->orderBy('chat_sessions.created_at', 'DESC')
+                         ->findAll();
+        
+        // Process customer names and last messages
+        foreach ($sessions as &$session) {
+            $session['customer_name'] = $this->getCustomerDisplayName($session);
+            $session['last_message_info'] = $this->getLastMessageInfo($session['id']);
+        }
+        
+        return $sessions;
+    }
+    
+    /**
+     * Get session statistics for specific API keys
+     */
+    public function getSessionStatsByApiKeys($apiKeys)
+    {
+        if (empty($apiKeys)) {
+            return [
+                'total' => 0,
+                'active' => 0,
+                'waiting' => 0,
+                'closed' => 0
+            ];
+        }
+        
+        $apiKeysList = is_array($apiKeys) ? $apiKeys : [$apiKeys];
+        
+        $sessions = $this->whereIn('api_key', $apiKeysList)->findAll();
+        
+        $stats = [
+            'total' => count($sessions),
+            'active' => 0,
+            'waiting' => 0,
+            'closed' => 0
+        ];
+        
+        foreach ($sessions as $session) {
+            if (isset($stats[$session['status']])) {
+                $stats[$session['status']]++;
+            }
+        }
+        
+        return $stats;
+    }
+    
 }

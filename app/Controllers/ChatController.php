@@ -69,6 +69,25 @@ class ChatController extends General
         $externalFullname = $this->sanitizeInput($this->request->getPost('external_fullname'));
         $externalSystemId = $this->sanitizeInput($this->request->getPost('external_system_id'));
         
+        // API Key parameter for tracking session origin
+        $apiKey = $this->sanitizeInput($this->request->getPost('api_key'));
+        
+        // Validate API key if provided
+        if ($apiKey) {
+            $apiKeyModel = new \App\Models\ApiKeyModel();
+            $domain = $this->request->getServer('HTTP_ORIGIN') ?: $this->request->getServer('HTTP_REFERER');
+            if ($domain) {
+                $parsedUrl = parse_url($domain);
+                $domain = $parsedUrl['host'] ?? $domain;
+            }
+            
+            $validation = $apiKeyModel->validateApiKey($apiKey, $domain);
+            
+            if (!$validation['valid']) {
+                return $this->jsonResponse(['error' => 'Invalid API key: ' . $validation['error']], 403);
+            }
+        }
+        
         // Validate role exists
         if (!$this->userRoleModel->getRoleByName($userRole)) {
             return $this->jsonResponse(['error' => 'Invalid user role specified'], 400);
@@ -128,6 +147,7 @@ class ChatController extends General
             'external_username' => $externalUsername,
             'external_fullname' => $externalFullname,
             'external_system_id' => $externalSystemId,
+            'api_key' => $apiKey,
             'status' => 'waiting'
         ];
         

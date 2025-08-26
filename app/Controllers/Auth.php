@@ -6,8 +6,12 @@ class Auth extends BaseController
 {
     public function login()
     {
-        // If already logged in, redirect to admin dashboard
+        // If already logged in, redirect to appropriate dashboard
         if ($this->session->has('user_id')) {
+            $user = $this->userModel->find($this->session->get('user_id'));
+            if ($user && $user['role'] === 'client') {
+                return redirect()->to('/client');
+            }
             return redirect()->to('/admin');
         }
         
@@ -30,8 +34,8 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'Invalid credentials');
         }
         
-        // Check if user is admin or support
-        if (!in_array($user['role'], ['admin', 'support'])) {
+        // Check if user has a valid role
+        if (!in_array($user['role'], ['admin', 'support', 'client'])) {
             return redirect()->back()->with('error', 'Access denied');
         }
         
@@ -44,7 +48,12 @@ class Auth extends BaseController
                 'role' => $user['role']
             ]);
             
-            return redirect()->to('/admin');
+            // Redirect based on user role
+            if ($user['role'] === 'client') {
+                return redirect()->to('/client');
+            } else {
+                return redirect()->to('/admin');
+            }
         } else {
             return redirect()->back()->with('error', 'Invalid credentials');
         }

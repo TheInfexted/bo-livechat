@@ -101,4 +101,54 @@ class ApiKeyModel extends Model
     {
         return $this->update($keyId, ['last_used_at' => date('Y-m-d H:i:s')]);
     }
+    
+    /**
+     * Get API keys for a specific client email
+     */
+    public function getKeysByClientEmail($email)
+    {
+        return $this->where('client_email', $email)
+                   ->orderBy('created_at', 'DESC')
+                   ->findAll();
+    }
+    
+    /**
+     * Get active API keys for a specific client email
+     */
+    public function getActiveKeysByClientEmail($email)
+    {
+        return $this->where('client_email', $email)
+                   ->where('status', 'active')
+                   ->orderBy('created_at', 'DESC')
+                   ->findAll();
+    }
+    
+    /**
+     * Check if an email has any API keys
+     */
+    public function hasApiKeys($email)
+    {
+        return $this->where('client_email', $email)->countAllResults() > 0;
+    }
+    
+    /**
+     * Get API key statistics for a client
+     */
+    public function getClientApiKeyStats($email)
+    {
+        $keys = $this->getKeysByClientEmail($email);
+        
+        $stats = [
+            'total' => count($keys),
+            'active' => 0,
+            'suspended' => 0,
+            'revoked' => 0
+        ];
+        
+        foreach ($keys as $key) {
+            $stats[$key['status']]++;
+        }
+        
+        return $stats;
+    }
 }

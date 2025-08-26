@@ -30,6 +30,17 @@ $routes->group('chat-history', ['filter' => 'authfilter'], function($routes) {
     $routes->get('get-stats', 'ChatHistoryController::getStats');
 });
 
+// Client routes
+$routes->group('client', ['filter' => 'authfilter'], function($routes) {
+    $routes->get('/', 'ClientController::dashboard');
+    $routes->get('dashboard', 'ClientController::dashboard');
+    $routes->get('api-keys', 'ClientController::apiKeys');
+    $routes->get('chat-history', 'ClientController::chatHistory');
+    $routes->get('profile', 'ClientController::profile');
+    $routes->post('profile/update', 'ClientController::updateProfile');
+    $routes->get('realtime-stats', 'ClientController::getRealtimeStats');
+});
+
 // Admin routes
 $routes->group('admin', ['filter' => 'authfilter'], function($routes) {
     $routes->get('/', 'AdminController::dashboard');

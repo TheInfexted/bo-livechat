@@ -32,6 +32,11 @@ class AdminController extends General
         
         $currentUser = $this->getCurrentUser();
         
+        // Redirect clients to client dashboard
+        if ($currentUser['role'] === 'client') {
+            return redirect()->to('/client/dashboard');
+        }
+        
         // Additional admin dashboard functionality can be added here
         $data = [
             'title' => $currentUser['role'] === 'admin' ? 'Admin Dashboard' : 'Support Dashboard',
@@ -57,9 +62,9 @@ class AdminController extends General
         }
         
         $data = [
-            'title' => 'Manage Agents',
+            'title' => 'Manage Users',
             'user' => $this->getCurrentUser(),
-            'agents' => $this->userModel->whereIn('role', ['admin', 'support'])->findAll()
+            'agents' => $this->userModel->whereIn('role', ['admin', 'support', 'client'])->findAll()
         ];
         
         return view('admin/agents', $data);
@@ -87,7 +92,7 @@ class AdminController extends General
         }
         
         // Validate role
-        if (!in_array($role, ['admin', 'support'])) {
+        if (!in_array($role, ['admin', 'support', 'client'])) {
             return $this->jsonResponse(['error' => 'Invalid role'], 400);
         }
         
@@ -146,7 +151,7 @@ class AdminController extends General
         }
         
         // Validate role
-        if (!in_array($role, ['admin', 'support'])) {
+        if (!in_array($role, ['admin', 'support', 'client'])) {
             return $this->jsonResponse(['error' => 'Invalid role'], 400);
         }
         
@@ -219,17 +224,27 @@ class AdminController extends General
             return redirect()->to('/login');
         }
         
-        // Only admins can access API key management
-        if (!$this->isAdmin()) {
-            return redirect()->to('/admin')->with('error', 'Access denied. Only administrators can manage API keys.');
+        $currentUser = $this->getCurrentUser();
+        $apiKeyModel = new \App\Models\ApiKeyModel();
+        
+        if ($this->isClient()) {
+            // Client can only see API keys that match their email
+            $keys = $apiKeyModel->where('client_email', $currentUser['email'])
+                              ->orderBy('created_at', 'DESC')
+                              ->findAll();
+            $title = 'My API Keys';
+        } else if ($this->isAdmin()) {
+            // Admin can see all API keys
+            $keys = $apiKeyModel->orderBy('created_at', 'DESC')->findAll();
+            $title = 'API Key Management';
+        } else {
+            // Support users cannot access API keys
+            return redirect()->to('/admin')->with('error', 'Access denied.');
         }
         
-        $apiKeyModel = new \App\Models\ApiKeyModel();
-        $keys = $apiKeyModel->orderBy('created_at', 'DESC')->findAll();
-        
         $data = [
-            'title' => 'API Key Management',
-            'user' => $this->getCurrentUser(),
+            'title' => $title,
+            'user' => $currentUser,
             'api_keys' => $keys
         ];
         

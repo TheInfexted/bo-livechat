@@ -8,7 +8,10 @@ class UserModel extends Model
 {
     protected $table = 'users';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['username', 'password', 'email', 'role', 'is_online', 'last_seen'];
+    protected $allowedFields = [
+        'username', 'password', 'email', 'role', 'is_online', 'last_seen',
+        'status', 'max_concurrent_chats', 'current_chats'
+    ];
     
     public function updateOnlineStatus($userId, $isOnline)
     {
@@ -25,5 +28,35 @@ class UserModel extends Model
         return $this->where('is_online', 1)
                     ->whereIn('role', ['admin', 'support'])
                     ->findAll();
+    }
+    
+    /**
+     * Get all clients
+     */
+    public function getClients()
+    {
+        return $this->where('role', 'client')
+                    ->orderBy('username', 'ASC')
+                    ->findAll();
+    }
+    
+    /**
+     * Get client by email
+     */
+    public function getClientByEmail($email)
+    {
+        return $this->where('role', 'client')
+                    ->where('email', $email)
+                    ->first();
+    }
+    
+    /**
+     * Check if email belongs to a client
+     */
+    public function isClientEmail($email)
+    {
+        return $this->where('role', 'client')
+                    ->where('email', $email)
+                    ->countAllResults() > 0;
     }
 }
