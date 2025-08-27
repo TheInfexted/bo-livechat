@@ -187,13 +187,39 @@ class ChatController extends General
     
     public function getMessages($sessionId)
     {
-        $messages = $this->messageModel->getSessionMessages($sessionId);
-        return $this->jsonResponse($messages);
+        $forBackend = $this->request->getGet('backend') === '1';
+        
+        if ($forBackend) {
+            // For backend (admin/client interfaces), filter out system messages
+            $messages = $this->messageModel->getSessionMessagesForBackend($sessionId);
+        } else {
+            // For frontend (customer interface), include all messages
+            $messages = $this->messageModel->getSessionMessages($sessionId);
+        }
+        
+        return $this->jsonResponse([
+            'success' => true,
+            'messages' => $messages
+        ]);
     }
     
     public function closeSession()
     {
-        $sessionId = $this->request->getPost('session_id');
+        // Handle both JSON and form data (like acceptSession method)
+        $contentType = $this->request->getServer('CONTENT_TYPE');
+        
+        if (strpos($contentType, 'application/json') !== false) {
+            // Handle JSON data
+            $data = json_decode($this->request->getBody(), true);
+            $sessionId = $data['session_id'] ?? null;
+        } else {
+            // Handle form data
+            $sessionId = $this->request->getPost('session_id');
+        }
+        
+        if (!$sessionId) {
+            return $this->jsonResponse(['error' => 'Session ID is required'], 400);
+        }
         
         $updated = $this->chatModel->closeSession($sessionId);
         
@@ -202,6 +228,106 @@ class ChatController extends General
         }
         
         return $this->jsonResponse(['error' => 'Failed to close session'], 500);
+    }
+    
+    public function sendMessage()
+    {
+        $sessionId = $this->request->getPost('session_id');
+        $message = $this->sanitizeInput($this->request->getPost('message'));
+        $senderType = $this->request->getPost('sender_type') ?: 'customer';
+        $senderName = $this->sanitizeInput($this->request->getPost('sender_name'));
+        
+        if (!$sessionId || !$message) {
+            return $this->jsonResponse(['error' => 'Session ID and message are required'], 400);
+        }
+        
+        // Get the chat session
+        $chatSession = $this->chatModel->getSessionBySessionId($sessionId);
+        if (!$chatSession) {
+            return $this->jsonResponse(['error' => 'Chat session not found'], 404);
+        }
+        
+        // Check if session is active or waiting
+        if (!in_array($chatSession['status'], ['active', 'waiting'])) {
+            return $this->jsonResponse(['error' => 'Cannot send message to closed session'], 400);
+        }
+        
+        $messageData = [
+            'session_id' => $chatSession['id'],
+            'sender_type' => $senderType,
+            'sender_id' => $senderType === 'agent' ? ($this->session->get('user_id') ?: null) : null,
+            'message' => $message,
+            'message_type' => 'text'
+        ];
+        
+        $messageId = $this->messageModel->insert($messageData);
+        
+        if ($messageId) {
+            // Update session timestamp - silently ignore any update errors since message was sent successfully
+            try {
+                $this->chatModel->update($chatSession['id'], ['updated_at' => date('Y-m-d H:i:s')]);
+            } catch (\Exception $e) {
+                // Ignore timestamp update errors - message was sent successfully
+            }
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'message_id' => $messageId,
+                'session_id' => $sessionId
+            ]);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to send message'], 500);
+    }
+    
+    public function acceptSession()
+    {
+        $data = json_decode($this->request->getBody(), true);
+        $sessionId = $data['session_id'] ?? null;
+        $agentName = $data['agent_name'] ?? 'Agent';
+        
+        if (!$sessionId) {
+            return $this->jsonResponse(['error' => 'Session ID is required'], 400);
+        }
+        
+        // Get the chat session
+        $chatSession = $this->chatModel->getSessionBySessionId($sessionId);
+        if (!$chatSession) {
+            return $this->jsonResponse(['error' => 'Chat session not found'], 404);
+        }
+        
+        // Check if session is waiting
+        if ($chatSession['status'] !== 'waiting') {
+            return $this->jsonResponse(['error' => 'Session is not waiting for agent'], 400);
+        }
+        
+        // Update session to active and assign agent
+        $updated = $this->chatModel->update($chatSession['id'], [
+            'status' => 'active',
+            'agent_id' => $this->session->get('user_id') ?: null,
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+        
+        if ($updated) {
+            // Add system message
+            $messageData = [
+                'session_id' => $chatSession['id'],
+                'sender_type' => 'system',
+                'sender_id' => null,
+                'message' => $agentName . ' has joined the chat',
+                'message_type' => 'system'
+            ];
+            
+            $this->messageModel->insert($messageData);
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Session accepted successfully',
+                'session_id' => $sessionId
+            ]);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to accept session'], 500);
     }
     
     

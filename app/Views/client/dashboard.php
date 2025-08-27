@@ -92,6 +92,13 @@
                     <div class="action-title">My API Keys</div>
                     <div class="action-description">View and manage your API keys</div>
                 </a>
+                <a href="<?= base_url('client/manage-chats') ?>" class="action-card primary">
+                    <div class="action-icon">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <div class="action-title">Manage Chats</div>
+                    <div class="action-description">View and manage your chat sessions</div>
+                </a>
                 <a href="<?= base_url('client/profile') ?>" class="action-card info">
                     <div class="action-icon">
                         <i class="bi bi-person-gear"></i>

@@ -1450,7 +1450,7 @@ async function refreshMessagesForSession(sessionId) {
     }
     
     try {
-        const response = await fetch(`/api/chat/messages/${sessionId}`);
+        const response = await fetch(`/api/chat/messages/${sessionId}?backend=1`);
         const messages = await response.json();
         
         const container = document.getElementById('messagesContainer');

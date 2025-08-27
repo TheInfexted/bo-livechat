@@ -76,13 +76,15 @@ html, body {
     border-right: 1px solid #dee2e6;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    max-height: calc(100vh - 80px);
 }
 
 .panel-section {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .panel-section h3 {
@@ -127,6 +129,8 @@ html, body {
     flex: 1;
     overflow-y: auto;
     padding: 0;
+    min-height: 0;
+    max-height: none;
 }
 
 .session-item {
@@ -825,9 +829,10 @@ html, body {
 
 .sessions-list {
     transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
-    overflow: hidden;
-    max-height: 600px;
+    overflow-y: auto;
+    max-height: 400px;
     opacity: 1;
+    min-height: 0;
 }
 
 .sessions-list.collapsed {
@@ -922,13 +927,14 @@ html, body {
 
 .sessions-list {
     transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
-    overflow: hidden;
-    max-height: 600px;
+    overflow-y: auto;
+    max-height: 400px;
     opacity: 1;
     background: white;
     border-left: 1px solid #e1e8ed;
     border-right: 1px solid #e1e8ed;
     border-bottom: 1px solid #e1e8ed;
+    min-height: 0;
 }
 
 .sessions-list.collapsed {

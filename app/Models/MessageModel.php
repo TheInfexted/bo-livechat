@@ -18,11 +18,32 @@ class MessageModel extends Model
             return [];
         }
         
-        return $this->select('messages.*, users.username as sender_name')
-                    ->join('users', 'users.id = messages.sender_id', 'left')
-                    ->where('session_id', $chatSession['id'])
-                    ->orderBy('created_at', 'ASC')
-                    ->findAll();
+        $messages = $this->select('messages.*, COALESCE(users.username, "Anonymous") as sender_name, messages.created_at as timestamp')
+                         ->join('users', 'users.id = messages.sender_id', 'left')
+                         ->where('session_id', $chatSession['id'])
+                         ->orderBy('messages.created_at', 'ASC')
+                         ->findAll();
+        
+        return $messages ?: [];
+    }
+    
+    public function getSessionMessagesForBackend($sessionId)
+    {
+        $chatSession = model('ChatModel')->getSessionBySessionId($sessionId);
+        
+        if (!$chatSession) {
+            return [];
+        }
+        
+        // Filter out system messages for backend interfaces (admin/client)
+        $messages = $this->select('messages.*, COALESCE(users.username, "Anonymous") as sender_name, messages.created_at as timestamp')
+                         ->join('users', 'users.id = messages.sender_id', 'left')
+                         ->where('session_id', $chatSession['id'])
+                         ->where('sender_type !=', 'system') // Exclude system messages
+                         ->orderBy('messages.created_at', 'ASC')
+                         ->findAll();
+        
+        return $messages ?: [];
     }
     
     public function markAsRead($sessionId, $senderType)

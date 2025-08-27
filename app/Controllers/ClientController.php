@@ -302,4 +302,179 @@ class ClientController extends General
         
         return $this->jsonResponse(['error' => 'Failed to update profile'], 500);
     }
+    
+    public function manageChats()
+    {
+        if (!$this->isAuthenticated()) {
+            return redirect()->to('/login');
+        }
+        
+        // Only clients can access this
+        if (!$this->isClient()) {
+            return redirect()->to('/admin')->with('error', 'Access denied.');
+        }
+        
+        $currentUser = $this->getCurrentUser();
+        $apiKeyModel = new \App\Models\ApiKeyModel();
+        $chatModel = new \App\Models\ChatModel();
+        
+        // Get client's API keys
+        $apiKeys = $apiKeyModel->where('client_email', $currentUser['email'])->findAll();
+        
+        $data = [
+            'title' => 'Manage Chat Sessions',
+            'user' => $currentUser,
+            'client_id' => $currentUser['id'],
+            'client_name' => $currentUser['username'] ?? 'Client User',
+            'api_keys' => array_column($apiKeys, 'api_key')
+        ];
+        
+        return view('client/manage_chats', $data);
+    }
+    
+    public function getSessionsData()
+    {
+        if (!$this->isAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        // Only clients can access this
+        if (!$this->isClient()) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        $currentUser = $this->getCurrentUser();
+        $apiKeyModel = new \App\Models\ApiKeyModel();
+        $chatModel = new \App\Models\ChatModel();
+        $messageModel = new \App\Models\MessageModel();
+        
+        // Get client's API keys
+        $apiKeys = $apiKeyModel->where('client_email', $currentUser['email'])->findAll();
+        
+        $allSessions = [];
+        
+        if (!empty($apiKeys)) {
+            $apiKeysList = array_column($apiKeys, 'api_key');
+            
+            // Get all sessions for client's API keys
+            $sessions = $chatModel->whereIn('api_key', $apiKeysList)
+                                 ->orderBy('created_at', 'DESC')
+                                 ->findAll();
+            
+            // Process each session to add latest customer message and sender info
+            foreach ($sessions as $session) {
+                // Get the latest message for this session using database session ID
+                $latestMessage = $messageModel->select('messages.*, COALESCE(users.username, "Anonymous") as sender_name')
+                                             ->join('users', 'users.id = messages.sender_id', 'left')
+                                             ->where('session_id', $session['id'])
+                                             ->orderBy('created_at', 'DESC')
+                                             ->first();
+                
+                // Get the latest customer message specifically
+                $latestCustomerMessage = $messageModel->where('session_id', $session['id'])
+                                                     ->where('sender_type', 'customer')
+                                                     ->orderBy('created_at', 'DESC')
+                                                     ->first();
+                
+                // Add latest customer message info
+                $session['last_customer_message'] = $latestCustomerMessage ? $latestCustomerMessage['message'] : null;
+                
+                // Add last message sender info
+                if ($latestMessage) {
+                    $session['last_message_sender'] = $latestMessage['sender_type'];
+                    $session['last_message_sender_name'] = $latestMessage['sender_name'] ?? null;
+                    $session['last_message_time'] = $latestMessage['created_at'];
+                } else {
+                    $session['last_message_sender'] = null;
+                    $session['last_message_sender_name'] = null;
+                    $session['last_message_time'] = null;
+                }
+                
+                // Process customer name consistently
+                $session['customer_name'] = $this->processCustomerName($session);
+                
+                $allSessions[] = $session;
+            }
+        }
+        
+        return $this->jsonResponse([
+            'success' => true,
+            'sessions' => $allSessions
+        ]);
+    }
+    
+    /**
+     * Process customer name with consistent logic
+     */
+    private function processCustomerName($session)
+    {
+        // Priority order for customer name - check for non-empty and non-null values
+        if (isset($session['external_fullname']) && trim($session['external_fullname']) !== '') {
+            return trim($session['external_fullname']);
+        }
+        
+        if (isset($session['customer_fullname']) && trim($session['customer_fullname']) !== '') {
+            return trim($session['customer_fullname']);
+        }
+        
+        if (isset($session['customer_name']) && trim($session['customer_name']) !== '') {
+            return trim($session['customer_name']);
+        }
+        
+        return 'Anonymous';
+    }
+    
+    /**
+     * Get canned responses available to clients
+     */
+    public function getCannedResponses()
+    {
+        if (!$this->isAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        // Only clients can access this
+        if (!$this->isClient()) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        $cannedResponseModel = new \App\Models\CannedResponseModel();
+        
+        // Get global responses and client-specific responses
+        $currentUser = $this->getCurrentUser();
+        $responses = $cannedResponseModel->getAvailableResponses($currentUser['id']);
+        
+        return $this->jsonResponse($responses);
+    }
+    
+    /**
+     * Get a specific canned response for client use
+     */
+    public function getCannedResponse($id)
+    {
+        if (!$this->isAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        // Only clients can access this
+        if (!$this->isClient()) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        $cannedResponseModel = new \App\Models\CannedResponseModel();
+        $response = $cannedResponseModel->find($id);
+        
+        if (!$response) {
+            return $this->jsonResponse(['error' => 'Response not found'], 404);
+        }
+        
+        $currentUser = $this->getCurrentUser();
+        
+        // Check if client can access this response (global or their own)
+        if (!$response['is_global'] && $response['agent_id'] != $currentUser['id']) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        return $this->jsonResponse($response);
+    }
 }

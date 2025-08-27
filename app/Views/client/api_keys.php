@@ -36,10 +36,6 @@
                         <i class="bi bi-arrow-left"></i>
                         Back to Dashboard
                     </a>
-                    <a href="<?= base_url('logout') ?>" class="logout-btn">
-                        <i class="bi bi-box-arrow-right"></i>
-                        Logout
-                    </a>
                 </div>
             </div>
         </div>

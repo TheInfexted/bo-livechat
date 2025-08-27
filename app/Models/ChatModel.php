@@ -123,23 +123,6 @@ class ChatModel extends Model
         }
     }
     
-    /**
-     * Get chat sessions for specific API keys (for client filtering)
-     */
-    public function getSessionsByApiKeys($apiKeys)
-    {
-        if (empty($apiKeys)) {
-            return [];
-        }
-        
-        $apiKeysList = is_array($apiKeys) ? $apiKeys : [$apiKeys];
-        
-        return $this->select('chat_sessions.*, users.username as agent_name')
-                    ->join('users', 'users.id = chat_sessions.agent_id', 'left')
-                    ->whereIn('chat_sessions.api_key', $apiKeysList)
-                    ->orderBy('chat_sessions.created_at', 'DESC')
-                    ->findAll();
-    }
     
     /**
      * Get active sessions for specific API keys
@@ -200,6 +183,39 @@ class ChatModel extends Model
         }
         
         return $stats;
+    }
+    
+    /**
+     * Get sessions by API keys with optional status filter
+     */
+    public function getSessionsByApiKeys($apiKeys, $status = null)
+    {
+        if (empty($apiKeys)) {
+            return [];
+        }
+        
+        $apiKeysList = is_array($apiKeys) ? $apiKeys : [$apiKeys];
+        
+        $query = $this->select('chat_sessions.*, users.username as agent_name')
+                      ->join('users', 'users.id = chat_sessions.agent_id', 'left')
+                      ->whereIn('chat_sessions.api_key', $apiKeysList);
+        
+        if ($status) {
+            $query->where('chat_sessions.status', $status);
+        }
+        
+        $sessions = $query->orderBy('chat_sessions.created_at', $status === 'waiting' ? 'ASC' : 'DESC')
+                         ->findAll();
+        
+        // Process customer names and last messages for each session
+        foreach ($sessions as &$session) {
+            $session['customer_name'] = $this->getCustomerDisplayName($session);
+            if ($status !== 'waiting') {
+                $session['last_message_info'] = $this->getLastMessageInfo($session['id']);
+            }
+        }
+        
+        return $sessions;
     }
     
 }

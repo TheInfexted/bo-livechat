@@ -238,16 +238,55 @@ class ChatServer implements MessageComponentInterface
         ");
         $stmt->execute([$agentId, $sessionId]);
         
-        // Notify all connections in session
-        $response = [
-            'type' => 'agent_assigned',
-            'session_id' => $sessionId,
-            'message' => 'An agent has joined the chat'
-        ];
+        // Get the session data to get agent name
+        $stmt = $this->pdo->prepare("SELECT * FROM chat_sessions WHERE session_id = ?");
+        $stmt->execute([$sessionId]);
+        $chatSession = $stmt->fetch();
         
-        if (isset($this->sessions[$sessionId])) {
-            foreach ($this->sessions[$sessionId] as $client) {
-                $client['connection']->send(json_encode($response));
+        if (!$chatSession) {
+            return;
+        }
+        
+        // Get agent name
+        $stmt = $this->pdo->prepare("SELECT username FROM users WHERE id = ?");
+        $stmt->execute([$agentId]);
+        $agentName = $stmt->fetchColumn() ?: 'Agent';
+        
+        // Insert the system message into database
+        $systemMessage = $agentName . ' has joined the chat';
+        $stmt = $this->pdo->prepare("
+            INSERT INTO messages (session_id, sender_type, sender_id, message, message_type, created_at) 
+            VALUES (?, 'system', NULL, ?, 'system', NOW())
+        ");
+        $result = $stmt->execute([$chatSession['id'], $systemMessage]);
+        
+        if ($result) {
+            $messageId = $this->pdo->lastInsertId();
+            
+            // Get the actual timestamp from the database
+            $stmt = $this->pdo->prepare("
+                SELECT created_at FROM messages WHERE id = ?
+            ");
+            $stmt->execute([$messageId]);
+            $timestamp = $stmt->fetchColumn();
+            
+            // Send system message via WebSocket with proper message format
+            $messageResponse = [
+                'type' => 'message',
+                'id' => $messageId,
+                'session_id' => $sessionId,
+                'sender_type' => 'system',
+                'message_type' => 'system',
+                'message' => $systemMessage,
+                'timestamp' => $timestamp,
+                'created_at' => $timestamp
+            ];
+            
+            // Send the system message to all connections in this session
+            if (isset($this->sessions[$sessionId])) {
+                foreach ($this->sessions[$sessionId] as $client) {
+                    $client['connection']->send(json_encode($messageResponse));
+                }
             }
         }
         

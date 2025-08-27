@@ -20,7 +20,7 @@ $routes->get('/api/agent/workload', 'ChatController::getAgentWorkload');
 $routes->post('/api/admin/close-inactive', 'ChatController::closeInactiveSessions');
 
 // Frontend integration route for getting chatroom links
-$routes->match(['get', 'post'], '/api/getChatroomLink', 'ChatController::getChatroomLink');
+$routes->match(['GET', 'POST'], '/api/getChatroomLink', 'ChatController::getChatroomLink');
 
 // Chat History routes (accessible to authenticated users)
 $routes->group('chat-history', ['filter' => 'authfilter'], function($routes) {
@@ -36,9 +36,13 @@ $routes->group('client', ['filter' => 'authfilter'], function($routes) {
     $routes->get('dashboard', 'ClientController::dashboard');
     $routes->get('api-keys', 'ClientController::apiKeys');
     $routes->get('chat-history', 'ClientController::chatHistory');
+    $routes->get('manage-chats', 'ClientController::manageChats');
     $routes->get('profile', 'ClientController::profile');
     $routes->post('profile/update', 'ClientController::updateProfile');
     $routes->get('realtime-stats', 'ClientController::getRealtimeStats');
+    $routes->get('sessions-data', 'ClientController::getSessionsData');
+    $routes->get('canned-responses', 'ClientController::getCannedResponses');
+    $routes->get('canned-responses/get/(:segment)', 'ClientController::getCannedResponse/$1');
 });
 
 // Admin routes
@@ -115,6 +119,16 @@ $routes->group('webhook', function($routes) {
 $routes->get('/login', 'Auth::login');
 $routes->post('/login', 'Auth::attemptLogin');
 $routes->get('/logout', 'Auth::logout');
+
+// Chat API routes for clients and admin
+$routes->group('chat', ['filter' => 'authfilter'], function($routes) {
+    $routes->post('sendMessage', 'ChatController::sendMessage');
+    $routes->post('acceptSession', 'ChatController::acceptSession');
+    $routes->get('getMessages/(:segment)', 'ChatController::getMessages/$1');
+    $routes->post('closeSession', 'ChatController::closeSession');
+    $routes->get('checkSessionStatus/(:segment)', 'ChatController::checkSessionStatus/$1');
+    $routes->get('getSessionDetails/(:segment)', 'ChatController::getSessionDetails/$1');
+});
 
 // API routes for WebSocket fallback (optional)
 $routes->group('api', function($routes) {

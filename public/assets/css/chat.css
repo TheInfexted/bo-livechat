@@ -355,6 +355,9 @@ body {
     background: white;
     border-right: 1px solid #e1e8ed;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 80px);
 }
 
 .panel-section {
@@ -382,6 +385,9 @@ body {
 
 .sessions-list {
     padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .session-item {
