@@ -2,6 +2,7 @@
 
 <?= $this->section('styles') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/client.css?v=' . time()) ?>">
+<link rel="stylesheet" href="<?= base_url('assets/css/client-api-keys.css?v=' . time()) ?>">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -43,7 +44,7 @@
 
     <div class="container">
         <!-- API Keys Statistics -->
-        <div class="stats-grid fade-in">
+        <div class="stats-grid four-column fade-in">
             <div class="stat-card">
                 <div class="stat-icon primary">
                     <i class="bi bi-key-fill"></i>
@@ -231,24 +232,93 @@
     </div>
 </div>
 
-<!-- Key Details Modal -->
+<!-- API Key Integration Modal -->
 <div class="modal fade" id="keyDetailsModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-custom-wide">
+        <div class="modal-content simple-modal">
+            <!-- Modal Header -->
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="bi bi-key me-2"></i>
-                    API Key Details
+                    <i class="bi bi-eye me-2"></i>API Key Details & Integration
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
+            <!-- Modal Body -->
             <div class="modal-body">
-                <div id="keyDetailsContent">
-                    <!-- Content will be populated by JavaScript -->
+                <!-- API Key Details Grid -->
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <label>CLIENT NAME</label>
+                        <span id="viewClientName">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>CLIENT EMAIL</label>
+                        <span id="viewClientEmail">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>STATUS</label>
+                        <span class="status-badge" id="viewStatus">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>API KEY</label>
+                        <code id="viewApiKey">-</code>
+                    </div>
+                    <div class="detail-item">
+                        <label>ALLOWED DOMAINS</label>
+                        <span id="viewDomain">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>CREATED DATE</label>
+                        <span id="viewCreated">-</span>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                <!-- Integration Style Selector -->
+                <div class="integration-section">
+                    <h6><i class="bi bi-code-slash me-2"></i>Choose Integration Style</h6>
+                    <div class="integration-options">
+                        <div class="option-card active" onclick="changeIntegration('basic')" data-type="basic">
+                            <div class="option-header">
+                                <span class="option-emoji">🚀</span>
+                                <strong>Basic Chat Button</strong>
+                            </div>
+                            <p>Simple chat button without welcome bubble</p>
+                        </div>
+                        <div class="option-card" onclick="changeIntegration('welcome')" data-type="welcome">
+                            <div class="option-header">
+                                <span class="option-emoji">💬</span>
+                                <strong>With Welcome Bubble</strong>
+                            </div>
+                            <p>Chat button with proactive welcome message</p>
+                        </div>
+                        <div class="option-card" onclick="changeIntegration('ecommerce')" data-type="ecommerce">
+                            <div class="option-header">
+                                <span class="option-emoji">🛍️</span>
+                                <strong>E-commerce Optimized</strong>
+                            </div>
+                            <p>Perfect for online stores with shopping context</p>
+                        </div>
+                        <div class="option-card" onclick="changeIntegration('helper')" data-type="helper">
+                            <div class="option-header">
+                                <span class="option-emoji">🔗</span>
+                                <strong>Fullscreen API Method</strong>
+                            </div>
+                            <p>Opens fullscreen chat - perfect for navigation integration</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Integration Code -->
+                <div class="code-section">
+                    <h6><i class="bi bi-file-earmark-code me-2"></i>Integration Code</h6>
+                    <div class="code-wrapper">
+                        <textarea id="scriptCode" class="code-textarea" readonly></textarea>
+                        <button class="copy-code-btn" onclick="copyScriptCode()">
+                            <i class="bi bi-clipboard"></i> Copy Code
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -289,7 +359,174 @@ function copyToClipboard(text, button) {
     });
 }
 
-// Show key details
+// Global variables for integration functionality
+var globalApiKey = '';
+var selectedType = 'basic';
+
+// Integration templates
+var basicTemplate = [
+    '<script>',
+    'window.LiveChatConfig = {',
+    '    baseUrl: \'https://livechat.kopisugar.cc\',',
+    '    apiKey: \'API_KEY_PLACEHOLDER\',',
+    '    theme: \'blue\',',
+    '    position: \'bottom-right\'',
+    '};',
+    '',
+    'var script = document.createElement(\'script\');',
+    'script.src = \'https://livechat.kopisugar.cc/assets/js/widget.js\';',
+    'document.head.appendChild(script);',
+    '<\/script>'
+];
+
+var welcomeTemplate = [
+    '<script>',
+    'window.LiveChatConfig = {',
+    '    baseUrl: \'https://livechat.kopisugar.cc\',',
+    '    apiKey: \'API_KEY_PLACEHOLDER\',',
+    '    theme: \'blue\',',
+    '    position: \'bottom-right\',',
+    '    welcomeBubble: {',
+    '        enabled: true,',
+    '        message: \'Hi! I\\\'m here to help. How can I assist you?\',',
+    '        avatar: \'👋\',',
+    '        delay: 3000,',
+    '        autoHide: true,',
+    '        autoHideDelay: 10000',
+    '    }',
+    '};',
+    '',
+    'var script = document.createElement(\'script\');',
+    'script.src = \'https://livechat.kopisugar.cc/assets/js/widget.js\';',
+    'document.head.appendChild(script);',
+    '<\/script>'
+];
+
+var ecommerceTemplate = [
+    '<script>',
+    'window.LiveChatConfig = {',
+    '    baseUrl: \'https://livechat.kopisugar.cc\',',
+    '    apiKey: \'API_KEY_PLACEHOLDER\',',
+    '    theme: \'green\',',
+    '    position: \'bottom-right\',',
+    '    welcomeBubble: {',
+    '        enabled: true,',
+    '        message: \'Hi! Need help with your order or have questions?\',',
+    '        avatar: \'🛍️\',',
+    '        delay: 2000,',
+    '        autoHide: true,',
+    '        autoHideDelay: 15000',
+    '    },',
+    '    callbacks: {',
+    '        onOpen: function() {',
+    '            if (typeof gtag !== \'undefined\') {',
+    '                gtag(\'event\', \'chat_opened\', {',
+    '                    \'event_category\': \'customer_support\'',
+    '                });',
+    '            }',
+    '        }',
+    '    }',
+    '};',
+    '',
+    'var script = document.createElement(\'script\');',
+    'script.src = \'https://livechat.kopisugar.cc/assets/js/widget.js\';',
+    'document.head.appendChild(script);',
+    '<\/script>'
+];
+
+var helperTemplate = [
+    '<!-- LiveChat Helper - Fullscreen Integration -->',
+    '<!-- STEP 1: Add this HTML to your navigation menu -->',
+    '<!-- <a href="#" onclick="openLiveChat(); return false;" class="nav-link">Live Chat</a> -->',
+    '',
+    '<!-- STEP 2: Add this JavaScript before closing </body> tag -->',
+    '<script src="https://livechat.kopisugar.cc/assets/js/livechat-helper.js"><\/script>',
+    '<script>',
+    '// Initialize LiveChat Helper in fullscreen mode',
+    'LiveChatHelper.init({',
+    '    apiKey: \'API_KEY_PLACEHOLDER\',',
+    '    mode: \'fullscreen\',',
+    '    baseUrl: \'https://livechat.kopisugar.cc\'',
+    '});',
+    '',
+    '// Open chat from navigation function',
+    'function openLiveChat() {',
+    '    // Check if user is logged in',
+    '    if (currentUser && currentUser.isLoggedIn) {',
+    '        LiveChatHelper.openChat({',
+    '            // Map your user fields to LiveChat fields',
+    '            userId: currentUser.id,           // or currentUser.user_id',
+    '            name: currentUser.name,           // or currentUser.user_name, currentUser.fullName',
+    '            email: currentUser.email,         // or currentUser.user_email',
+    '            username: currentUser.username    // optional: or currentUser.user_name',
+    '        });',
+    '    } else {',
+    '        // Open as anonymous user',
+    '        LiveChatHelper.openAnonymousChat();',
+    '    }',
+    '}',
+    '',
+    '// Example: Custom field mapping for different user object structures',
+    'function openLiveChatWithCustomFields() {',
+    '    // Example 1: If your user object uses user_id and user_name',
+    '    if (currentUser && currentUser.isLoggedIn) {',
+    '        LiveChatHelper.openChat({',
+    '            userId: currentUser.user_id,',
+    '            name: currentUser.user_name,',
+    '            email: currentUser.user_email || currentUser.email,',
+    '            username: currentUser.username || currentUser.user_name',
+    '        });',
+    '    }',
+    '',
+    '    // Example 2: If your user object has different field names',
+    '    // LiveChatHelper.openChat({',
+    '    //     userId: userProfile.memberId,',
+    '    //     name: userProfile.displayName,',
+    '    //     email: userProfile.emailAddress,',
+    '    //     username: userProfile.loginName',
+    '    // });',
+    '}',
+    '',
+    '// Example usage for custom buttons',
+    'document.addEventListener(\'DOMContentLoaded\', function() {',
+    '    // Method 1: Navigation menu integration',
+    '    // <a href="#" onclick="openLiveChat(); return false;">Live Chat</a>',
+    '    ',
+    '    // Method 2: Button with class "live-chat"',
+    '    var chatButtons = document.querySelectorAll(\'.live-chat\');',
+    '    for (var i = 0; i < chatButtons.length; i++) {',
+    '        chatButtons[i].addEventListener(\'click\', function() {',
+    '            openLiveChat();',
+    '        });',
+    '    }',
+    '    ',
+    '    // Method 3: Direct integration with existing user system',
+    '    // Replace this with your actual user detection logic',
+    '    /*',
+    '    var supportButton = document.getElementById(\'contact-support\');',
+    '    if (supportButton) {',
+    '        supportButton.addEventListener(\'click\', function() {',
+    '            // Get current user from your system',
+    '            var user = getUserFromYourSystem(); // Your function here',
+    '            ',
+    '            if (user && user.isAuthenticated) {',
+    '                LiveChatHelper.openChat({',
+    '                    userId: user.id,              // Adjust field names as needed',
+    '                    name: user.fullName,          // Adjust field names as needed', 
+    '                    email: user.emailAddress,     // Adjust field names as needed',
+    '                    username: user.loginId        // Adjust field names as needed',
+    '                });',
+    '            } else {',
+    '                LiveChatHelper.openAnonymousChat();',
+    '            }',
+    '        });',
+    '    }',
+    '    */',
+    '});',
+    '<\/script>'
+];
+
+// Show key details with integration functionality
 function showKeyDetails(keyId) {
     // Find the key data
     const apiKeys = <?= json_encode($api_keys) ?>;
@@ -300,54 +537,79 @@ function showKeyDetails(keyId) {
         return;
     }
     
-    const sessionCount = <?= json_encode($session_counts ?? []) ?>[key.api_key] || 0;
-    const activeCount = <?= json_encode($active_sessions ?? []) ?>[key.api_key] || 0;
+    globalApiKey = key.api_key;
     
-    const content = `
-        <div class="row g-3">
-            <div class="col-sm-4"><strong>Key ID:</strong></div>
-            <div class="col-sm-8"><code>${key.key_id}</code></div>
-            
-            <div class="col-sm-4"><strong>Client Name:</strong></div>
-            <div class="col-sm-8">${key.client_name}</div>
-            
-            <div class="col-sm-4"><strong>Email:</strong></div>
-            <div class="col-sm-8">${key.client_email || 'Not set'}</div>
-            
-            <div class="col-sm-4"><strong>Domain:</strong></div>
-            <div class="col-sm-8">${key.client_domain || 'Not set'}</div>
-            
-            <div class="col-sm-4"><strong>Status:</strong></div>
-            <div class="col-sm-8">
-                <span class="badge badge-${key.status === 'active' ? 'success' : key.status === 'suspended' ? 'warning' : 'danger'}">
-                    ${key.status.charAt(0).toUpperCase() + key.status.slice(1)}
-                </span>
-            </div>
-            
-            <div class="col-sm-4"><strong>Usage:</strong></div>
-            <div class="col-sm-8">
-                <div>${sessionCount} total sessions</div>
-                <div>${activeCount} active sessions</div>
-            </div>
-            
-            <div class="col-sm-4"><strong>Created:</strong></div>
-            <div class="col-sm-8">${new Date(key.created_at).toLocaleString()}</div>
-            
-            <div class="col-12">
-                <hr>
-                <strong>API Key:</strong>
-                <div class="input-group mt-2">
-                    <input type="text" class="form-control" value="${key.api_key}" readonly id="apiKeyInput">
-                    <button class="btn btn-outline-secondary" type="button" onclick="copyFromModal()">
-                        <i class="bi bi-clipboard"></i> Copy
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
+    // Populate API key information
+    document.getElementById('viewClientName').textContent = key.client_name;
+    document.getElementById('viewClientEmail').textContent = key.client_email;
+    document.getElementById('viewApiKey').textContent = key.api_key;
+    document.getElementById('viewStatus').textContent = key.status.charAt(0).toUpperCase() + key.status.slice(1);
+    document.getElementById('viewDomain').textContent = key.client_domain || 'All domains allowed';
     
-    document.getElementById('keyDetailsContent').innerHTML = content;
+    var date = new Date(key.created_at);
+    document.getElementById('viewCreated').textContent = date.toLocaleDateString();
+    
+    // Reset to basic integration and update script
+    changeIntegration('basic');
+    
+    // Show modal
     new bootstrap.Modal(document.getElementById('keyDetailsModal')).show();
+}
+
+// Change integration style
+function changeIntegration(type) {
+    selectedType = type;
+    
+    // Update active state of cards
+    const cards = document.querySelectorAll('.option-card');
+    cards.forEach(card => card.classList.remove('active'));
+    document.querySelector(`[data-type="${type}"]`).classList.add('active');
+    
+    // Update script
+    updateScript();
+}
+
+// Update script based on selected integration type
+function updateScript() {
+    var template = basicTemplate;
+    
+    switch(selectedType) {
+        case 'welcome':
+            template = welcomeTemplate;
+            break;
+        case 'ecommerce':
+            template = ecommerceTemplate;
+            break;
+        case 'helper':
+            template = helperTemplate;
+            break;
+    }
+    
+    var script = template.join('\n').replace('API_KEY_PLACEHOLDER', globalApiKey);
+    document.getElementById('scriptCode').value = script;
+}
+
+// Copy script code to clipboard
+function copyScriptCode() {
+    var textarea = document.getElementById('scriptCode');
+    var button = event.target.closest('button');
+    
+    textarea.select();
+    navigator.clipboard.writeText(textarea.value).then(function() {
+        var originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        button.classList.remove('btn-success');
+        button.classList.add('btn-info');
+        
+        setTimeout(function() {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-info');
+            button.classList.add('btn-success');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Failed to copy script: ', err);
+        alert('Failed to copy script to clipboard');
+    });
 }
 
 // Copy from modal

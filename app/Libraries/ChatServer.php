@@ -133,6 +133,7 @@ class ChatServer implements MessageComponentInterface
         $message = $data['message'];
         $senderType = $data['sender_type'];
         $senderId = $data['sender_id'] ?? null;
+        $userType = $data['user_type'] ?? null; // Get user_type from client message
         
         // Get chat session using PDO
         $this->ensureDatabaseConnection();
@@ -168,6 +169,74 @@ class ChatServer implements MessageComponentInterface
         $stmt->execute([$messageId]);
         $timestamp = $stmt->fetchColumn();
         
+        // Get sender name based on sender type and ID with user_type prioritization
+        $senderName = null;
+        if ($senderType === 'customer') {
+            $senderName = $chatSession['customer_name'] ?: 'Customer';
+        } elseif ($senderType === 'agent' && $senderId) {
+            // Use user_type to determine which table to query first
+            if ($userType === 'client') {
+                // For client users, check clients table first
+                $stmt = $this->pdo->prepare("SELECT username FROM clients WHERE id = ?");
+                $stmt->execute([$senderId]);
+                $senderName = $stmt->fetchColumn();
+                
+                if (!$senderName) {
+                    // Fallback to users table
+                    $stmt = $this->pdo->prepare("SELECT username FROM users WHERE id = ?");
+                    $stmt->execute([$senderId]);
+                    $senderName = $stmt->fetchColumn();
+                }
+                
+                if (!$senderName) {
+                    // Fallback to agents table
+                    $stmt = $this->pdo->prepare("SELECT username FROM agents WHERE id = ?");
+                    $stmt->execute([$senderId]);
+                    $senderName = $stmt->fetchColumn();
+                }
+            } elseif ($userType === 'agent') {
+                // For agent users, check agents table first
+                $stmt = $this->pdo->prepare("SELECT username FROM agents WHERE id = ?");
+                $stmt->execute([$senderId]);
+                $senderName = $stmt->fetchColumn();
+                
+                if (!$senderName) {
+                    // Fallback to users table
+                    $stmt = $this->pdo->prepare("SELECT username FROM users WHERE id = ?");
+                    $stmt->execute([$senderId]);
+                    $senderName = $stmt->fetchColumn();
+                }
+                
+                if (!$senderName) {
+                    // Fallback to clients table
+                    $stmt = $this->pdo->prepare("SELECT username FROM clients WHERE id = ?");
+                    $stmt->execute([$senderId]);
+                    $senderName = $stmt->fetchColumn();
+                }
+            } else {
+                // For admin users or when user_type is not specified, check users table first (legacy behavior)
+                $stmt = $this->pdo->prepare("SELECT username FROM users WHERE id = ?");
+                $stmt->execute([$senderId]);
+                $senderName = $stmt->fetchColumn();
+                
+                if (!$senderName) {
+                    // Try clients table
+                    $stmt = $this->pdo->prepare("SELECT username FROM clients WHERE id = ?");
+                    $stmt->execute([$senderId]);
+                    $senderName = $stmt->fetchColumn();
+                }
+                
+                if (!$senderName) {
+                    // Try agents table
+                    $stmt = $this->pdo->prepare("SELECT username FROM agents WHERE id = ?");
+                    $stmt->execute([$senderId]);
+                    $senderName = $stmt->fetchColumn();
+                }
+            }
+            
+            $senderName = $senderName ?: 'Agent';
+        }
+        
         // Prepare response
         $response = [
             'type' => 'message',
@@ -176,7 +245,7 @@ class ChatServer implements MessageComponentInterface
             'sender_type' => $senderType,
             'message' => $message,
             'timestamp' => $timestamp,
-            'sender_name' => $senderType === 'customer' ? $chatSession['customer_name'] : null
+            'sender_name' => $senderName
         ];
         
         // Send to all connections in this session

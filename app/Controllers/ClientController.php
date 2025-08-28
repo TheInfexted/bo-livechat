@@ -6,50 +6,47 @@ class ClientController extends General
 {
     public function dashboard()
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return redirect()->to('/login');
         }
         
-        // Only clients can access client dashboard
-        if (!$this->isClient()) {
-            return redirect()->to('/admin')->with('error', 'Access denied.');
-        }
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
         
-        $currentUser = $this->getCurrentUser();
-        $apiKeyModel = new \App\Models\ApiKeyModel();
+        // Get client's API keys
+        $apiKeys = $this->apiKeyModel->where('client_id', $clientId)->findAll();
         
-        // Get client's API keys (matching email)
-        $apiKeys = $apiKeyModel->where('client_email', $currentUser['email'])->findAll();
+        // Get chat sessions data for this client
+        $sessions = $this->chatModel->where('client_id', $clientId)->findAll();
         
-        // Get chat sessions data for API keys owned by this client
-        $totalSessions = 0;
+        // Count sessions by status
+        $totalSessions = count($sessions);
         $activeSessions = 0;
         $waitingSessions = 0;
         $closedSessions = 0;
         
-        if (!empty($apiKeys)) {
-            $apiKeysList = array_column($apiKeys, 'api_key');
-            $chatModel = new \App\Models\ChatModel();
-            $sessions = $chatModel->whereIn('api_key', $apiKeysList)->findAll();
-            
-            $totalSessions = count($sessions);
-            foreach ($sessions as $session) {
-                switch ($session['status']) {
-                    case 'active':
-                        $activeSessions++;
-                        break;
-                    case 'waiting':
-                        $waitingSessions++;
-                        break;
-                    case 'closed':
-                        $closedSessions++;
-                        break;
-                }
+        foreach ($sessions as $session) {
+            switch ($session['status']) {
+                case 'active':
+                    $activeSessions++;
+                    break;
+                case 'waiting':
+                    $waitingSessions++;
+                    break;
+                case 'closed':
+                    $closedSessions++;
+                    break;
             }
         }
         
+        // Get agents count (only for clients, not agents)
+        $agentsCount = 0;
+        if ($this->isClientUser()) {
+            $agentsCount = $this->agentModel->where('client_id', $clientId)->countAllResults();
+        }
+        
         $data = [
-            'title' => 'Client Dashboard',
+            'title' => $this->isClientUser() ? 'Client Dashboard' : 'Agent Dashboard',
             'user' => $currentUser,
             'totalApiKeys' => count($apiKeys),
             'activeApiKeys' => count(array_filter($apiKeys, fn($key) => $key['status'] === 'active')),
@@ -57,6 +54,7 @@ class ClientController extends General
             'activeSessions' => $activeSessions,
             'waitingSessions' => $waitingSessions,
             'closedSessions' => $closedSessions,
+            'agentsCount' => $agentsCount,
             'api_keys' => $apiKeys
         ];
         
@@ -65,22 +63,17 @@ class ClientController extends General
     
     public function apiKeys()
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return redirect()->to('/login');
         }
         
-        // Only clients can access this
-        if (!$this->isClient()) {
-            return redirect()->to('/admin')->with('error', 'Access denied.');
-        }
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
         
-        $currentUser = $this->getCurrentUser();
-        $apiKeyModel = new \App\Models\ApiKeyModel();
-        
-        // Client can only see API keys that match their email
-        $keys = $apiKeyModel->where('client_email', $currentUser['email'])
-                          ->orderBy('created_at', 'DESC')
-                          ->findAll();
+        // Get client's API keys
+        $keys = $this->apiKeyModel->where('client_id', $clientId)
+                                 ->orderBy('created_at', 'DESC')
+                                 ->findAll();
         
         // Get session statistics for each API key
         $chatModel = new \App\Models\ChatModel();
@@ -111,28 +104,40 @@ class ClientController extends General
     
     public function chatHistory()
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return redirect()->to('/login');
         }
         
-        // Only clients can access this
-        if (!$this->isClient()) {
-            return redirect()->to('/admin')->with('error', 'Access denied.');
-        }
-        
-        $currentUser = $this->getCurrentUser();
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
         
         // Get client's API keys and their associated sessions
-        $apiKeyModel = new \App\Models\ApiKeyModel();
-        $apiKeys = $apiKeyModel->where('client_email', $currentUser['email'])->findAll();
+        $apiKeys = $this->apiKeyModel->where('client_id', $clientId)->findAll();
         
-        $sessions = [];
-        if (!empty($apiKeys)) {
-            $apiKeysList = array_column($apiKeys, 'api_key');
-            $chatModel = new \App\Models\ChatModel();
-            $sessions = $chatModel->whereIn('api_key', $apiKeysList)
-                                 ->orderBy('created_at', 'DESC')
-                                 ->findAll();
+        // Get sessions based on client ID with additional message data
+        $sessions = $this->chatModel->where('client_id', $clientId)
+                                   ->orderBy('created_at', 'DESC')
+                                   ->findAll();
+        
+        // Add message timing data for each session
+        $messageModel = new \App\Models\MessageModel();
+        foreach ($sessions as &$session) {
+            // Process customer name
+            $session['customer_name'] = $this->processCustomerName($session);
+            
+            // Get last customer message time
+            $lastCustomerMessage = $messageModel->where('session_id', $session['id'])
+                                               ->where('sender_type', 'customer')
+                                               ->orderBy('created_at', 'DESC')
+                                               ->first();
+            $session['last_customer_message_time'] = $lastCustomerMessage ? $lastCustomerMessage['created_at'] : null;
+            
+            // Get last agent message time
+            $lastAgentMessage = $messageModel->where('session_id', $session['id'])
+                                            ->where('sender_type', 'agent')
+                                            ->orderBy('created_at', 'DESC')
+                                            ->first();
+            $session['last_agent_message_time'] = $lastAgentMessage ? $lastAgentMessage['created_at'] : null;
         }
         
         $data = [
@@ -146,35 +151,20 @@ class ClientController extends General
     
     public function profile()
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return redirect()->to('/login');
         }
         
-        // Only clients can access this
-        if (!$this->isClient()) {
-            return redirect()->to('/admin')->with('error', 'Access denied.');
-        }
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
         
-        $currentUser = $this->getCurrentUser();
-        $apiKeyModel = new \App\Models\ApiKeyModel();
+        // Get client's API keys
+        $apiKeys = $this->apiKeyModel->where('client_id', $clientId)->findAll();
         
-        // Get basic statistics for profile
-        $apiKeys = $apiKeyModel->where('client_email', $currentUser['email'])->findAll();
-        $chatModel = new \App\Models\ChatModel();
-        
-        // Get session statistics for this client's API keys
-        $totalSessions = 0;
-        $activeSessions = 0;
-        
-        if (!empty($apiKeys)) {
-            $apiKeysList = array_column($apiKeys, 'api_key');
-            $chatModel = new \App\Models\ChatModel();
-            $sessions = $chatModel->whereIn('api_key', $apiKeysList)->findAll();
-            $totalSessions = count($sessions);
-            $activeSessions = $chatModel->whereIn('api_key', $apiKeysList)
-                                      ->where('status', 'active')
-                                      ->countAllResults(false);
-        }
+        // Get session statistics for this client
+        $sessions = $this->chatModel->where('client_id', $clientId)->findAll();
+        $totalSessions = count($sessions);
+        $activeSessions = count(array_filter($sessions, fn($s) => $s['status'] === 'active'));
         
         $stats = [
             'api_keys' => count($apiKeys),
@@ -193,45 +183,36 @@ class ClientController extends General
     
     public function getRealtimeStats()
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
         
-        // Only clients can access this
-        if (!$this->isClient()) {
-            return $this->jsonResponse(['error' => 'Access denied'], 403);
-        }
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
         
-        $currentUser = $this->getCurrentUser();
-        $apiKeyModel = new \App\Models\ApiKeyModel();
+        // Get client's API keys
+        $apiKeys = $this->apiKeyModel->where('client_id', $clientId)->findAll();
         
-        // Get client's API keys (matching email)
-        $apiKeys = $apiKeyModel->where('client_email', $currentUser['email'])->findAll();
+        // Get chat sessions data for this client
+        $sessions = $this->chatModel->where('client_id', $clientId)->findAll();
         
-        // Get chat sessions data for API keys owned by this client
-        $totalSessions = 0;
+        // Count sessions by status
+        $totalSessions = count($sessions);
         $activeSessions = 0;
         $waitingSessions = 0;
         $closedSessions = 0;
         
-        if (!empty($apiKeys)) {
-            $apiKeysList = array_column($apiKeys, 'api_key');
-            $chatModel = new \App\Models\ChatModel();
-            $sessions = $chatModel->whereIn('api_key', $apiKeysList)->findAll();
-            
-            $totalSessions = count($sessions);
-            foreach ($sessions as $session) {
-                switch ($session['status']) {
-                    case 'active':
-                        $activeSessions++;
-                        break;
-                    case 'waiting':
-                        $waitingSessions++;
-                        break;
-                    case 'closed':
-                        $closedSessions++;
-                        break;
-                }
+        foreach ($sessions as $session) {
+            switch ($session['status']) {
+                case 'active':
+                    $activeSessions++;
+                    break;
+                case 'waiting':
+                    $waitingSessions++;
+                    break;
+                case 'closed':
+                    $closedSessions++;
+                    break;
             }
         }
         
@@ -250,16 +231,11 @@ class ClientController extends General
     
     public function updateProfile()
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
         
-        // Only clients can update their own profile
-        if (!$this->isClient()) {
-            return $this->jsonResponse(['error' => 'Access denied'], 403);
-        }
-        
-        $currentUser = $this->getCurrentUser();
+        $currentUser = $this->getCurrentClientUser();
         $username = $this->request->getPost('username');
         $email = $this->request->getPost('email');
         $password = $this->request->getPost('password');
@@ -305,26 +281,24 @@ class ClientController extends General
     
     public function manageChats()
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return redirect()->to('/login');
         }
         
-        // Only clients can access this
-        if (!$this->isClient()) {
-            return redirect()->to('/admin')->with('error', 'Access denied.');
-        }
-        
-        $currentUser = $this->getCurrentUser();
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
         $apiKeyModel = new \App\Models\ApiKeyModel();
         $chatModel = new \App\Models\ChatModel();
         
         // Get client's API keys
-        $apiKeys = $apiKeyModel->where('client_email', $currentUser['email'])->findAll();
+        $apiKeys = $apiKeyModel->where('client_id', $clientId)->findAll();
         
         $data = [
             'title' => 'Manage Chat Sessions',
             'user' => $currentUser,
-            'client_id' => $currentUser['id'],
+            'user_id' => $currentUser['id'], // The actual user ID (client or agent)
+            'user_type' => $currentUser['type'], // 'client' or 'agent'
+            'client_id' => $clientId, // The client ID (for filtering sessions)
             'client_name' => $currentUser['username'] ?? 'Client User',
             'api_keys' => array_column($apiKeys, 'api_key')
         ];
@@ -334,32 +308,24 @@ class ClientController extends General
     
     public function getSessionsData()
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
         
-        // Only clients can access this
-        if (!$this->isClient()) {
-            return $this->jsonResponse(['error' => 'Access denied'], 403);
-        }
-        
-        $currentUser = $this->getCurrentUser();
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
         $apiKeyModel = new \App\Models\ApiKeyModel();
         $chatModel = new \App\Models\ChatModel();
         $messageModel = new \App\Models\MessageModel();
         
-        // Get client's API keys
-        $apiKeys = $apiKeyModel->where('client_email', $currentUser['email'])->findAll();
+        // All authenticated users (clients and agents) can see ALL sessions for their client_id
+        $sessions = $chatModel->where('client_id', $clientId)
+                             ->orderBy('created_at', 'DESC')
+                             ->findAll();
         
         $allSessions = [];
         
-        if (!empty($apiKeys)) {
-            $apiKeysList = array_column($apiKeys, 'api_key');
-            
-            // Get all sessions for client's API keys
-            $sessions = $chatModel->whereIn('api_key', $apiKeysList)
-                                 ->orderBy('created_at', 'DESC')
-                                 ->findAll();
+        if (!empty($sessions)) {
             
             // Process each session to add latest customer message and sender info
             foreach ($sessions as $session) {
@@ -429,19 +395,14 @@ class ClientController extends General
      */
     public function getCannedResponses()
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
-        }
-        
-        // Only clients can access this
-        if (!$this->isClient()) {
-            return $this->jsonResponse(['error' => 'Access denied'], 403);
         }
         
         $cannedResponseModel = new \App\Models\CannedResponseModel();
         
         // Get global responses and client-specific responses
-        $currentUser = $this->getCurrentUser();
+        $currentUser = $this->getCurrentClientUser();
         $responses = $cannedResponseModel->getAvailableResponses($currentUser['id']);
         
         return $this->jsonResponse($responses);
@@ -452,13 +413,8 @@ class ClientController extends General
      */
     public function getCannedResponse($id)
     {
-        if (!$this->isAuthenticated()) {
+        if (!$this->isClientAuthenticated()) {
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
-        }
-        
-        // Only clients can access this
-        if (!$this->isClient()) {
-            return $this->jsonResponse(['error' => 'Access denied'], 403);
         }
         
         $cannedResponseModel = new \App\Models\CannedResponseModel();
@@ -468,7 +424,7 @@ class ClientController extends General
             return $this->jsonResponse(['error' => 'Response not found'], 404);
         }
         
-        $currentUser = $this->getCurrentUser();
+        $currentUser = $this->getCurrentClientUser();
         
         // Check if client can access this response (global or their own)
         if (!$response['is_global'] && $response['agent_id'] != $currentUser['id']) {
@@ -476,5 +432,560 @@ class ClientController extends General
         }
         
         return $this->jsonResponse($response);
+    }
+    
+    /**
+     * Manage Agents - Only accessible by clients
+     */
+    public function manageAgents()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return redirect()->to('/login');
+        }
+        
+        // Only clients can manage agents, not agents themselves
+        if (!$this->isClientUser()) {
+            return redirect()->to('/client/dashboard')->with('error', 'Access denied. Only clients can manage agents.');
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
+        
+        // Get all agents for this client
+        $agents = $this->agentModel->getByClientId($clientId);
+        
+        $data = [
+            'title' => 'Manage Agents',
+            'user' => $currentUser,
+            'agents' => $agents
+        ];
+        
+        return view('client/manage_agents', $data);
+    }
+    
+    /**
+     * Add new agent
+     */
+    public function addAgent()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        // Only clients can add agents
+        if (!$this->isClientUser()) {
+            return $this->jsonResponse(['error' => 'Access denied. Only clients can add agents.'], 403);
+        }
+        
+        $username = $this->request->getPost('username');
+        $email = $this->request->getPost('email');
+        $password = $this->request->getPost('password');
+        
+        if (!$username || !$password) {
+            return $this->jsonResponse(['error' => 'Username and password are required'], 400);
+        }
+        
+        // Check username uniqueness across clients and agents
+        if (!$this->agentModel->isUsernameUnique($username)) {
+            return $this->jsonResponse(['error' => 'Username already exists'], 400);
+        }
+        
+        // Check email uniqueness if provided
+        if (!empty($email)) {
+            $existingClient = $this->clientModel->getByEmail($email);
+            $existingAgent = $this->agentModel->where('email', $email)->first();
+            if ($existingClient || $existingAgent) {
+                return $this->jsonResponse(['error' => 'Email already exists'], 400);
+            }
+        }
+        
+        $clientId = $this->getClientId();
+        
+        $data = [
+            'client_id' => $clientId,
+            'username' => $username,
+            'email' => $email,
+            'password' => password_hash($password, PASSWORD_DEFAULT),
+            'status' => 'active'
+        ];
+        
+        $agentId = $this->agentModel->insert($data);
+        
+        if ($agentId) {
+            return $this->jsonResponse(['success' => true, 'message' => 'Agent added successfully']);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to add agent'], 500);
+    }
+    
+    /**
+     * Edit existing agent
+     */
+    public function editAgent()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        // Only clients can edit agents
+        if (!$this->isClientUser()) {
+            return $this->jsonResponse(['error' => 'Access denied. Only clients can edit agents.'], 403);
+        }
+        
+        $agentId = $this->request->getPost('agent_id');
+        $username = $this->request->getPost('username');
+        $email = $this->request->getPost('email');
+        $password = $this->request->getPost('password');
+        $status = $this->request->getPost('status');
+        
+        if (!$agentId || !$username) {
+            return $this->jsonResponse(['error' => 'Agent ID and username are required'], 400);
+        }
+        
+        $clientId = $this->getClientId();
+        
+        // Check if agent belongs to this client
+        if (!$this->agentModel->belongsToClient($agentId, $clientId)) {
+            return $this->jsonResponse(['error' => 'Agent not found or access denied'], 404);
+        }
+        
+        // Check username uniqueness
+        if (!$this->agentModel->isUsernameUnique($username, $agentId)) {
+            return $this->jsonResponse(['error' => 'Username already exists'], 400);
+        }
+        
+        // Check email uniqueness if provided
+        if (!empty($email)) {
+            $existingClient = $this->clientModel->where('email', $email)->first();
+            $existingAgent = $this->agentModel->where('email', $email)->where('id !=', $agentId)->first();
+            if ($existingClient || $existingAgent) {
+                return $this->jsonResponse(['error' => 'Email already exists'], 400);
+            }
+        }
+        
+        $data = [
+            'username' => $username,
+            'email' => $email,
+            'status' => $status ?: 'active'
+        ];
+        
+        // Only update password if provided
+        if (!empty($password)) {
+            $data['password'] = password_hash($password, PASSWORD_DEFAULT);
+        }
+        
+        $updated = $this->agentModel->update($agentId, $data);
+        
+        if ($updated) {
+            return $this->jsonResponse(['success' => true, 'message' => 'Agent updated successfully']);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to update agent'], 500);
+    }
+    
+    /**
+     * Delete agent
+     */
+    public function deleteAgent()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        // Only clients can delete agents
+        if (!$this->isClientUser()) {
+            return $this->jsonResponse(['error' => 'Access denied. Only clients can delete agents.'], 403);
+        }
+        
+        $agentId = $this->request->getPost('agent_id');
+        
+        if (!$agentId) {
+            return $this->jsonResponse(['error' => 'Agent ID is required'], 400);
+        }
+        
+        $clientId = $this->getClientId();
+        
+        // Check if agent belongs to this client
+        if (!$this->agentModel->belongsToClient($agentId, $clientId)) {
+            return $this->jsonResponse(['error' => 'Agent not found or access denied'], 404);
+        }
+        
+        // Check if agent has active chat sessions
+        $activeSessions = $this->agentModel->getActiveChatCount($agentId);
+        if ($activeSessions > 0) {
+            return $this->jsonResponse(['error' => 'Cannot delete agent with active chat sessions'], 400);
+        }
+        
+        $deleted = $this->agentModel->delete($agentId);
+        
+        if ($deleted) {
+            return $this->jsonResponse(['success' => true, 'message' => 'Agent deleted successfully']);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to delete agent'], 500);
+    }
+    
+    /**
+     * API endpoint: Get client ID by email
+     * This is used by the frontend chat system to lookup client_id from email
+     */
+    public function getClientIdByEmail()
+    {
+        // Set CORS headers for cross-system communication
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: POST, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        
+        // Handle preflight OPTIONS request
+        if ($this->request->getMethod() === 'options') {
+            return $this->response->setStatusCode(200);
+        }
+        
+        $email = $this->request->getPost('email');
+        
+        if (!$email) {
+            return $this->jsonResponse(['error' => 'Email is required'], 400);
+        }
+        
+        // Look up client by email
+        $client = $this->clientModel->getByEmail($email);
+        
+        if ($client) {
+            return $this->jsonResponse([
+                'success' => true,
+                'client_id' => $client['id']
+            ]);
+        }
+        
+        return $this->jsonResponse([
+            'success' => false,
+            'error' => 'Client not found'
+        ], 404);
+    }
+    
+    /**
+     * Get detailed session information for customer info panel
+     * Client-specific version that checks client authentication
+     */
+    public function getSessionDetails($sessionId)
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized', 'debug' => 'Client not authenticated'], 401);
+        }
+        
+        if (!$sessionId) {
+            return $this->jsonResponse(['error' => 'Session ID is required'], 400);
+        }
+        
+        $clientId = $this->getClientId();
+        
+        try {
+            // All authenticated users (clients and agents) can access all sessions for their client_id
+            $session = $this->chatModel->select('chat_sessions.*, users.username as agent_name')
+                                       ->join('users', 'users.id = chat_sessions.agent_id', 'left')
+                                       ->where('chat_sessions.session_id', $sessionId)
+                                       ->where('chat_sessions.client_id', $clientId)
+                                       ->first();
+            
+            if (!$session) {
+                return $this->jsonResponse(['error' => 'Session not found or access denied', 'session_id' => $sessionId], 404);
+            }
+            
+            // Process customer name using comprehensive logic (same as ChatController)
+            $customerName = 'Anonymous';
+            if (!empty($session['external_fullname']) && trim($session['external_fullname']) !== '') {
+                $customerName = trim($session['external_fullname']);
+            } elseif (!empty($session['customer_fullname']) && trim($session['customer_fullname']) !== '') {
+                $customerName = trim($session['customer_fullname']);
+            } elseif (!empty($session['customer_name']) && trim($session['customer_name']) !== '') {
+                $customerName = trim($session['customer_name']);
+            } elseif (!empty($session['external_username']) && trim($session['external_username']) !== '') {
+                $customerName = trim($session['external_username']);
+            }
+            
+            // Add processed customer name to session data
+            $session['customer_name'] = $customerName;
+            
+            // Ensure chat_topic is not null or empty
+            if (empty($session['chat_topic']) || trim($session['chat_topic']) === '') {
+                $session['chat_topic'] = 'No topic specified';
+            }
+            
+            // Ensure customer_email is properly set
+            if (empty($session['customer_email'])) {
+                $session['customer_email'] = '';
+            }
+            
+            // Get the latest message for this session to determine last reply info
+            $messageModel = new \App\Models\MessageModel();
+            $latestMessage = $messageModel->select('messages.*, 
+                                                   CASE 
+                                                       WHEN messages.sender_type = "customer" THEN "Customer"
+                                                       WHEN messages.sender_type = "agent" AND messages.sender_id IS NOT NULL THEN 
+                                                           CASE
+                                                               WHEN messages.sender_user_type = "client" THEN COALESCE(clients.username, "Agent")
+                                                               WHEN messages.sender_user_type = "agent" THEN COALESCE(agents.username, "Agent")
+                                                               WHEN messages.sender_user_type = "admin" THEN COALESCE(users.username, "Agent")
+                                                               WHEN messages.sender_user_type IS NULL THEN COALESCE(clients_all.username, agents_all.username, users_all.username, "Agent")
+                                                               ELSE "Agent"
+                                                           END
+                                                       ELSE "Agent"
+                                                   END as sender_name')
+                                   ->join('clients', 'clients.id = messages.sender_id AND messages.sender_user_type = "client"', 'left')
+                                   ->join('agents', 'agents.id = messages.sender_id AND messages.sender_user_type = "agent"', 'left')
+                                   ->join('users', 'users.id = messages.sender_id AND messages.sender_user_type = "admin"', 'left')
+                                   ->join('clients as clients_all', 'clients_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
+                                   ->join('agents as agents_all', 'agents_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
+                                   ->join('users as users_all', 'users_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
+                                   ->where('session_id', $session['id'])
+                                   ->orderBy('created_at', 'DESC')
+                                   ->first();
+            
+            // Get all unique agents involved in this session
+            $agentsInvolved = $messageModel->select('DISTINCT 
+                                                    CASE 
+                                                        WHEN messages.sender_type = "agent" AND messages.sender_id IS NOT NULL THEN 
+                                                            CASE
+                                                                WHEN messages.sender_user_type = "client" THEN COALESCE(clients.username, "Agent")
+                                                                WHEN messages.sender_user_type = "agent" THEN COALESCE(agents.username, "Agent")
+                                                                WHEN messages.sender_user_type = "admin" THEN COALESCE(users.username, "Agent")
+                                                                WHEN messages.sender_user_type IS NULL THEN COALESCE(clients_all.username, agents_all.username, users_all.username, "Agent")
+                                                                ELSE "Agent"
+                                                            END
+                                                        ELSE NULL
+                                                    END as agent_name')
+                                           ->join('clients', 'clients.id = messages.sender_id AND messages.sender_user_type = "client"', 'left')
+                                           ->join('agents', 'agents.id = messages.sender_id AND messages.sender_user_type = "agent"', 'left')
+                                           ->join('users', 'users.id = messages.sender_id AND messages.sender_user_type = "admin"', 'left')
+                                           ->join('clients as clients_all', 'clients_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
+                                           ->join('agents as agents_all', 'agents_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
+                                           ->join('users as users_all', 'users_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
+                                           ->where('session_id', $session['id'])
+                                           ->where('sender_type', 'agent')
+                                           ->having('agent_name IS NOT NULL')
+                                           ->having('agent_name !=', 'Agent')
+                                           ->findAll();
+            
+            // Extract agent names and remove duplicates
+            $agentNames = [];
+            foreach ($agentsInvolved as $agent) {
+                if (!empty($agent['agent_name']) && $agent['agent_name'] !== 'Agent') {
+                    $agentNames[] = $agent['agent_name'];
+                }
+            }
+            $agentNames = array_unique($agentNames);
+            $session['agents_involved'] = array_values($agentNames); // Re-index array
+            
+            // Add last message sender info
+            if ($latestMessage) {
+                $session['last_message_sender'] = $latestMessage['sender_type'];
+                $session['last_message_sender_name'] = $latestMessage['sender_name'] ?? null;
+                $session['last_message_time'] = $latestMessage['created_at'];
+            } else {
+                $session['last_message_sender'] = null;
+                $session['last_message_sender_name'] = null;
+                $session['last_message_time'] = null;
+            }
+            
+            // accepted_at and accepted_by are now stored directly in the database
+            // No need to derive them from other fields
+            
+            // Format timestamps for frontend
+            if (!empty($session['created_at'])) {
+                $session['created_at_formatted'] = date('M d, Y h:i A', strtotime($session['created_at']));
+            }
+            
+            if (!empty($session['updated_at'])) {
+                $session['updated_at_formatted'] = date('M d, Y h:i A', strtotime($session['updated_at']));
+            }
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'session' => $session
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log('ERROR - ClientController::getSessionDetails failed: ' . $e->getMessage());
+            return $this->jsonResponse([
+                'error' => 'Failed to fetch session details',
+                'debug' => 'Database error occurred'
+            ], 500);
+        }
+    }
+    
+    /**
+     * View detailed chat history for a specific session
+     * Client-specific version with proper access control
+     */
+    public function viewChatHistory($sessionId)
+    {
+        if (!$this->isClientAuthenticated()) {
+            return redirect()->to('/login');
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
+        
+        try {
+            // All authenticated users (clients and agents) can access all sessions for their client_id
+            $session = $this->chatModel->select('chat_sessions.*, users.username as agent_name')
+                                       ->join('users', 'users.id = chat_sessions.agent_id', 'left')
+                                       ->where('chat_sessions.id', $sessionId)
+                                       ->where('chat_sessions.client_id', $clientId)
+                                       ->first();
+            
+            if (!$session) {
+                return redirect()->to('/client/chat-history')->with('error', 'Session not found or access denied');
+            }
+            
+            // Get messages for this session with proper joins for clients/agents
+            $messageModel = new \App\Models\MessageModel();
+            $messages = $messageModel->select('messages.*, 
+                                              CASE 
+                                                  WHEN messages.sender_type = "customer" THEN "Customer"
+                                                  WHEN messages.sender_type = "agent" AND messages.sender_id IS NOT NULL THEN 
+                                                      COALESCE(
+                                                          clients.username,
+                                                          agents.username,
+                                                          users.username,
+                                                          "Agent"
+                                                      )
+                                                  ELSE "Agent"
+                                              END as sender_name,
+                                              messages.message_type')
+                                    ->join('clients', 'clients.id = messages.sender_id AND messages.sender_type = "agent"', 'left')
+                                    ->join('agents', 'agents.id = messages.sender_id AND messages.sender_type = "agent"', 'left')
+                                    ->join('users', 'users.id = messages.sender_id AND messages.sender_type = "agent"', 'left')
+                                    ->where('session_id', $session['id'])
+                                    ->orderBy('created_at', 'ASC')
+                                    ->findAll();
+            
+            // Process customer name
+            $session['customer_name'] = $this->processCustomerName($session);
+            
+            $data = [
+                'title' => 'Chat Session Details',
+                'user' => $currentUser,
+                'client_id' => $clientId,
+                'client_name' => $currentUser['username'] ?? 'Client User',
+                'session' => $session,
+                'messages' => $messages
+            ];
+            
+            return view('client/chat_history_view', $data);
+            
+        } catch (\Exception $e) {
+            error_log('ERROR - ClientController::viewChatHistory failed: ' . $e->getMessage());
+            return redirect()->to('/client/chat-history')->with('error', 'Failed to load chat session details');
+        }
+    }
+    
+    // Keyword Responses Management for Clients
+    public function keywordResponses()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return redirect()->to('/login');
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
+        
+        // Get keyword responses for this client only
+        $responses = $this->keywordResponseModel->where('client_id', $clientId)
+                                               ->findAll();
+        
+        $data = [
+            'title' => 'Keyword Responses',
+            'user' => $currentUser,
+            'responses' => $responses
+        ];
+        
+        return view('client/keyword-responses', $data);
+    }
+    
+    // Get keyword response for editing
+    public function getKeywordResponse($id)
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
+        
+        $response = $this->keywordResponseModel->where('id', $id)
+                                             ->where('client_id', $clientId)
+                                             ->first();
+        
+        if (!$response) {
+            return $this->jsonResponse(['error' => 'Response not found'], 404);
+        }
+        
+        return $this->jsonResponse($response);
+    }
+    
+    // Save keyword response
+    public function saveKeywordResponse()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
+        
+        $id = $this->request->getPost('id');
+        $data = [
+            'keyword' => $this->request->getPost('keyword'),
+            'response' => $this->request->getPost('response'),
+            'is_active' => $this->request->getPost('is_active') ? 1 : 0,
+            'client_id' => $clientId // Always set client_id for new entries
+        ];
+        
+        if ($id) {
+            // Update existing - make sure it belongs to this client
+            $existingResponse = $this->keywordResponseModel->where('id', $id)
+                                                          ->where('client_id', $clientId)
+                                                          ->first();
+            if (!$existingResponse) {
+                session()->setFlashdata('error', 'Response not found or access denied');
+                return redirect()->to('client/keyword-responses');
+            }
+            
+            unset($data['client_id']); // Don't update client_id for existing records
+            $this->keywordResponseModel->update($id, $data);
+            session()->setFlashdata('success', 'Response updated successfully');
+        } else {
+            // Create new
+            $this->keywordResponseModel->insert($data);
+            session()->setFlashdata('success', 'Response created successfully');
+        }
+        
+        return redirect()->to('client/keyword-responses');
+    }
+    
+    // Delete keyword response
+    public function deleteKeywordResponse()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
+        
+        $id = $this->request->getPost('id');
+        
+        // Check if response belongs to this client
+        $response = $this->keywordResponseModel->where('id', $id)
+                                             ->where('client_id', $clientId)
+                                             ->first();
+        
+        if (!$response) {
+            return $this->jsonResponse(['error' => 'Response not found or access denied'], 404);
+        }
+        
+        $this->keywordResponseModel->delete($id);
+        return $this->jsonResponse(['success' => true]);
     }
 }

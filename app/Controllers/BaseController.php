@@ -41,6 +41,9 @@ abstract class BaseController extends Controller
     protected $chatModel;
     protected $userModel;
     protected $messageModel;
+    protected $clientModel;
+    protected $agentModel;
+    protected $apiKeyModel;
 
     protected $cannedResponseModel;
     protected $chatFileModel;
@@ -71,6 +74,9 @@ abstract class BaseController extends Controller
         $this->chatModel = new \App\Models\ChatModel();
         $this->userModel = new \App\Models\UserModel();
         $this->messageModel = new \App\Models\MessageModel();
+        $this->clientModel = new \App\Models\ClientModel();
+        $this->agentModel = new \App\Models\AgentModel();
+        $this->apiKeyModel = new \App\Models\ApiKeyModel();
         $this->chatFileModel = new \App\Models\ChatFileModel();
         $this->cannedResponseModel = new \App\Models\CannedResponseModel();
         $this->keywordResponseModel = new \App\Models\KeywordResponseModel();

@@ -6,13 +6,14 @@ class Auth extends BaseController
 {
     public function login()
     {
-        // If already logged in, redirect to appropriate dashboard
+        // If already logged in as client/agent, redirect to client dashboard
+        if ($this->session->has('client_user_id') || $this->session->has('agent_user_id')) {
+            return redirect()->to('/client');
+        }
+        
+        // If logged in as admin, redirect to admin login
         if ($this->session->has('user_id')) {
-            $user = $this->userModel->find($this->session->get('user_id'));
-            if ($user && $user['role'] === 'client') {
-                return redirect()->to('/client');
-            }
-            return redirect()->to('/admin');
+            return redirect()->to('/admin/login')->with('error', 'Please use admin login for admin access');
         }
         
         return view('auth/login');
@@ -27,36 +28,41 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'Username and password are required');
         }
         
-        // Find user by username
-        $user = $this->userModel->where('username', $username)->first();
-        
-        if (!$user) {
-            return redirect()->back()->with('error', 'Invalid credentials');
-        }
-        
-        // Check if user has a valid role
-        if (!in_array($user['role'], ['admin', 'support', 'client'])) {
-            return redirect()->back()->with('error', 'Access denied');
-        }
-        
-        // Verify password
-        if (password_verify($password, $user['password'])) {
-            // Set session
+        return $this->attemptClientLogin($username, $password);
+    }
+    
+    private function attemptClientLogin($username, $password)
+    {
+        // First, try to find user in clients table
+        $client = $this->clientModel->getByUsername($username);
+        if ($client && password_verify($password, $client['password'])) {
+            // Client login successful
             $this->session->set([
-                'user_id' => $user['id'],
-                'username' => $user['username'],
-                'role' => $user['role']
+                'client_user_id' => $client['id'],
+                'client_username' => $client['username'],
+                'client_email' => $client['email'],
+                'user_type' => 'client'
             ]);
             
-            // Redirect based on user role
-            if ($user['role'] === 'client') {
-                return redirect()->to('/client');
-            } else {
-                return redirect()->to('/admin');
-            }
-        } else {
-            return redirect()->back()->with('error', 'Invalid credentials');
+            return redirect()->to('/client/dashboard');
         }
+        
+        // If not found in clients, try agents table
+        $agent = $this->agentModel->getByUsername($username);
+        if ($agent && password_verify($password, $agent['password'])) {
+            // Agent login successful
+            $this->session->set([
+                'agent_user_id' => $agent['id'],
+                'agent_username' => $agent['username'],
+                'agent_email' => $agent['email'],
+                'agent_client_id' => $agent['client_id'],
+                'user_type' => 'agent'
+            ]);
+            
+            return redirect()->to('/client/dashboard');
+        }
+        
+        return redirect()->back()->with('error', 'Invalid client/agent credentials');
     }
     
     public function logout()

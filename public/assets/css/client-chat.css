@@ -194,6 +194,26 @@
     text-align: center;
 }
 
+/* Message Links Styling */
+.message-link {
+    color: var(--primary-color) !important;
+    text-decoration: underline !important;
+    word-break: break-word;
+    transition: all 0.2s ease;
+}
+
+.message-link:hover {
+    color: var(--primary-hover) !important;
+    text-decoration: underline !important;
+    background-color: rgba(102, 126, 234, 0.1);
+    padding: 0.1rem 0.2rem;
+    border-radius: 0.2rem;
+}
+
+.message-link:visited {
+    color: var(--info-color) !important;
+}
+
 /* Sessions List */
 .sessions-list {
     flex: 1;

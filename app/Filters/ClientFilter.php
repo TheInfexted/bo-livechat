@@ -6,19 +6,18 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Filters\FilterInterface;
 
-class AuthFilter implements FilterInterface
+class ClientFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
         $session = session();
         
-        // Check if any type of user is logged in
-        $isAdminLoggedIn = $session->get('user_id');
+        // Check if user is logged in as client or agent
         $isClientLoggedIn = $session->get('client_user_id');
         $isAgentLoggedIn = $session->get('agent_user_id');
         
-        if (!$isAdminLoggedIn && !$isClientLoggedIn && !$isAgentLoggedIn) {
-            return redirect()->to('/login')->with('error', 'Please login to access this area');
+        if (!$isClientLoggedIn && !$isAgentLoggedIn) {
+            return redirect()->to('/login')->with('error', 'Please login as client or agent to access this area');
         }
     }
 

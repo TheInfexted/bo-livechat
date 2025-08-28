@@ -10,8 +10,8 @@
 
 <div class="login-container">
     <div class="login-header">
-        <h2><i class="bi bi-people"></i> Client Portal</h2>
-        <p>Client & Agent Access</p>
+        <h2><i class="bi bi-shield-check"></i> Admin Portal</h2>
+        <p>Live Chat System Administration</p>
     </div>
     
     <div class="login-body">
@@ -29,29 +29,29 @@
             </div>
         <?php endif; ?>
         
-        <form method="post" action="<?= base_url('login') ?>">
+        <form method="post" action="<?= base_url('admin/login') ?>">
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="username">Administrator Username</label>
                 <div class="input-group">
                     <span class="input-group-text">
-                        <i class="bi bi-person"></i>
+                        <i class="bi bi-person-badge"></i>
                     </span>
-                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter admin username" required>
                 </div>
             </div>
             
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">Administrator Password</label>
                 <div class="input-group">
                     <span class="input-group-text">
-                        <i class="bi bi-lock"></i>
+                        <i class="bi bi-key"></i>
                     </span>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter admin password" required>
                 </div>
             </div>
             
             <button type="submit" class="btn btn-login">
-                <i class="bi bi-box-arrow-in-right"></i> Login to Client Dashboard
+                <i class="bi bi-shield-lock"></i> Login to Admin Dashboard
             </button>
         </form>
     </div>

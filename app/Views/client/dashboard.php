@@ -2,6 +2,7 @@
 
 <?= $this->section('styles') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/client.css?v=' . time()) ?>">
+<link rel="stylesheet" href="<?= base_url('assets/css/client-responsive.css?v=' . time()) ?>">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -38,7 +39,10 @@
             <div class="header-actions">
                 <div class="user-badge">
                     <i class="bi bi-person-circle"></i>
-                    <?= esc($user['username']) ?> (<?= ucfirst($user['role']) ?>)
+                    <?= esc($user['username']) ?>
+                    <span class="role-badge role-<?= $user['type'] ?? 'client' ?>">
+                        <?= ucfirst($user['type'] ?? 'client') ?>
+                    </span>
                 </div>
                 <a href="<?= base_url('logout') ?>" class="logout-btn">
                     <i class="bi bi-box-arrow-right"></i>
@@ -51,7 +55,26 @@
     
     <div class="container">
         <!-- Stats Cards -->
-        <div class="stats-grid fade-in">
+        <?php
+        // Determine number of stats cards for proper layout
+        $statsCardCount = 0;
+        if ($user['type'] === 'client') {
+            $statsCardCount += 2; // API Keys stats (Total + Active)
+            if (isset($agentsCount)) $statsCardCount += 1; // My Agents
+        }
+        $statsCardCount += 2; // Total Sessions + Active Chats (always shown)
+        
+        $statsGridClass = 'stats-grid fade-in';
+        if ($statsCardCount == 2) {
+            $statsGridClass .= ' two-column';
+        } elseif ($statsCardCount == 3) {
+            $statsGridClass .= ' three-column';
+        } elseif ($statsCardCount == 4) {
+            $statsGridClass .= ' four-column';
+        }
+        ?>
+        <div class="<?= $statsGridClass ?>">
+            <?php if ($user['type'] === 'client'): ?>
             <div class="stat-card">
                 <div class="stat-icon primary">
                     <i class="bi bi-key-fill"></i>
@@ -66,6 +89,16 @@
                 <div class="stat-label">Active API Keys</div>
                 <div class="stat-value"><?= $activeApiKeys ?></div>
             </div>
+            <?php endif; ?>
+            <?php if ($user['type'] === 'client' && isset($agentsCount)): ?>
+            <div class="stat-card">
+                <div class="stat-icon secondary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-label">My Agents</div>
+                <div class="stat-value"><?= $agentsCount ?></div>
+            </div>
+            <?php endif; ?>
             <div class="stat-card">
                 <div class="stat-icon info">
                     <i class="bi bi-chat-dots-fill"></i>
@@ -85,6 +118,7 @@
         <!-- Quick Actions -->
         <div class="quick-actions slide-up">
             <div class="actions-grid">
+                <?php if ($user['type'] === 'client'): ?>
                 <a href="<?= base_url('client/api-keys') ?>" class="action-card primary">
                     <div class="action-icon">
                         <i class="bi bi-key"></i>
@@ -92,6 +126,7 @@
                     <div class="action-title">My API Keys</div>
                     <div class="action-description">View and manage your API keys</div>
                 </a>
+                <?php endif; ?>
                 <a href="<?= base_url('client/manage-chats') ?>" class="action-card primary">
                     <div class="action-icon">
                         <i class="bi bi-chat-dots"></i>
@@ -99,6 +134,31 @@
                     <div class="action-title">Manage Chats</div>
                     <div class="action-description">View and manage your chat sessions</div>
                 </a>
+                <a href="<?= base_url('client/chat-history') ?>" class="action-card info">
+                    <div class="action-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="action-title">Chat History</div>
+                    <div class="action-description">View your past chat conversations</div>
+                </a>
+                <?php if ($user['type'] === 'client'): ?>
+                <a href="<?= base_url('client/keyword-responses') ?>" class="action-card info">
+                    <div class="action-icon">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="action-title">Keyword Responses</div>
+                    <div class="action-description">Manage automated responses for keywords</div>
+                </a>
+                <?php endif; ?>
+                <?php if ($user['type'] === 'client'): ?>
+                <a href="<?= base_url('client/manage-agents') ?>" class="action-card secondary">
+                    <div class="action-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="action-title">Manage Agents</div>
+                    <div class="action-description">Add and manage your support agents</div>
+                </a>
+                <?php endif; ?>
                 <a href="<?= base_url('client/profile') ?>" class="action-card info">
                     <div class="action-icon">
                         <i class="bi bi-person-gear"></i>
@@ -109,8 +169,8 @@
             </div>
         </div>
     
-        <!-- API Keys Section -->
-        <?php if (!empty($api_keys)): ?>
+        <!-- API Keys Section (Clients Only) -->
+        <?php if ($user['type'] === 'client' && !empty($api_keys)): ?>
         <div class="table-container fade-in">
             <div style="padding: 1.5rem 1.5rem 0;">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -191,7 +251,7 @@
                 </tbody>
             </table>
         </div>
-        <?php else: ?>
+        <?php elseif ($user['type'] === 'client'): ?>
         <!-- No API Keys State -->
         <div class="no-data slide-up">
             <div class="no-data-icon">

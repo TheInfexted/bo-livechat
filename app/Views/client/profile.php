@@ -72,13 +72,13 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Role</label>
-                                <input type="text" class="form-control" value="<?= ucfirst($user['role']) ?>" readonly>
+                                <input type="text" class="form-control" value="<?= ucfirst($user['type'] ?? 'client') ?>" readonly>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Account Created</label>
-                                <input type="text" class="form-control" value="<?= date('M d, Y h:i A', strtotime($user['created_at'])) ?>" readonly>
+                                <input type="text" class="form-control" value="<?= isset($user['created_at']) ? date('M d, Y h:i A', strtotime($user['created_at'])) : 'Not available' ?>" readonly>
                             </div>
                         </div>
                     </div>
@@ -202,7 +202,7 @@
                                     <i class="bi bi-calendar3" style="font-size: 1rem;"></i>
                                 </div>
                                 <div class="stat-value" style="font-size: 1.5rem;">
-                                    <?= floor((time() - strtotime($user['created_at'])) / (60 * 60 * 24)) ?>
+                                    <?= isset($user['created_at']) ? floor((time() - strtotime($user['created_at'])) / (60 * 60 * 24)) : 0 ?>
                                 </div>
                                 <div class="stat-label">Days Active</div>
                             </div>

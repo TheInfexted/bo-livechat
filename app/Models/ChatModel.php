@@ -7,9 +7,9 @@ class ChatModel extends Model
     protected $table = 'chat_sessions';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'session_id', 'customer_name', 'customer_fullname', 'chat_topic', 'customer_email', 
+        'client_id', 'session_id', 'customer_name', 'customer_fullname', 'chat_topic', 'customer_email', 
         'user_role', 'external_username', 'external_fullname', 'external_system_id', 
-        'agent_id', 'status', 'closed_at', 'api_key'
+        'agent_id', 'status', 'closed_at', 'api_key', 'accepted_at', 'accepted_by'
     ];
     
     public function getActiveSessions()

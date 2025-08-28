@@ -6,8 +6,17 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
-// Home route - redirect to admin dashboard
-$routes->get('/', 'AdminController::dashboard');
+// Home route - redirect to appropriate dashboard based on user type
+$routes->get('/', function() {
+    $session = session();
+    if ($session->has('user_id')) {
+        return redirect()->to('/admin');
+    } elseif ($session->has('client_user_id') || $session->has('agent_user_id')) {
+        return redirect()->to('/client');
+    } else {
+        return redirect()->to('/login');
+    }
+});
 
 // API routes for customer chat support (minimal, for data access)
 $routes->post('/api/chat/assign-agent', 'ChatController::assignAgent');
@@ -31,7 +40,7 @@ $routes->group('chat-history', ['filter' => 'authfilter'], function($routes) {
 });
 
 // Client routes
-$routes->group('client', ['filter' => 'authfilter'], function($routes) {
+$routes->group('client', ['filter' => 'clientfilter'], function($routes) {
     $routes->get('/', 'ClientController::dashboard');
     $routes->get('dashboard', 'ClientController::dashboard');
     $routes->get('api-keys', 'ClientController::apiKeys');
@@ -43,10 +52,24 @@ $routes->group('client', ['filter' => 'authfilter'], function($routes) {
     $routes->get('sessions-data', 'ClientController::getSessionsData');
     $routes->get('canned-responses', 'ClientController::getCannedResponses');
     $routes->get('canned-responses/get/(:segment)', 'ClientController::getCannedResponse/$1');
+    $routes->get('session-details/(:segment)', 'ClientController::getSessionDetails/$1');
+    $routes->get('chat-history/view/(:segment)', 'ClientController::viewChatHistory/$1');
+    
+    // Keyword Responses routes (clients only)
+    $routes->get('keyword-responses', 'ClientController::keywordResponses');
+    $routes->get('get-keyword-response/(:segment)', 'ClientController::getKeywordResponse/$1');
+    $routes->post('save-keyword-response', 'ClientController::saveKeywordResponse');
+    $routes->post('delete-keyword-response', 'ClientController::deleteKeywordResponse');
+    
+    // Agent Management routes (clients only)
+    $routes->get('manage-agents', 'ClientController::manageAgents');
+    $routes->post('agents/add', 'ClientController::addAgent');
+    $routes->post('agents/edit', 'ClientController::editAgent');
+    $routes->post('agents/delete', 'ClientController::deleteAgent');
 });
 
 // Admin routes
-$routes->group('admin', ['filter' => 'authfilter'], function($routes) {
+$routes->group('admin', ['filter' => 'adminfilter'], function($routes) {
     $routes->get('/', 'AdminController::dashboard');
     $routes->get('dashboard', 'AdminController::dashboard');
     $routes->get('chat', 'AdminController::chat');
@@ -60,29 +83,6 @@ $routes->group('admin', ['filter' => 'authfilter'], function($routes) {
     $routes->post('canned-responses/save', 'AdminController::saveCannedResponse');
     $routes->post('canned-responses/delete', 'AdminController::deleteCannedResponse');
     
-    // Keyword responses routes
-    $routes->get('keyword-responses', 'AdminController::keywordResponses');
-    $routes->get('get-keyword-response/(:segment)', 'AdminController::getKeywordResponse/$1');
-    $routes->post('save-keyword-response', 'AdminController::saveKeywordResponse');
-    $routes->post('delete-keyword-response', 'AdminController::deleteKeywordResponse');
-    
-    $routes->get('sessions-data', 'AdminController::sessionsData');
-    $routes->get('settings', 'AdminController::settings');
-    $routes->post('settings/save', 'AdminController::saveSettings');
-    $routes->get('customers', 'AdminController::customers');
-    $routes->get('customers/(:segment)', 'AdminController::customerDetails/$1');
-    $routes->get('export/chats', 'AdminController::exportChats');
-    
-    // API Key Management routes
-    $routes->get('api-keys', 'AdminController::apiKeys');
-    $routes->post('api-keys/create', 'AdminController::createApiKey');
-    $routes->post('api-keys/update', 'AdminController::updateApiKey');
-    $routes->get('api-keys/edit/(:num)', 'AdminController::editApiKey/$1');
-    $routes->post('api-keys/suspend/(:num)', 'AdminController::suspendApiKey/$1');
-    $routes->post('api-keys/activate/(:num)', 'AdminController::activateApiKey/$1');
-    $routes->post('api-keys/revoke/(:num)', 'AdminController::revokeApiKey/$1');
-    
-    $routes->post('delete-keyword-response', 'AdminController::deleteKeywordResponse');
     
     $routes->get('sessions-data', 'AdminController::sessionsData');
     $routes->get('settings', 'AdminController::settings');
@@ -100,6 +100,7 @@ $routes->group('admin', ['filter' => 'authfilter'], function($routes) {
     $routes->post('api-keys/activate/(:num)', 'AdminController::activateApiKey/$1');
     $routes->post('api-keys/revoke/(:num)', 'AdminController::revokeApiKey/$1');
     $routes->post('api-keys/delete/(:num)', 'AdminController::deleteApiKey/$1');
+    
 
 });
 
@@ -120,6 +121,11 @@ $routes->get('/login', 'Auth::login');
 $routes->post('/login', 'Auth::attemptLogin');
 $routes->get('/logout', 'Auth::logout');
 
+// Admin Authentication routes
+$routes->get('/admin/login', 'AdminAuth::login');
+$routes->post('/admin/login', 'AdminAuth::attemptLogin');
+$routes->get('/admin/logout', 'AdminAuth::logout');
+
 // Chat API routes for clients and admin
 $routes->group('chat', ['filter' => 'authfilter'], function($routes) {
     $routes->post('sendMessage', 'ChatController::sendMessage');
@@ -135,6 +141,9 @@ $routes->group('api', function($routes) {
     $routes->post('chat/send-message', 'ChatController::sendMessage');
     $routes->get('chat/check-status/(:segment)', 'ChatController::checkStatus/$1');
     $routes->get('chat/quick-actions', 'AdminController::getQuickActions');
+    
+    // Client lookup API (for frontend integration)
+    $routes->post('client/get-id-by-email', 'ClientController::getClientIdByEmail');
     
     // Widget API validation routes (no auth filter - public API)
     $routes->post('widget/validate', 'WidgetAuthController::validateWidget');

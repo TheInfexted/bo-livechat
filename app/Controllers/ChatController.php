@@ -252,10 +252,33 @@ class ChatController extends General
             return $this->jsonResponse(['error' => 'Cannot send message to closed session'], 400);
         }
         
+        // Determine sender_id and sender_user_type based on authentication type
+        $senderId = null;
+        $senderUserType = null;
+        if ($senderType === 'agent') {
+            if ($this->session->has('user_id')) {
+                // Admin user
+                $senderId = $this->session->get('user_id');
+                $senderUserType = 'admin';
+            } elseif ($this->session->has('client_user_id')) {
+                // Client user
+                $senderId = $this->session->get('client_user_id');
+                $senderUserType = 'client';
+            } elseif ($this->session->has('agent_user_id')) {
+                // Agent user
+                $senderId = $this->session->get('agent_user_id');
+                $senderUserType = 'agent';
+            }
+        } else {
+            // For customer messages, sender_user_type is null (they're not in any user table)
+            $senderUserType = null;
+        }
+        
         $messageData = [
             'session_id' => $chatSession['id'],
             'sender_type' => $senderType,
-            'sender_id' => $senderType === 'agent' ? ($this->session->get('user_id') ?: null) : null,
+            'sender_id' => $senderId,
+            'sender_user_type' => $senderUserType,
             'message' => $message,
             'message_type' => 'text'
         ];
@@ -301,10 +324,25 @@ class ChatController extends General
             return $this->jsonResponse(['error' => 'Session is not waiting for agent'], 400);
         }
         
+        // Determine agent_id based on authentication type
+        $agentId = null;
+        if ($this->session->has('user_id')) {
+            // Admin user
+            $agentId = $this->session->get('user_id');
+        } elseif ($this->session->has('client_user_id')) {
+            // Client user
+            $agentId = $this->session->get('client_user_id');
+        } elseif ($this->session->has('agent_user_id')) {
+            // Agent user
+            $agentId = $this->session->get('agent_user_id');
+        }
+        
         // Update session to active and assign agent
         $updated = $this->chatModel->update($chatSession['id'], [
             'status' => 'active',
-            'agent_id' => $this->session->get('user_id') ?: null,
+            'agent_id' => $agentId,
+            'accepted_at' => date('Y-m-d H:i:s'),
+            'accepted_by' => $agentName,
             'updated_at' => date('Y-m-d H:i:s')
         ]);
         
@@ -808,48 +846,75 @@ class ChatController extends General
     public function getSessionDetails($sessionId)
     {
         if (!$this->isAuthenticated()) {
-            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return $this->jsonResponse(['error' => 'Unauthorized', 'debug' => 'User not authenticated'], 401);
         }
         
         if (!$sessionId) {
             return $this->jsonResponse(['error' => 'Session ID is required'], 400);
         }
         
-        // Get session with agent information
-        $session = $this->chatModel->select('chat_sessions.*, users.username as agent_name')
-                                   ->join('users', 'users.id = chat_sessions.agent_id', 'left')
-                                   ->where('chat_sessions.session_id', $sessionId)
-                                   ->first();
-        
-        if (!$session) {
-            return $this->jsonResponse(['error' => 'Session not found'], 404);
+        try {
+            // Get session with agent information
+            $session = $this->chatModel->select('chat_sessions.*, users.username as agent_name')
+                                       ->join('users', 'users.id = chat_sessions.agent_id', 'left')
+                                       ->where('chat_sessions.session_id', $sessionId)
+                                       ->first();
+            
+            if (!$session) {
+                return $this->jsonResponse(['error' => 'Session not found', 'session_id' => $sessionId], 404);
+            }
+            
+            // Process customer name using comprehensive logic
+            $customerName = 'Anonymous';
+            if (!empty($session['external_fullname']) && trim($session['external_fullname']) !== '') {
+                $customerName = trim($session['external_fullname']);
+            } elseif (!empty($session['customer_fullname']) && trim($session['customer_fullname']) !== '') {
+                $customerName = trim($session['customer_fullname']);
+            } elseif (!empty($session['customer_name']) && trim($session['customer_name']) !== '') {
+                $customerName = trim($session['customer_name']);
+            } elseif (!empty($session['external_username']) && trim($session['external_username']) !== '') {
+                $customerName = trim($session['external_username']);
+            }
+            
+            // Add processed customer name to session data
+            $session['customer_name'] = $customerName;
+            
+            // Ensure chat_topic is not null or empty
+            if (empty($session['chat_topic']) || trim($session['chat_topic']) === '') {
+                $session['chat_topic'] = 'No topic specified';
+            }
+            
+            // Ensure customer_email is properly set
+            if (empty($session['customer_email'])) {
+                $session['customer_email'] = '';
+            }
+            
+            // accepted_at and accepted_by are now stored directly in the database
+            // No need to derive them from other fields
+            
+            // Format timestamps for frontend
+            if (!empty($session['created_at'])) {
+                $session['created_at_formatted'] = date('M d, Y h:i A', strtotime($session['created_at']));
+            }
+            
+            if (!empty($session['updated_at'])) {
+                $session['updated_at_formatted'] = date('M d, Y h:i A', strtotime($session['updated_at']));
+            }
+            
+            // Remove debug logging from production
+            // Only log errors, not successful requests
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'session' => $session
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log('ERROR - getSessionDetails failed: ' . $e->getMessage());
+            return $this->jsonResponse([
+                'error' => 'Failed to fetch session details',
+                'debug' => 'Database error occurred'
+            ], 500);
         }
-        
-        // Process customer name using the same logic as ChatModel
-        $customerName = 'Anonymous';
-        if (!empty($session['external_fullname'])) {
-            $customerName = trim($session['external_fullname']);
-        } elseif (!empty($session['customer_fullname'])) {
-            $customerName = trim($session['customer_fullname']);
-        } elseif (!empty($session['customer_name'])) {
-            $customerName = trim($session['customer_name']);
-        }
-        
-        // Add processed customer name to session data
-        $session['customer_name'] = $customerName;
-        
-        // Add accepted_at timestamp (when agent was assigned)
-        // For now, we'll use updated_at when status changed to active
-        // In the future, we could add a separate accepted_at column
-        if ($session['status'] === 'active' && $session['agent_id']) {
-            $session['accepted_at'] = $session['updated_at'];
-        } else {
-            $session['accepted_at'] = null;
-        }
-        
-        return $this->jsonResponse([
-            'success' => true,
-            'session' => $session
-        ]);
     }
 }

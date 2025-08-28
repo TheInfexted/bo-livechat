@@ -549,11 +549,13 @@ function startNewChat() {
         }
         
         // Add hidden fields for role information
+        const currentApiKey = typeof apiKey !== 'undefined' ? apiKey : '';
         roleFieldsHtml = `
             <input type="hidden" name="user_role" value="${currentUserRole}">
             <input type="hidden" name="external_username" value="${currentExternalUsername}">
             <input type="hidden" name="external_fullname" value="${currentExternalFullname}">
             <input type="hidden" name="external_system_id" value="${currentExternalSystemId}">
+            <input type="hidden" name="api_key" value="${currentApiKey}">
         `;
         
         chatInterface.innerHTML = `
@@ -1613,40 +1615,70 @@ async function sendQuickResponse(type) {
 
 // Fetch session details and populate customer info panel
 async function fetchSessionDetailsAndPopulate(sessionId) {
-    if (!sessionId || getUserType() !== 'agent') return;
+    if (!sessionId || getUserType() !== 'agent') {
+        console.warn('fetchSessionDetailsAndPopulate: Invalid sessionId or not an agent');
+        return;
+    }
+    
+    console.log('Fetching session details for:', sessionId);
     
     try {
         const response = await fetch(`/api/chat/session-details/${sessionId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const sessionData = await response.json();
+        console.log('Session data received:', sessionData);
         
         if (sessionData.success && sessionData.session) {
             // Use the populateCustomerInfo function if it exists in the admin view
             if (typeof populateCustomerInfo === 'function') {
                 populateCustomerInfo(sessionData.session);
+                console.log('Customer info populated successfully');
+            } else {
+                console.error('populateCustomerInfo function not found');
             }
             
             // Also load messages to update last reply information
-            const messagesResponse = await fetch(`/api/chat/messages/${sessionId}`);
-            const messages = await messagesResponse.json();
-            
-            if (messages && typeof updateLastReplyInfo === 'function') {
-                updateLastReplyInfo(messages);
+            try {
+                const messagesResponse = await fetch(`/api/chat/messages/${sessionId}`);
+                if (messagesResponse.ok) {
+                    const messages = await messagesResponse.json();
+                    
+                    if (messages && typeof updateLastReplyInfo === 'function') {
+                        updateLastReplyInfo(messages);
+                        console.log('Last reply info updated');
+                    }
+                }
+            } catch (messagesError) {
+                console.warn('Failed to load messages for last reply info:', messagesError);
             }
+        } else {
+            console.error('Session data not found or invalid:', sessionData);
+            throw new Error(sessionData.error || 'Invalid session data');
         }
     } catch (error) {
+        console.error('Error loading session details:', error);
+        
         // Error loading session details - populate with basic info from DOM
         const sessionItem = document.querySelector(`[data-session-id="${sessionId}"]`);
         if (sessionItem && typeof populateCustomerInfo === 'function') {
             const customerName = sessionItem.querySelector('strong')?.textContent || 'Anonymous';
             const basicSessionData = {
                 customer_name: customerName,
-                chat_topic: 'Unable to load',
+                chat_topic: 'Error loading details',
                 customer_email: '-',
                 created_at: new Date().toISOString(),
                 status: 'active',
-                agent_name: currentUsername || 'Agent'
+                agent_name: currentUsername || 'Agent',
+                error: true
             };
             populateCustomerInfo(basicSessionData);
+            console.log('Populated with fallback data due to error');
+        } else {
+            console.error('Cannot populate fallback data - DOM element or function not found');
         }
     }
 }

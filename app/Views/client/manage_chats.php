@@ -8,6 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="<?= base_url('assets/css/client-chat.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/client-responsive.css') ?>?v=<?= time() ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/css/date.css') ?>?v=<?= time() ?>" rel="stylesheet">
 </head>
 <body class="client-chat-dashboard">
     <!-- Header -->
@@ -202,6 +203,11 @@
                             </div>
                             
                             <div class="detail-item">
+                                <label>Agents Involved:</label>
+                                <span id="agents-involved-detail">-</span>
+                            </div>
+                            
+                            <div class="detail-item">
                                 <label>Status:</label>
                                 <span class="status-badge" id="chat-status-detail">-</span>
                             </div>
@@ -287,6 +293,15 @@
                             </div>
                         </div>
                         
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body py-2">
+                                    <label class="fw-bold text-primary mb-1" style="font-size: 0.8rem;">AGENTS INVOLVED</label>
+                                    <div id="agents-involved-detail-modal" style="font-size: 0.9rem; color: #333;">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="col-md-6">
                             <div class="card border-0 bg-light">
                                 <div class="card-body py-2">
@@ -320,10 +335,13 @@
     <script>
         // Set client-specific globals for chat.js
         let userType = 'agent'; // Client acts as agent
-        let userId = <?= json_encode($client_id ?? 1) ?>;
+        let userId = <?= json_encode($user_id ?? 1) ?>; // The actual user ID (client or agent)
         let currentUsername = <?= json_encode($client_name ?? 'Client User') ?>;
         let currentSessionId = null;
         let sessionId = null;
+        
+        // User type for WebSocket communication ('client' or 'agent')
+        let actualUserType = <?= json_encode($user_type ?? 'client') ?>;
         
         let clientApiKeys = <?= json_encode($api_keys ?? []) ?>;
         let clientName = <?= json_encode($client_name ?? 'Client User') ?>;
@@ -634,12 +652,21 @@
                     }
                     
                     if (data.success && data.messages && data.messages.length > 0) {
-                        // Process messages - always use our custom display function for reliability
+                        // Process messages with date separators
+                        let previousDate = null;
+                        
                         data.messages.forEach((message, index) => {
                             
                             // Ensure each message has proper timestamp
                             if (!message.timestamp && message.created_at) {
                                 message.timestamp = message.created_at;
+                            }
+                            
+                            // Check if we need to add a date separator
+                            const messageDate = new Date(message.created_at || message.timestamp).toDateString();
+                            if (previousDate !== messageDate) {
+                                displayDateSeparator(formatChatDate(message.created_at || message.timestamp));
+                                previousDate = messageDate;
                             }
                             
                             // Always use our custom message display for client interface
@@ -712,12 +739,14 @@
             messageDiv.className = `message ${message.sender_type}`;
             
             // Get the actual sender name from the message data
+            // With the new sender_user_type system, sender_name should be properly set by the database
             let senderName;
             if (message.sender_type === 'customer') {
-                senderName = message.customer_name || 'Customer';
+                // For customer messages, use sender_name from database
+                senderName = message.sender_name || message.customer_name || 'Customer';
             } else {
-                // For agent messages, use the actual sender_name from the message
-                senderName = message.sender_name || currentUsername || clientName || 'Agent';
+                // For agent messages, trust the sender_name from database (now properly set with sender_user_type)
+                senderName = message.sender_name || 'Agent';
             }
             
             const avatar = generateAvatarInitials(senderName, message.sender_type);
@@ -727,7 +756,7 @@
                     ${avatar}
                 </div>
                 <div class="message-content">
-                    ${escapeHtml(message.message)}
+                    ${makeLinksClickable(message.message)}
                     <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
                 </div>
             `;
@@ -740,6 +769,110 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        }
+        
+        // Function to convert URLs to clickable links
+        function makeLinksClickable(text) {
+            if (!text) return text;
+            
+            // Escape HTML first to prevent XSS
+            const escapedText = escapeHtml(text);
+            
+            // URL regex pattern to match various URL formats
+            const urlPattern = /(https?:\/\/(?:[-\w.])+(?::[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[&\w\/.=])*)?(?:#(?:[\w\/.])*)?)(?![^<]*>|[^<>]*<\/)/gi;
+            
+            // Replace URLs with clickable links
+            return escapedText.replace(urlPattern, function(url) {
+                // Ensure the URL has a protocol
+                const fullUrl = url.match(/^https?:\/\//i) ? url : 'http://' + url;
+                
+                return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="message-link">${url}</a>`;
+            });
+        }
+        
+        // Date separator functions (from chat.js)
+        function displayDateSeparator(dateString, id = null) {
+            const container = document.getElementById('messages-container');
+            if (!container) return;
+
+            // Create a unique identifier for this date
+            const dateId = id || `date_${dateString.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            // Check if date separator already exists for this specific date
+            if (container.querySelector(`[data-separator-id="${dateId}"]`)) {
+                return; // Already exists, don't add another
+            }
+
+            // Also check by date string content to prevent duplicates
+            const existingSeparators = container.querySelectorAll('.date-separator .date-badge');
+            for (let separator of existingSeparators) {
+                if (separator.textContent.trim() === dateString.trim()) {
+                    return; // Already exists, don't add another
+                }
+            }
+
+            // Determine date type for styling
+            const dateType = getDateType(dateString);
+            
+            const separatorDiv = document.createElement('div');
+            separatorDiv.className = `date-separator ${dateType}`;
+            separatorDiv.dataset.separatorId = dateId;
+            
+            separatorDiv.innerHTML = `
+                <div class="date-badge">${dateString}</div>
+            `;
+
+            // Add animation class for new separators
+            separatorDiv.classList.add('new');
+            
+            container.appendChild(separatorDiv);
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                separatorDiv.classList.remove('new');
+            }, 300);
+        }
+
+        function formatChatDate(timestamp) {
+            const date = new Date(timestamp);
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            // Helper function to format date as DD-MM-YYYY
+            const formatDDMMYYYY = (d) => {
+                const day = d.getDate().toString().padStart(2, '0');
+                const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}-${month}-${year}`;
+            };
+            
+            // Check if it's today
+            if (date.toDateString() === today.toDateString()) {
+                return `Today, ${formatDDMMYYYY(date)}`;
+            } 
+            // Check if it's yesterday
+            else if (date.toDateString() === yesterday.toDateString()) {
+                return `Yesterday, ${formatDDMMYYYY(date)}`;
+            } 
+            // For other dates, show full date with day name
+            else {
+                return date.toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+            }
+        }
+
+        function getDateType(dateString) {
+            if (dateString.includes('Today')) {
+                return 'today';
+            } else if (dateString.includes('Yesterday')) {
+                return 'yesterday';
+            }
+            return '';
         }
         
         // Initialize message form (adapted from chat.js)
@@ -760,7 +893,8 @@
                                 session_id: currentSessionId,
                                 message: message,
                                 sender_type: 'agent', // Client acts as agent
-                                sender_id: userId
+                                sender_id: userId,
+                                user_type: actualUserType // Use the actual user type ('client' or 'agent')
                             };
                             
                             ws.send(JSON.stringify(messageData));
@@ -988,10 +1122,11 @@
         // Load session details for customer info panel
         function loadSessionDetails(sessionId) {
             if (!sessionId) {
+                console.warn('loadSessionDetails: No sessionId provided');
                 return;
             }
             
-            const url = `<?= base_url('chat/getSessionDetails') ?>/${sessionId}`;
+            const url = `<?= base_url('client/session-details') ?>/${sessionId}`;
             
             fetch(url)
                 .then(response => {
@@ -1041,6 +1176,7 @@
                         updateDetailElement('chat-accepted-detail', session.accepted_at ? formatDateTime(session.accepted_at) : '-');
                         updateDetailElement('chat-accepted-by-detail', session.accepted_by || session.agent_name || '-');
                         updateDetailElement('last-reply-by-detail', getLastReplyBy(session));
+                        updateDetailElement('agents-involved-detail', getAgentsInvolved(session));
                         updateStatusBadge('chat-status-detail', session.status);
                         updateDetailElement('api-key-detail', session.api_key ? `${session.api_key.substring(0, 12)}...` : '-');
                         
@@ -1051,6 +1187,7 @@
                         updateModalElement('chat-accepted-detail-modal', session.accepted_at ? formatDateTime(session.accepted_at) : '-');
                         updateModalElement('chat-accepted-by-detail-modal', session.accepted_by || session.agent_name || '-');
                         updateModalElement('last-reply-by-detail-modal', getLastReplyBy(session));
+                        updateModalElement('agents-involved-detail-modal', getAgentsInvolved(session));
                         updateStatusBadge('chat-status-detail-modal', session.status);
                         updateModalElement('api-key-detail-modal', session.api_key ? `${session.api_key.substring(0, 12)}...` : '-');
                         
@@ -1177,15 +1314,38 @@
         
         // Helper function to determine last reply by
         function getLastReplyBy(session) {
+            // Check if we have last message sender information
+            if (session.last_message_sender) {
+                if (session.last_message_sender === 'customer') {
+                    return 'Customer';
+                } else if (session.last_message_sender === 'agent') {
+                    // Use the actual sender name from the message
+                    return session.last_message_sender_name || 'Agent';
+                }
+            }
+            
+            // Fallback to old logic if new fields not available
             if (session.last_reply_by) {
                 return session.last_reply_by;
             }
             
-            if (session.last_message_sender) {
-                return session.last_message_sender === 'customer' ? 'Customer' : (session.last_message_sender_name || 'Agent');
+            return '-';
+        }
+        
+        // Helper function to format agents involved
+        function getAgentsInvolved(session) {
+            // Check if we have agents involved data
+            if (session.agents_involved && Array.isArray(session.agents_involved) && session.agents_involved.length > 0) {
+                // Join agent names with commas
+                return session.agents_involved.join(', ');
             }
             
-            return '-';
+            // Fallback: if no agents involved data, try to show accepted_by at minimum
+            if (session.accepted_by && session.accepted_by !== '-') {
+                return session.accepted_by;
+            }
+            
+            return 'None';
         }
         
         // Override chat.js refreshMessagesForSession to use backend parameter for client interface

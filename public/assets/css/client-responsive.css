@@ -680,3 +680,340 @@
         animation: none;
     }
 }
+
+/* =============================================================================
+   DASHBOARD STAT CARDS RESPONSIVE STYLES
+   ============================================================================= */
+
+/* Large Desktop (1200px+) - All 5 cards in one row */
+@media (min-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 1.5rem;
+        max-width: 1200px;
+    }
+    
+    .stat-card {
+        min-height: 180px;
+        padding: 2rem;
+    }
+    
+    .stat-icon {
+        width: 64px;
+        height: 64px;
+        font-size: 2rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+    }
+}
+
+/* Medium Desktop (992px - 1199px) - All 5 cards in one row, slightly smaller */
+@media (max-width: 1199px) and (min-width: 992px) {
+    .stats-grid {
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 1.25rem;
+        max-width: 100%;
+    }
+    
+    .stat-card {
+        min-height: 170px;
+        padding: 1.75rem;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.875rem;
+        margin-bottom: 1.125rem;
+    }
+    
+    .stat-value {
+        font-size: 2.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+}
+
+/* Small Desktop (768px - 991px) - 3 cards top row, 2 cards bottom row */
+@media (max-width: 991px) and (min-width: 769px) {
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 1rem;
+        max-width: 100%;
+    }
+    
+    .stat-card {
+        min-height: 150px;
+        padding: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 54px;
+        height: 54px;
+        font-size: 1.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+}
+
+/* Tablet (576px - 768px) - 2 cards per row */
+@media (max-width: 768px) and (min-width: 576px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem;
+        max-width: none;
+    }
+    
+    .stat-card {
+        min-height: 140px;
+        padding: 1.25rem;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+        margin-bottom: 0.875rem;
+    }
+    
+    .stat-value {
+        font-size: 1.875rem;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+    }
+}
+
+/* Mobile (480px - 575px) - 2 cards per row, smaller */
+@media (max-width: 575px) and (min-width: 481px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.875rem;
+        max-width: none;
+    }
+    
+    .stat-card {
+        min-height: 130px;
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.375rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .stat-value {
+        font-size: 1.75rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+    }
+}
+
+/* Small Mobile (480px and below) - Single column */
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+        max-width: none;
+    }
+    
+    .stat-card {
+        min-height: 120px;
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .stat-value {
+        font-size: 1.625rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+    }
+}
+
+/* Dashboard Header responsive adjustments */
+@media (max-width: 768px) {
+    .client-header {
+        padding: 1.5rem 0;
+    }
+    
+    .client-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+    
+    .user-badge {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.875rem;
+    }
+    
+    .logout-btn {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.875rem;
+    }
+}
+
+/* Dashboard Actions grid responsive adjustments */
+@media (max-width: 768px) {
+    .actions-grid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+        gap: 1rem;
+    }
+    
+    .action-card {
+        text-align: center;
+        padding: 1.25rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+    .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 600px;
+        gap: 1.25rem;
+    }
+}
+
+@media (min-width: 993px) {
+    .actions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        max-width: 900px;
+        gap: 1.5rem;
+    }
+}
+
+/* Dashboard Container adjustments for different screen sizes */
+@media (max-width: 576px) {
+    .container {
+        padding: 0 0.75rem;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+}
+
+@media (min-width: 769px) {
+    .container {
+        padding: 0 1rem;
+    }
+}
+
+/* Stat card hover effects - adjust for touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .stat-card:hover {
+        transform: none;
+        box-shadow: var(--shadow-sm);
+        border-color: var(--border-color);
+    }
+    
+    .stat-card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+}
+
+/* Optimize for high-density displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .stat-icon {
+        border-width: 2px;
+    }
+    
+    .stat-card::before {
+        height: 3px;
+    }
+}
+
+/* Landscape phone orientation adjustments for dashboard */
+@media (max-height: 500px) and (orientation: landscape) and (max-width: 768px) {
+    .client-header {
+        padding: 1rem 0;
+    }
+    
+    .client-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card {
+        min-height: 110px;
+        padding: 0.875rem;
+    }
+    
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.65rem;
+    }
+}
+
+/* Print styles for dashboard */
+@media print {
+    .stats-grid {
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 0.5rem;
+        max-width: 100%;
+    }
+    
+    .stat-card {
+        border: 1px solid #000;
+        box-shadow: none;
+        min-height: auto;
+        padding: 1rem;
+        page-break-inside: avoid;
+    }
+    
+    .stat-card::before {
+        display: none;
+    }
+    
+    .stat-card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}

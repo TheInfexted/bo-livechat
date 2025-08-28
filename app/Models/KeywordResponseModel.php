@@ -12,7 +12,7 @@ class KeywordResponseModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
-    protected $allowedFields = ['keyword', 'response', 'is_active', 'created_at', 'updated_at'];
+    protected $allowedFields = ['keyword', 'response', 'is_active', 'client_id', 'created_at', 'updated_at'];
 
     // Dates
     protected $useTimestamps = true;
@@ -83,5 +83,40 @@ class KeywordResponseModel extends Model
             return $this->update($id, ['is_active' => $record['is_active'] ? 0 : 1]);
         }
         return false;
+    }
+    
+    /**
+     * Get active keyword responses for a specific client
+     */
+    public function getActiveResponsesByClient($clientId)
+    {
+        return $this->where('client_id', $clientId)
+                   ->where('is_active', 1)
+                   ->findAll();
+    }
+    
+    /**
+     * Get all keyword responses for a specific client
+     */
+    public function getResponsesByClient($clientId)
+    {
+        return $this->where('client_id', $clientId)
+                   ->orderBy('created_at', 'DESC')
+                   ->findAll();
+    }
+    
+    /**
+     * Check if keyword already exists for a specific client
+     */
+    public function keywordExistsForClient($keyword, $clientId, $excludeId = null)
+    {
+        $builder = $this->where('keyword', $keyword)
+                        ->where('client_id', $clientId);
+        
+        if ($excludeId) {
+            $builder->where('id !=', $excludeId);
+        }
+        
+        return $builder->first() !== null;
     }
 }
