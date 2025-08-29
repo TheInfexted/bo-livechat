@@ -65,7 +65,7 @@
 }
 
 .status-badge.closed {
-    background-color: var(--secondary-color);
+    background-color: red;
     color: white;
 }
 

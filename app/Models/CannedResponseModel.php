@@ -8,31 +8,150 @@ class CannedResponseModel extends Model
 {
     protected $table = 'canned_responses';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['title', 'content', 'category', 'agent_id', 'is_global'];
+    protected $useAutoIncrement = true;
+    protected $returnType = 'array';
+    protected $useSoftDeletes = false;
+    protected $protectFields = true;
+    protected $allowedFields = [
+        'title', 'content', 'category', 'api_key', 'created_by_user_type', 
+        'created_by_user_id', 'is_active', 'created_at', 'updated_at'
+    ];
+
+    // Dates
+    protected $useTimestamps = true;
+    protected $dateFormat = 'datetime';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
+
+    // Validation
+    protected $validationRules = [
+        'title' => 'required|min_length[1]|max_length[100]',
+        'content' => 'required|min_length[1]',
+        'category' => 'max_length[50]',
+        'api_key' => 'required|max_length[255]',
+        'created_by_user_type' => 'required|in_list[client,agent]',
+        'created_by_user_id' => 'required|integer'
+    ];
     
-    public function getGlobalResponses()
+    protected $validationMessages = [
+        'title' => [
+            'required' => 'Title is required',
+            'min_length' => 'Title must be at least 1 character long',
+            'max_length' => 'Title cannot exceed 100 characters'
+        ],
+        'content' => [
+            'required' => 'Content is required',
+            'min_length' => 'Content must be at least 1 character long'
+        ],
+        'api_key' => [
+            'required' => 'API key is required'
+        ],
+        'created_by_user_type' => [
+            'required' => 'User type is required',
+            'in_list' => 'User type must be either client or agent'
+        ],
+        'created_by_user_id' => [
+            'required' => 'User ID is required',
+            'integer' => 'User ID must be an integer'
+        ]
+    ];
+    
+    protected $skipValidation = false;
+    protected $cleanValidationRules = true;
+
+    /**
+     * Get all active canned responses
+     */
+    public function getActiveResponses()
     {
-        return $this->where('is_global', 1)->findAll();
+        return $this->where('is_active', 1)->findAll();
     }
-    
-    public function getAgentResponses($agentId)
+
+    /**
+     * Get canned responses for a specific API key and creator
+     */
+    public function getResponsesForCreator($apiKey, $userType, $userId)
     {
-        return $this->where('agent_id', $agentId)->findAll();
-    }
-    
-    public function getByCategory($category)
-    {
-        return $this->where('category', $category)->findAll();
-    }
-    
-    public function getAvailableResponses($agentId)
-    {
-        return $this->groupStart()
-                    ->where('is_global', 1)
-                    ->orWhere('agent_id', $agentId)
-                    ->groupEnd()
-                    ->orderBy('category')
-                    ->orderBy('title')
+        return $this->where('api_key', $apiKey)
+                    ->where('created_by_user_type', $userType)
+                    ->where('created_by_user_id', $userId)
+                    ->where('is_active', 1)
+                    ->orderBy('title', 'ASC')
                     ->findAll();
+    }
+
+    /**
+     * Get all canned responses for a specific API key (for dropdown usage in chat)
+     */
+    public function getResponsesForApiKey($apiKey)
+    {
+        return $this->where('api_key', $apiKey)
+                    ->where('is_active', 1)
+                    ->orderBy('title', 'ASC')
+                    ->findAll();
+    }
+
+    /**
+     * Check if title already exists for the same creator
+     */
+    public function titleExistsForCreator($title, $apiKey, $userType, $userId, $excludeId = null)
+    {
+        $builder = $this->where('title', $title)
+                        ->where('api_key', $apiKey)
+                        ->where('created_by_user_type', $userType)
+                        ->where('created_by_user_id', $userId);
+        
+        if ($excludeId) {
+            $builder->where('id !=', $excludeId);
+        }
+        
+        return $builder->first() !== null;
+    }
+
+    /**
+     * Toggle active status of a canned response
+     */
+    public function toggleStatus($id)
+    {
+        $record = $this->find($id);
+        if ($record) {
+            return $this->update($id, ['is_active' => $record['is_active'] ? 0 : 1]);
+        }
+        return false;
+    }
+
+    /**
+     * Check if user can manage this canned response (creator check)
+     */
+    public function canUserManage($id, $userType, $userId)
+    {
+        $response = $this->find($id);
+        if (!$response) {
+            return false;
+        }
+        
+        return ($response['created_by_user_type'] === $userType && 
+                $response['created_by_user_id'] == $userId);
+    }
+
+    /**
+     * Get canned responses with category grouping for management interface
+     */
+    public function getResponsesGroupedByCategory($apiKey, $userType, $userId)
+    {
+        $responses = $this->where('api_key', $apiKey)
+                          ->where('created_by_user_type', $userType)
+                          ->where('created_by_user_id', $userId)
+                          ->orderBy('category', 'ASC')
+                          ->orderBy('title', 'ASC')
+                          ->findAll();
+
+        $grouped = [];
+        foreach ($responses as $response) {
+            $category = $response['category'] ?: 'general';
+            $grouped[$category][] = $response;
+        }
+        
+        return $grouped;
     }
 }

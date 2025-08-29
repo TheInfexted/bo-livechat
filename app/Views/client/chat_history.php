@@ -7,6 +7,19 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/date.css?v=' . time()) ?>">
 <?= $this->endSection() ?>
 
+<?php
+// Helper function to build query string from current filters (excluding page parameter)
+function buildQueryString() {
+    $params = [];
+    if (!empty($_GET['status'])) $params['status'] = $_GET['status'];
+    if (!empty($_GET['date_from'])) $params['date_from'] = $_GET['date_from'];
+    if (!empty($_GET['date_to'])) $params['date_to'] = $_GET['date_to'];
+    if (!empty($_GET['search'])) $params['search'] = $_GET['search'];
+    
+    return empty($params) ? '' : '&' . http_build_query($params);
+}
+?>
+
 <?= $this->section('content') ?>
 <!-- Alerts -->
 <?php if (session()->getFlashdata('error')): ?>
@@ -63,28 +76,28 @@
                 <i class="bi bi-chat-dots-fill"></i>
             </div>
             <div class="stat-label">Total Sessions</div>
-            <div class="stat-value"><?= count($sessions) ?></div>
+            <div class="stat-value"><?= isset($allSessions) ? count($allSessions) : count($sessions) ?></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon success">
                 <i class="bi bi-check-circle-fill"></i>
             </div>
             <div class="stat-label">Completed</div>
-            <div class="stat-value"><?= count(array_filter($sessions, fn($s) => $s['status'] === 'closed')) ?></div>
+            <div class="stat-value"><?= isset($allSessions) ? count(array_filter($allSessions, fn($s) => $s['status'] === 'closed')) : count(array_filter($sessions, fn($s) => $s['status'] === 'closed')) ?></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon warning">
                 <i class="bi bi-hourglass-split"></i>
             </div>
             <div class="stat-label">Active</div>
-            <div class="stat-value"><?= count(array_filter($sessions, fn($s) => $s['status'] === 'active')) ?></div>
+            <div class="stat-value"><?= isset($allSessions) ? count(array_filter($allSessions, fn($s) => $s['status'] === 'active')) : count(array_filter($sessions, fn($s) => $s['status'] === 'active')) ?></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon primary">
                 <i class="bi bi-clock"></i>
             </div>
             <div class="stat-label">Waiting</div>
-            <div class="stat-value"><?= count(array_filter($sessions, fn($s) => $s['status'] === 'waiting')) ?></div>
+            <div class="stat-value"><?= isset($allSessions) ? count(array_filter($allSessions, fn($s) => $s['status'] === 'waiting')) : count(array_filter($sessions, fn($s) => $s['status'] === 'waiting')) ?></div>
         </div>
     </div>
 
@@ -118,28 +131,28 @@
                                 <label class="form-label">Status</label>
                                 <select name="status" class="form-control">
                                     <option value="">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="waiting">Waiting</option>
-                                    <option value="closed">Closed</option>
+                                    <option value="active" <?= isset($filters['status']) && $filters['status'] == 'active' ? 'selected' : '' ?>>Active</option>
+                                    <option value="waiting" <?= isset($filters['status']) && $filters['status'] == 'waiting' ? 'selected' : '' ?>>Waiting</option>
+                                    <option value="closed" <?= isset($filters['status']) && $filters['status'] == 'closed' ? 'selected' : '' ?>>Closed</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label class="form-label">Date From</label>
-                                <input type="date" name="date_from" class="form-control">
+                                <input type="date" name="date_from" class="form-control" value="<?= esc($filters['date_from'] ?? '') ?>">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label class="form-label">Date To</label>
-                                <input type="date" name="date_to" class="form-control">
+                                <input type="date" name="date_to" class="form-control" value="<?= esc($filters['date_to'] ?? '') ?>">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label class="form-label">Search</label>
-                                <input type="text" name="search" class="form-control" placeholder="Customer name...">
+                                <input type="text" name="search" class="form-control" placeholder="Customer name..." value="<?= esc($filters['search'] ?? '') ?>">
                             </div>
                         </div>
                     </div>
@@ -232,6 +245,83 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
+        
+        <?php if (isset($pagination) && $pagination['hasPages']): ?>
+        <div class="d-flex justify-content-between align-items-center mt-3 px-3 pb-3">
+            <div>
+                <small class="text-muted">
+                    Showing page <?= $pagination['currentPage'] ?> of <?= $pagination['totalPages'] ?> 
+                    (<?= $pagination['totalRecords'] ?> total sessions)
+                </small>
+            </div>
+            <nav>
+                <ul class="pagination mb-0">
+                    <?php if ($pagination['hasPrevious']): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="<?= $pagination['baseUrl'] ?>?page=<?= $pagination['previousPage'] ?><?= buildQueryString() ?>">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </span>
+                        </li>
+                    <?php endif; ?>
+                    
+                    <?php 
+                    $startPage = max(1, $pagination['currentPage'] - 2);
+                    $endPage = min($pagination['totalPages'], $pagination['currentPage'] + 2);
+                    
+                    // Show first page if we're not starting from 1
+                    if ($startPage > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="<?= $pagination['baseUrl'] ?>?page=1<?= buildQueryString() ?>">1</a>
+                        </li>
+                        <?php if ($startPage > 2): ?>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                        <li class="page-item <?= $i == $pagination['currentPage'] ? 'active' : '' ?>">
+                            <?php if ($i == $pagination['currentPage']): ?>
+                                <span class="page-link"><?= $i ?></span>
+                            <?php else: ?>
+                                <a class="page-link" href="<?= $pagination['baseUrl'] ?>?page=<?= $i ?><?= buildQueryString() ?>"><?= $i ?></a>
+                            <?php endif; ?>
+                        </li>
+                    <?php endfor; ?>
+                    
+                    <?php 
+                    // Show last page if we're not ending at the last page
+                    if ($endPage < $pagination['totalPages']): ?>
+                        <?php if ($endPage < $pagination['totalPages'] - 1): ?>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        <?php endif; ?>
+                        <li class="page-item">
+                            <a class="page-link" href="<?= $pagination['baseUrl'] ?>?page=<?= $pagination['totalPages'] ?><?= buildQueryString() ?>"><?= $pagination['totalPages'] ?></a>
+                        </li>
+                    <?php endif; ?>
+                    
+                    <?php if ($pagination['hasNext']): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="<?= $pagination['baseUrl'] ?>?page=<?= $pagination['nextPage'] ?><?= buildQueryString() ?>">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+        </div>
+        <?php endif; ?>
     </div>
     <?php else: ?>
     <!-- No Chat Sessions State -->

@@ -4,25 +4,6 @@ namespace App\Controllers;
 
 class AdminController extends General
 {
-    public function chat()
-    {
-        if (!$this->isAuthenticated()) {
-            return redirect()->to('/login');
-        }
-        
-        // Get sessions using the updated model methods that handle customer names properly
-        $activeSessions = $this->chatModel->getActiveSessions();
-        $waitingSessions = $this->chatModel->getWaitingSessions();
-        
-        $data = [
-            'title' => 'Admin Chat Dashboard',
-            'user' => $this->getCurrentUser(),
-            'activeSessions' => $activeSessions,
-            'waitingSessions' => $waitingSessions
-        ];
-        
-        return view('chat/admin', $data);
-    }
     
     public function dashboard()
     {
@@ -37,14 +18,24 @@ class AdminController extends General
             return redirect()->to('/client/dashboard');
         }
         
-        // Additional admin dashboard functionality can be added here
+        // Get dashboard statistics
+        $apiKeyModel = new \App\Models\ApiKeyModel();
+        
+        // Count active API keys
+        $activeApiKeys = $apiKeyModel->where('status', 'active')->countAllResults();
+        
+        // Count unique clients (by client_email)
+        $totalClients = $apiKeyModel->distinct()
+                                  ->select('client_email')
+                                  ->where('client_email IS NOT NULL')
+                                  ->where('client_email !=', '')
+                                  ->countAllResults();
+        
         $data = [
             'title' => $currentUser['role'] === 'admin' ? 'Admin Dashboard' : 'Support Dashboard',
             'user' => $currentUser,
-            'totalSessions' => $this->chatModel->countAll(),
-            'activeSessions' => $this->chatModel->where('status', 'active')->countAllResults(),
-            'waitingSessions' => $this->chatModel->where('status', 'waiting')->countAllResults(),
-            'closedSessions' => $this->chatModel->where('status', 'closed')->countAllResults()
+            'activeApiKeys' => $activeApiKeys,
+            'totalClients' => $totalClients
         ];
         
         return view('admin/dashboard', $data);
@@ -442,163 +433,94 @@ class AdminController extends General
     }
     
 
-    // Manage canned responses
-    public function cannedResponses()
-    {
-        if (!$this->isAuthenticated()) {
-            return redirect()->to('/login');
-        }
 
-        $data = [
-            'title' => 'Canned Responses',
-            'responses' => $this->cannedResponseModel->findAll()
-        ];
-
-        return view('admin/canned-responses', $data);
-    }
-
-    // Get canned response for editing
-    public function getCannedResponse($id)
-    {
-        if (!$this->isAuthenticated()) {
-            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
-        }
-
-        $response = $this->cannedResponseModel->find($id);
-        if (!$response) {
-            return $this->jsonResponse(['error' => 'Response not found'], 404);
-        }
-        return $this->jsonResponse($response);
-    }
-
-    // Get all canned responses for quick actions
-    public function getAllCannedResponses()
-    {
-        $responses = $this->cannedResponseModel->findAll();
-        return $this->jsonResponse($responses);
-    }
-
-    // Save canned response
-    public function saveCannedResponse()
-    {
-        if (!$this->isAuthenticated()) {
-            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
-        }
-
-        $id = $this->request->getPost('id');
-        $data = [
-            'title' => $this->request->getPost('title'),
-            'content' => $this->request->getPost('content'),
-            'category' => $this->request->getPost('category'),
-            'is_global' => $this->request->getPost('is_global') ? 1 : 0,
-            'agent_id' => $this->request->getPost('is_global') ? null : $this->getCurrentUser()['id']
-        ];
-
-        if ($id) {
-            // Update existing
-            $this->cannedResponseModel->update($id, $data);
-            session()->setFlashdata('success', 'Response updated successfully');
-        } else {
-            // Create new
-            $this->cannedResponseModel->insert($data);
-            session()->setFlashdata('success', 'Response created successfully');
-        }
-
-        return redirect()->to('admin/canned-responses');
-    }
-
-    // Delete canned response
-    public function deleteCannedResponse()
-    {
-        if (!$this->isAuthenticated()) {
-            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
-        }
-
-        $id = $this->request->getPost('id');
-        $this->cannedResponseModel->delete($id);
-        return $this->jsonResponse(['success' => true]);
-    }
-
-    // System settings
+    // Profile settings
     public function settings()
     {
         if (!$this->isAuthenticated()) {
             return redirect()->to('/login');
         }
 
+        $currentUser = $this->getCurrentUser();
+
         $data = [
-            'title' => 'System Settings',
-            'settings' => $this->getSystemSettings()
+            'title' => 'Profile Settings',
+            'user' => $currentUser
         ];
 
         return view('admin/settings', $data);
     }
-
-    // Get sessions data for real-time updates
-    public function sessionsData()
+    
+    // Update profile settings
+    public function saveSettings()
     {
         if (!$this->isAuthenticated()) {
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
-
-        $waitingSessions = $this->chatModel->getWaitingSessions();
-        $activeSessions = $this->chatModel->getActiveSessions();
-
-        // Double-check that customer names are properly processed
-        foreach ($waitingSessions as &$session) {
-            $session['customer_name'] = $this->processCustomerName($session);
+        
+        $currentUser = $this->getCurrentUser();
+        $userId = $currentUser['id'];
+        
+        $username = $this->request->getPost('username');
+        $email = $this->request->getPost('email');
+        $currentPassword = $this->request->getPost('current_password');
+        $newPassword = $this->request->getPost('new_password');
+        $confirmPassword = $this->request->getPost('confirm_password');
+        
+        if (!$username) {
+            return $this->jsonResponse(['error' => 'Username is required'], 400);
         }
         
-        foreach ($activeSessions as &$session) {
-            $session['customer_name'] = $this->processCustomerName($session);
+        // Check if username already exists for other users
+        $existingUser = $this->userModel->where('username', $username)->where('id !=', $userId)->first();
+        if ($existingUser) {
+            return $this->jsonResponse(['error' => 'Username already exists'], 400);
         }
-
-        return $this->jsonResponse([
-            'waitingSessions' => $waitingSessions,
-            'activeSessions' => $activeSessions
-        ]);
+        
+        // Check if email already exists for other users (if provided)
+        if (!empty($email)) {
+            $existingEmail = $this->userModel->where('email', $email)->where('id !=', $userId)->first();
+            if ($existingEmail) {
+                return $this->jsonResponse(['error' => 'Email already exists'], 400);
+            }
+        }
+        
+        $updateData = [
+            'username' => $username,
+            'email' => $email
+        ];
+        
+        // Handle password change
+        if (!empty($newPassword)) {
+            if (empty($currentPassword)) {
+                return $this->jsonResponse(['error' => 'Current password is required to change password'], 400);
+            }
+            
+            // Verify current password
+            if (!password_verify($currentPassword, $currentUser['password'])) {
+                return $this->jsonResponse(['error' => 'Current password is incorrect'], 400);
+            }
+            
+            if (strlen($newPassword) < 6) {
+                return $this->jsonResponse(['error' => 'New password must be at least 6 characters'], 400);
+            }
+            
+            if ($newPassword !== $confirmPassword) {
+                return $this->jsonResponse(['error' => 'New password and confirmation do not match'], 400);
+            }
+            
+            $updateData['password'] = password_hash($newPassword, PASSWORD_DEFAULT);
+        }
+        
+        $updated = $this->userModel->update($userId, $updateData);
+        
+        if ($updated) {
+            return $this->jsonResponse(['success' => true, 'message' => 'Profile updated successfully']);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to update profile'], 500);
     }
-    
-    /**
-     * Process customer name with the same logic as ChatModel
-     * This ensures consistency between initial load and refreshes
-     */
-    private function processCustomerName($session)
-    {
-        // Priority order for customer name - check for non-empty and non-null values
-        if (isset($session['external_fullname']) && trim($session['external_fullname']) !== '') {
-            return trim($session['external_fullname']);
-        }
-        
-        if (isset($session['customer_fullname']) && trim($session['customer_fullname']) !== '') {
-            return trim($session['customer_fullname']);
-        }
-        
-        if (isset($session['customer_name']) && trim($session['customer_name']) !== '') {
-            return trim($session['customer_name']);
-        }
-        
-        return 'Anonymous';
-    }
 
-    // Get quick actions (keyword responses) for customer interface
-    public function getQuickActions()
-    {
-        // Return active keyword responses that can be used as quick action buttons
-        $keywordResponses = $this->keywordResponseModel->where('is_active', 1)->findAll();
-        
-        // Format them for the frontend
-        $quickActions = [];
-        foreach ($keywordResponses as $response) {
-            $quickActions[] = [
-                'keyword' => $response['keyword'],
-                'display_name' => ucwords($response['keyword']),
-                'response' => $response['response']
-            ];
-        }
-        
-        return $this->jsonResponse($quickActions);
-    }
     
     private function getSystemSettings()
     {

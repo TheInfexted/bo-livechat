@@ -13,90 +13,21 @@ class ChatHistoryController extends General
             return redirect()->to('/login');
         }
         
-        $perPage = 10;
-        $page = $this->request->getVar('page') ?? 1;
-        
-        // Build query with filters
-        $builder = $this->chatModel->builder();
-        
-        // Join with users table to get agent information
-        $builder->select('
-            chat_sessions.id,
-            chat_sessions.session_id,
-            chat_sessions.customer_name as username,
-            chat_sessions.customer_fullname as fullname,
-            chat_sessions.created_at,
-            chat_sessions.closed_at,
-            chat_sessions.status,
-            users.username as agent_name,
-            (SELECT created_at FROM messages 
-             WHERE session_id = chat_sessions.id 
-             AND sender_type = "customer" 
-             ORDER BY created_at DESC LIMIT 1) as client_last_reply,
-            (SELECT created_at FROM messages 
-             WHERE session_id = chat_sessions.id 
-             AND sender_type = "agent" 
-             ORDER BY created_at DESC LIMIT 1) as agent_last_reply
-        ');
-        
-        $builder->join('users', 'users.id = chat_sessions.agent_id', 'left');
-        
-        // Apply filters if provided
-        if ($this->request->getVar('status')) {
-            $builder->where('chat_sessions.status', $this->request->getVar('status'));
+        // Initialize API key model
+        if (!isset($this->apiKeyModel)) {
+            $this->apiKeyModel = new \App\Models\ApiKeyModel();
         }
         
-        if ($this->request->getVar('date_from')) {
-            $builder->where('chat_sessions.created_at >=', $this->request->getVar('date_from') . ' 00:00:00');
-        }
-        
-        if ($this->request->getVar('date_to')) {
-            $builder->where('chat_sessions.created_at <=', $this->request->getVar('date_to') . ' 23:59:59');
-        }
-        
-        if ($this->request->getVar('search')) {
-            $search = $this->request->getVar('search');
-            $builder->groupStart()
-                   ->like('chat_sessions.customer_name', $search)
-                   ->orLike('chat_sessions.customer_fullname', $search)
-                   ->orLike('users.username', $search)
-                   ->groupEnd();
-        }
-        
-        // Order by created_at DESC
-        $builder->orderBy('chat_sessions.created_at', 'DESC');
-        
-        // Get results with pagination
-        $offset = ($page - 1) * $perPage;
-        $totalRecords = $builder->countAllResults(false);
-        $results = $builder->limit($perPage, $offset)->get()->getResultArray();
-        
-        // Create pagination data
-        $totalPages = ceil($totalRecords / $perPage);
-        $paginationData = [
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
-            'perPage' => $perPage,
-            'totalRecords' => $totalRecords,
-            'hasPages' => $totalPages > 1,
-            'hasPrevious' => $page > 1,
-            'hasNext' => $page < $totalPages,
-            'previousPage' => max(1, $page - 1),
-            'nextPage' => min($totalPages, $page + 1),
-            'baseUrl' => base_url('chat-history')
-        ];
+        // Get all API keys for the dropdown
+        $apiKeys = $this->apiKeyModel->select('api_key, client_name')
+                                   ->where('status', 'active')
+                                   ->orderBy('client_name', 'ASC')
+                                   ->findAll();
         
         $data = [
             'title' => 'Chat History',
             'user' => $this->getCurrentUser(),
-            'chats' => $results,
-            'pagination' => $paginationData,
-            'filters' => [
-                'status' => $this->request->getVar('status'),
-                'date_from' => $this->request->getVar('date_from'),
-                'date_to' => $this->request->getVar('date_to'),
-                'search' => $this->request->getVar('search')
-            ]
+            'api_keys' => $apiKeys
         ];
         
         return view('chat_history/index', $data);
@@ -171,6 +102,105 @@ class ChatHistoryController extends General
     }
     
     /**
+     * Get chat history for a specific API key (AJAX endpoint)
+     */
+    public function getChatHistoryForApiKey()
+    {
+        if (!$this->isAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $apiKey = $this->request->getGet('api_key');
+        if (!$apiKey) {
+            return $this->jsonResponse(['error' => 'API key is required'], 400);
+        }
+        
+        $perPage = 10;
+        $page = $this->request->getGet('page') ?? 1;
+        
+        // Build query with filters
+        $builder = $this->chatModel->builder();
+        
+        // Join with users table to get agent information and API key information
+        $builder->select('
+            chat_sessions.id,
+            chat_sessions.session_id,
+            chat_sessions.customer_name as username,
+            chat_sessions.customer_fullname as fullname,
+            chat_sessions.created_at,
+            chat_sessions.closed_at,
+            chat_sessions.status,
+            chat_sessions.api_key,
+            users.username as agent_name,
+            api_keys.client_name as api_client_name,
+            (SELECT created_at FROM messages 
+             WHERE session_id = chat_sessions.id 
+             AND sender_type = "customer" 
+             ORDER BY created_at DESC LIMIT 1) as client_last_reply,
+            (SELECT created_at FROM messages 
+             WHERE session_id = chat_sessions.id 
+             AND sender_type = "agent" 
+             ORDER BY created_at DESC LIMIT 1) as agent_last_reply
+        ');
+        
+        $builder->join('users', 'users.id = chat_sessions.agent_id', 'left');
+        $builder->join('api_keys', 'api_keys.api_key = chat_sessions.api_key', 'left');
+        
+        // Filter by API key
+        $builder->where('chat_sessions.api_key', $apiKey);
+        
+        // Apply additional filters if provided
+        if ($this->request->getGet('status')) {
+            $builder->where('chat_sessions.status', $this->request->getGet('status'));
+        }
+        
+        if ($this->request->getGet('date_from')) {
+            $builder->where('chat_sessions.created_at >=', $this->request->getGet('date_from') . ' 00:00:00');
+        }
+        
+        if ($this->request->getGet('date_to')) {
+            $builder->where('chat_sessions.created_at <=', $this->request->getGet('date_to') . ' 23:59:59');
+        }
+        
+        if ($this->request->getGet('search')) {
+            $search = $this->request->getGet('search');
+            $builder->groupStart()
+                   ->like('chat_sessions.customer_name', $search)
+                   ->orLike('chat_sessions.customer_fullname', $search)
+                   ->orLike('users.username', $search)
+                   ->groupEnd();
+        }
+        
+        // Order by created_at DESC
+        $builder->orderBy('chat_sessions.created_at', 'DESC');
+        
+        // Get results with pagination
+        $offset = ($page - 1) * $perPage;
+        $totalRecords = $builder->countAllResults(false);
+        $results = $builder->limit($perPage, $offset)->get()->getResultArray();
+        
+        // Create pagination data
+        $totalPages = ceil($totalRecords / $perPage);
+        $paginationData = [
+            'currentPage' => intval($page),
+            'totalPages' => $totalPages,
+            'perPage' => $perPage,
+            'totalRecords' => $totalRecords,
+            'hasPages' => $totalPages > 1,
+            'hasPrevious' => $page > 1,
+            'hasNext' => $page < $totalPages,
+            'previousPage' => max(1, $page - 1),
+            'nextPage' => min($totalPages, $page + 1)
+        ];
+        
+        return $this->jsonResponse([
+            'success' => true,
+            'chats' => $results,
+            'pagination' => $paginationData
+        ]);
+    }
+    
+    /**
      * Export chat history to CSV
      */
     public function export()
@@ -190,12 +220,19 @@ class ChatHistoryController extends General
             chat_sessions.created_at,
             chat_sessions.closed_at,
             chat_sessions.status,
-            users.username as agent_name
+            chat_sessions.api_key,
+            users.username as agent_name,
+            api_keys.client_name as api_client_name
         ');
         
         $builder->join('users', 'users.id = chat_sessions.agent_id', 'left');
+        $builder->join('api_keys', 'api_keys.api_key = chat_sessions.api_key', 'left');
         
         // Apply same filters as index
+        if ($this->request->getVar('api_key')) {
+            $builder->where('chat_sessions.api_key', $this->request->getVar('api_key'));
+        }
+        
         if ($this->request->getVar('status')) {
             $builder->where('chat_sessions.status', $this->request->getVar('status'));
         }
@@ -226,6 +263,7 @@ class ChatHistoryController extends General
             'Username', 
             'Full Name',
             'Agent',
+            'API Client',
             'Status',
             'Created At',
             'Closed At',
@@ -247,6 +285,7 @@ class ChatHistoryController extends General
                 $row['username'],
                 $row['fullname'] ?? 'N/A',
                 $row['agent_name'] ?? 'Unassigned',
+                $row['api_client_name'] ?? 'N/A',
                 ucfirst($row['status']),
                 $row['created_at'],
                 $row['closed_at'] ?? 'N/A',

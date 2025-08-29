@@ -111,13 +111,44 @@ class ClientController extends General
         $currentUser = $this->getCurrentClientUser();
         $clientId = $this->getClientId();
         
-        // Get client's API keys and their associated sessions
-        $apiKeys = $this->apiKeyModel->where('client_id', $clientId)->findAll();
+        $perPage = 10;
+        $page = $this->request->getVar('page') ?? 1;
         
-        // Get sessions based on client ID with additional message data
-        $sessions = $this->chatModel->where('client_id', $clientId)
-                                   ->orderBy('created_at', 'DESC')
-                                   ->findAll();
+        // Build query with filters
+        $builder = $this->chatModel->builder();
+        $builder->where('client_id', $clientId);
+        
+        // Apply filters if provided
+        if ($this->request->getVar('status')) {
+            $builder->where('status', $this->request->getVar('status'));
+        }
+        
+        if ($this->request->getVar('date_from')) {
+            $builder->where('created_at >=', $this->request->getVar('date_from') . ' 00:00:00');
+        }
+        
+        if ($this->request->getVar('date_to')) {
+            $builder->where('created_at <=', $this->request->getVar('date_to') . ' 23:59:59');
+        }
+        
+        if ($this->request->getVar('search')) {
+            $search = $this->request->getVar('search');
+            $builder->groupStart()
+                   ->like('customer_name', $search)
+                   ->orLike('customer_fullname', $search)
+                   ->groupEnd();
+        }
+        
+        // Order by created_at DESC
+        $builder->orderBy('created_at', 'DESC');
+        
+        // Get results with pagination
+        $offset = ($page - 1) * $perPage;
+        $totalRecords = $builder->countAllResults(false);
+        $sessions = $builder->limit($perPage, $offset)->get()->getResultArray();
+        
+        // Get all sessions for stats (without pagination)
+        $allSessions = $this->chatModel->where('client_id', $clientId)->findAll();
         
         // Add message timing data for each session
         $messageModel = new \App\Models\MessageModel();
@@ -140,10 +171,33 @@ class ClientController extends General
             $session['last_agent_message_time'] = $lastAgentMessage ? $lastAgentMessage['created_at'] : null;
         }
         
+        // Create pagination data
+        $totalPages = ceil($totalRecords / $perPage);
+        $paginationData = [
+            'currentPage' => intval($page),
+            'totalPages' => $totalPages,
+            'perPage' => $perPage,
+            'totalRecords' => $totalRecords,
+            'hasPages' => $totalPages > 1,
+            'hasPrevious' => $page > 1,
+            'hasNext' => $page < $totalPages,
+            'previousPage' => max(1, $page - 1),
+            'nextPage' => min($totalPages, $page + 1),
+            'baseUrl' => base_url('client/chat-history')
+        ];
+        
         $data = [
             'title' => 'My Chat History',
             'user' => $currentUser,
-            'sessions' => $sessions
+            'sessions' => $sessions,
+            'allSessions' => $allSessions, // For stats calculation
+            'pagination' => $paginationData,
+            'filters' => [
+                'status' => $this->request->getVar('status'),
+                'date_from' => $this->request->getVar('date_from'),
+                'date_to' => $this->request->getVar('date_to'),
+                'search' => $this->request->getVar('search')
+            ]
         ];
         
         return view('client/chat_history', $data);
@@ -391,7 +445,7 @@ class ClientController extends General
     }
     
     /**
-     * Get canned responses available to clients
+     * Get canned responses available to clients (deprecated - use getCannedResponsesForApiKey instead)
      */
     public function getCannedResponses()
     {
@@ -399,13 +453,9 @@ class ClientController extends General
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
         
-        $cannedResponseModel = new \App\Models\CannedResponseModel();
-        
-        // Get global responses and client-specific responses
-        $currentUser = $this->getCurrentClientUser();
-        $responses = $cannedResponseModel->getAvailableResponses($currentUser['id']);
-        
-        return $this->jsonResponse($responses);
+        // Return empty array since we now use API key-based responses
+        // This method is kept for backward compatibility
+        return $this->jsonResponse([]);
     }
     
     /**
@@ -417,21 +467,23 @@ class ClientController extends General
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
         
-        $cannedResponseModel = new \App\Models\CannedResponseModel();
-        $response = $cannedResponseModel->find($id);
+        $currentUser = $this->getCurrentClientUser();
+        
+        // Check if user can access this response
+        if (!$this->cannedResponseModel->canUserManage($id, $currentUser['type'], $currentUser['id'])) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        $response = $this->cannedResponseModel->find($id);
         
         if (!$response) {
             return $this->jsonResponse(['error' => 'Response not found'], 404);
         }
         
-        $currentUser = $this->getCurrentClientUser();
-        
-        // Check if client can access this response (global or their own)
-        if (!$response['is_global'] && $response['agent_id'] != $currentUser['id']) {
-            return $this->jsonResponse(['error' => 'Access denied'], 403);
-        }
-        
-        return $this->jsonResponse($response);
+        return $this->jsonResponse([
+            'success' => true,
+            'response' => $response
+        ]);
     }
     
     /**
@@ -987,5 +1039,191 @@ class ClientController extends General
         
         $this->keywordResponseModel->delete($id);
         return $this->jsonResponse(['success' => true]);
+    }
+    
+    // Canned Responses Management for Clients and Agents
+    public function cannedResponses()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return redirect()->to('/login');
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
+        
+        // Get user's API keys for dropdown
+        $apiKeys = $this->apiKeyModel->where('client_id', $clientId)->findAll();
+        
+        $data = [
+            'title' => 'Canned Responses',
+            'user' => $currentUser,
+            'api_keys' => $apiKeys
+        ];
+        
+        return view('client/canned_responses', $data);
+    }
+    
+    // Get canned responses for specific API key (AJAX)
+    public function getCannedResponsesForApiKey()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $apiKey = $this->request->getGet('api_key');
+        
+        if (!$apiKey) {
+            return $this->jsonResponse(['error' => 'API key is required'], 400);
+        }
+        
+        // Verify API key belongs to this client
+        $clientId = $this->getClientId();
+        $keyExists = $this->apiKeyModel->where('api_key', $apiKey)
+                                      ->where('client_id', $clientId)
+                                      ->first();
+        
+        if (!$keyExists) {
+            return $this->jsonResponse(['error' => 'Invalid API key'], 403);
+        }
+        
+        // Get canned responses for this creator and API key
+        $responses = $this->cannedResponseModel->getResponsesForCreator(
+            $apiKey,
+            $currentUser['type'],
+            $currentUser['id']
+        );
+        
+        return $this->jsonResponse([
+            'success' => true,
+            'responses' => $responses
+        ]);
+    }
+    
+    // Save canned response (create/update)
+    public function saveCannedResponse()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
+        
+        $id = $this->request->getPost('id');
+        $title = $this->request->getPost('title');
+        $content = $this->request->getPost('content');
+        $category = $this->request->getPost('category') ?: 'general';
+        $apiKey = $this->request->getPost('api_key');
+        $isActive = $this->request->getPost('is_active') ? 1 : 0;
+        
+        // Validate required fields
+        if (!$title || !$content || !$apiKey) {
+            return $this->jsonResponse(['error' => 'Title, content, and API key are required'], 400);
+        }
+        
+        // Verify API key belongs to this client
+        $keyExists = $this->apiKeyModel->where('api_key', $apiKey)
+                                      ->where('client_id', $clientId)
+                                      ->first();
+        
+        if (!$keyExists) {
+            return $this->jsonResponse(['error' => 'Invalid API key'], 403);
+        }
+        
+        $data = [
+            'title' => $title,
+            'content' => $content,
+            'category' => $category,
+            'api_key' => $apiKey,
+            'created_by_user_type' => $currentUser['type'],
+            'created_by_user_id' => $currentUser['id'],
+            'is_active' => $isActive
+        ];
+        
+        if ($id) {
+            // Update existing - check permissions
+            if (!$this->cannedResponseModel->canUserManage($id, $currentUser['type'], $currentUser['id'])) {
+                return $this->jsonResponse(['error' => 'Access denied'], 403);
+            }
+            
+            // Check for duplicate title (excluding current record)
+            if ($this->cannedResponseModel->titleExistsForCreator($title, $apiKey, $currentUser['type'], $currentUser['id'], $id)) {
+                return $this->jsonResponse(['error' => 'A canned response with this title already exists for this API key'], 400);
+            }
+            
+            $updated = $this->cannedResponseModel->update($id, $data);
+            if ($updated) {
+                return $this->jsonResponse(['success' => true, 'message' => 'Canned response updated successfully']);
+            }
+        } else {
+            // Create new - check for duplicate title
+            if ($this->cannedResponseModel->titleExistsForCreator($title, $apiKey, $currentUser['type'], $currentUser['id'])) {
+                return $this->jsonResponse(['error' => 'A canned response with this title already exists for this API key'], 400);
+            }
+            
+            $insertId = $this->cannedResponseModel->insert($data);
+            if ($insertId) {
+                return $this->jsonResponse(['success' => true, 'message' => 'Canned response created successfully']);
+            }
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to save canned response'], 500);
+    }
+    
+    // Delete canned response
+    public function deleteCannedResponse()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $id = $this->request->getPost('id');
+        
+        if (!$id) {
+            return $this->jsonResponse(['error' => 'Response ID is required'], 400);
+        }
+        
+        // Check if user can manage this response
+        if (!$this->cannedResponseModel->canUserManage($id, $currentUser['type'], $currentUser['id'])) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        $deleted = $this->cannedResponseModel->delete($id);
+        
+        if ($deleted) {
+            return $this->jsonResponse(['success' => true, 'message' => 'Canned response deleted successfully']);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to delete canned response'], 500);
+    }
+    
+    // Toggle canned response status
+    public function toggleCannedResponseStatus()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $id = $this->request->getPost('id');
+        
+        if (!$id) {
+            return $this->jsonResponse(['error' => 'Response ID is required'], 400);
+        }
+        
+        // Check if user can manage this response
+        if (!$this->cannedResponseModel->canUserManage($id, $currentUser['type'], $currentUser['id'])) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        $toggled = $this->cannedResponseModel->toggleStatus($id);
+        
+        if ($toggled) {
+            return $this->jsonResponse(['success' => true, 'message' => 'Status updated successfully']);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to update status'], 500);
     }
 }

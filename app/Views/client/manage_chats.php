@@ -978,6 +978,24 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    console.log('Session accepted via HTTP, now sending WebSocket notification');
+                    
+                    // IMPORTANT: Send WebSocket message to trigger real-time updates
+                    if (typeof ws !== 'undefined' && ws && ws.readyState === WebSocket.OPEN) {
+                        console.log('Sending assign_agent WebSocket message:', {
+                            type: 'assign_agent',
+                            session_id: sessionId,
+                            agent_id: userId
+                        });
+                        ws.send(JSON.stringify({
+                            type: 'assign_agent',
+                            session_id: sessionId,
+                            agent_id: userId
+                        }));
+                    } else {
+                        console.log('WebSocket not available for real-time notification');
+                    }
+                    
                     loadSessions();
                     setTimeout(() => openChat(sessionId), 500);
                 } else {
@@ -1642,17 +1660,38 @@
             btn.classList.remove('active');
         }
         
-        // Load canned responses from server
+        // Load canned responses from server based on current chat's API key
         function loadCannedResponses() {
-            fetch('<?= base_url('client/canned-responses') ?>')
+            if (!currentSessionId) {
+                displayFallbackResponses();
+                return;
+            }
+            
+            // Get current session details to determine API key
+            fetch(`<?= base_url('client/session-details') ?>/${currentSessionId}`)
                 .then(response => response.json())
-                .then(responses => {
-                    cannedResponses = responses;
-                    displayQuickResponses(responses);
-                    quickResponsesLoaded = true;
+                .then(data => {
+                    if (data.success && data.session && data.session.api_key) {
+                        const apiKey = data.session.api_key;
+                        
+                        // Load canned responses for this API key
+                        return fetch(`<?= base_url('client/canned-responses-for-api-key') ?>?api_key=${encodeURIComponent(apiKey)}`);
+                    } else {
+                        throw new Error('No API key found for session');
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        cannedResponses = data.responses;
+                        displayQuickResponses(data.responses);
+                        quickResponsesLoaded = true;
+                    } else {
+                        throw new Error(data.error || 'Failed to load responses');
+                    }
                 })
                 .catch(error => {
-                    showError('Failed to load quick responses');
+                    console.log('Failed to load canned responses:', error.message);
                     // Show fallback responses
                     displayFallbackResponses();
                 });
@@ -1725,15 +1764,15 @@
                 return;
             }
             
-            // Get the response content
-            fetch(`<?= base_url('client/canned-responses/get') ?>/${responseId}`)
+            // Get the response content from the new endpoint
+            fetch(`<?= base_url('client/get-canned-response') ?>/${responseId}`)
                 .then(response => response.json())
-                .then(responseData => {
-                    if (responseData.content) {
-                        sendCannedMessage(responseData.content);
+                .then(data => {
+                    if (data.success && data.response && data.response.content) {
+                        sendCannedMessage(data.response.content);
                         hideQuickResponses();
                     } else {
-                        showError('Failed to load response content');
+                        showError('Failed to load response content: ' + (data.error || 'Unknown error'));
                     }
                 })
                 .catch(error => {

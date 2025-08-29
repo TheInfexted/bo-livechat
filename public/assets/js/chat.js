@@ -294,7 +294,14 @@ async function loadChatHistory() {
 }
 
 async function acceptChat(sessionId) {
+    console.log('acceptChat function called with sessionId:', sessionId);
+    console.log('Current user type:', getUserType());
+    console.log('Current user ID:', getUserId());
+    console.log('WebSocket status:', ws ? 'exists' : 'null');
+    console.log('WebSocket ready state:', ws ? ws.readyState : 'N/A');
+    
     try {
+        console.log('Making HTTP request to assign agent...');
         // First, assign the agent via HTTP
         const response = await fetch('/api/chat/assign-agent', {
             method: 'POST',
@@ -309,11 +316,19 @@ async function acceptChat(sessionId) {
         if (result.success) {
             // Then notify WebSocket server
             if (ws && ws.readyState === WebSocket.OPEN) {
+                console.log('Sending assign_agent WebSocket message:', {
+                    type: 'assign_agent',
+                    session_id: sessionId,
+                    agent_id: userId
+                });
                 ws.send(JSON.stringify({
                     type: 'assign_agent',
                     session_id: sessionId,
                     agent_id: userId
                 }));
+            } else {
+                console.log('WebSocket not connected, cannot send assign_agent message');
+                console.log('WebSocket state:', ws ? ws.readyState : 'WebSocket is null');
             }
             
             // Open the chat after successful assignment
@@ -620,6 +635,7 @@ function initWebSocket() {
     ws = new WebSocket(wsUrl);
     
     ws.onopen = function() {
+        console.log('WebSocket connected successfully');
         const connectionStatus = safeGetElement('connectionStatus');
         if (connectionStatus) {
             connectionStatus.textContent = 'Online';

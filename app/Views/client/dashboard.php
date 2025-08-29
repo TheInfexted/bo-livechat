@@ -59,10 +59,10 @@
         // Determine number of stats cards for proper layout
         $statsCardCount = 0;
         if ($user['type'] === 'client') {
-            $statsCardCount += 2; // API Keys stats (Total + Active)
+            $statsCardCount += 1; // Total API Keys
             if (isset($agentsCount)) $statsCardCount += 1; // My Agents
         }
-        $statsCardCount += 2; // Total Sessions + Active Chats (always shown)
+        $statsCardCount += 3; // Total Sessions + Active Chats + Waiting Chats (always shown)
         
         $statsGridClass = 'stats-grid fade-in';
         if ($statsCardCount == 2) {
@@ -71,6 +71,8 @@
             $statsGridClass .= ' three-column';
         } elseif ($statsCardCount == 4) {
             $statsGridClass .= ' four-column';
+        } elseif ($statsCardCount == 5) {
+            $statsGridClass .= ' five-column';
         }
         ?>
         <div class="<?= $statsGridClass ?>">
@@ -81,13 +83,6 @@
                 </div>
                 <div class="stat-label">Total API Keys</div>
                 <div class="stat-value"><?= $totalApiKeys ?></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon success">
-                    <i class="bi bi-check-circle-fill"></i>
-                </div>
-                <div class="stat-label">Active API Keys</div>
-                <div class="stat-value"><?= $activeApiKeys ?></div>
             </div>
             <?php endif; ?>
             <?php if ($user['type'] === 'client' && isset($agentsCount)): ?>
@@ -113,6 +108,13 @@
                 <div class="stat-label">Active Chats</div>
                 <div class="stat-value"><?= $activeSessions ?></div>
             </div>
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="stat-label">Waiting Chats</div>
+                <div class="stat-value"><?= $waitingSessions ?></div>
+            </div>
         </div>
     
         <!-- Quick Actions -->
@@ -134,12 +136,19 @@
                     <div class="action-title">Manage Chats</div>
                     <div class="action-description">View and manage your chat sessions</div>
                 </a>
-                <a href="<?= base_url('client/chat-history') ?>" class="action-card info">
+                <a href="<?= base_url('client/chat-history') ?>" class="action-card primary">
                     <div class="action-icon">
                         <i class="bi bi-clock-history"></i>
                     </div>
                     <div class="action-title">Chat History</div>
                     <div class="action-description">View your past chat conversations</div>
+                </a>
+                <a href="<?= base_url('client/canned-responses') ?>" class="action-card info">
+                    <div class="action-icon">
+                        <i class="bi bi-chat-left-text"></i>
+                    </div>
+                    <div class="action-title">Canned Responses</div>
+                    <div class="action-description">Manage pre-written responses for quick replies</div>
                 </a>
                 <?php if ($user['type'] === 'client'): ?>
                 <a href="<?= base_url('client/keyword-responses') ?>" class="action-card info">
@@ -151,7 +160,7 @@
                 </a>
                 <?php endif; ?>
                 <?php if ($user['type'] === 'client'): ?>
-                <a href="<?= base_url('client/manage-agents') ?>" class="action-card secondary">
+                <a href="<?= base_url('client/manage-agents') ?>" class="action-card info">
                     <div class="action-icon">
                         <i class="bi bi-people"></i>
                     </div>
@@ -159,7 +168,7 @@
                     <div class="action-description">Add and manage your support agents</div>
                 </a>
                 <?php endif; ?>
-                <a href="<?= base_url('client/profile') ?>" class="action-card info">
+                <a href="<?= base_url('client/profile') ?>" class="action-card secondary">
                     <div class="action-icon">
                         <i class="bi bi-person-gear"></i>
                     </div>
@@ -304,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update stat values with animation
                 updateStatValue('totalApiKeys', stats.totalApiKeys);
-                updateStatValue('activeApiKeys', stats.activeApiKeys);
+                updateStatValue('waitingSessions', stats.waitingSessions);
                 updateStatValue('totalSessions', stats.totalSessions);
                 updateStatValue('activeSessions', stats.activeSessions);
                 
@@ -331,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (
                     (statKey === 'totalapikeys' && labelText === 'totalapikeys') ||
-                    (statKey === 'activeapikeys' && labelText === 'activeapikeys') ||
+                    (statKey === 'waitingsessions' && labelText === 'waitingchats') ||
                     (statKey === 'totalsessions' && labelText === 'totalsessions') ||
                     (statKey === 'activesessions' && labelText === 'activechats')
                 ) {

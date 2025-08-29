@@ -261,7 +261,7 @@ class ChatController extends General
                 $senderId = $this->session->get('user_id');
                 $senderUserType = 'admin';
             } elseif ($this->session->has('client_user_id')) {
-                // Client user
+                // Client user acting as agent
                 $senderId = $this->session->get('client_user_id');
                 $senderUserType = 'client';
             } elseif ($this->session->has('agent_user_id')) {
@@ -356,7 +356,13 @@ class ChatController extends General
                 'message_type' => 'system'
             ];
             
-            $this->messageModel->insert($messageData);
+            $messageId = $this->messageModel->insert($messageData);
+            
+            // Send WebSocket assign_agent message to trigger proper broadcasting
+            // This will use the existing WebSocket server handleAgentAssignment method
+            if ($messageId) {
+                $this->triggerWebSocketAgentAssignment($sessionId, $agentId);
+            }
             
             return $this->jsonResponse([
                 'success' => true,
@@ -654,6 +660,155 @@ class ChatController extends General
         
         // Future enhancement: Send WebSocket message to close session for all connected clients
         // For now, admins will see the session as closed when they refresh or check status
+    }
+    
+    /**
+     * Broadcast WebSocket notification when a session is accepted by an agent
+     */
+    private function broadcastSessionAccepted($sessionId, $agentName, $messageId)
+    {
+        // Send WebSocket notification to the WebSocket server using ReactPHP or a simple socket connection
+        // For now, we'll use a simple approach with file_get_contents to notify the WebSocket server
+        
+        try {
+            // Prepare the notification payload
+            $notificationData = [
+                'type' => 'agent_assigned',
+                'session_id' => $sessionId,
+                'message' => $agentName . ' has joined the chat',
+                'message_id' => $messageId,
+                'agent_name' => $agentName,
+                'timestamp' => date('Y-m-d H:i:s')
+            ];
+            
+            // Try to send to WebSocket server via HTTP endpoint
+            $this->sendWebSocketNotification($notificationData);
+            
+        } catch (\Exception $e) {
+            // Log error but don't fail the accept operation
+            error_log('WebSocket broadcast failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Send notification to WebSocket server
+     */
+    private function sendWebSocketNotification($data)
+    {
+        // Try to send to the WebSocket server using a simple HTTP request
+        // This assumes the WebSocket server has an HTTP endpoint for broadcasting messages
+        
+        $postData = json_encode($data);
+        $options = [
+            'http' => [
+                'header' => "Content-type: application/json\r\n",
+                'method' => 'POST',
+                'content' => $postData,
+                'timeout' => 2 // Short timeout to prevent blocking
+            ]
+        ];
+        
+        $context = stream_context_create($options);
+        
+        // Try multiple possible WebSocket server URLs
+        $urls = [
+            'http://localhost:8080/broadcast', // Primary WebSocket server
+            'http://127.0.0.1:8080/broadcast', // Alternative localhost
+            'ws://localhost:8080/broadcast'     // WebSocket protocol fallback
+        ];
+        
+        foreach ($urls as $url) {
+            try {
+                $result = @file_get_contents($url, false, $context);
+                if ($result !== false) {
+                    // Successfully sent notification
+                    break;
+                }
+            } catch (\Exception $e) {
+                // Try next URL
+                continue;
+            }
+        }
+        
+        // Alternative approach: Write to a message queue file that the WebSocket server can monitor
+        $this->writeToMessageQueue($data);
+    }
+    
+    /**
+     * Write message to a queue file that the WebSocket server can monitor
+     */
+    private function writeToMessageQueue($data)
+    {
+        try {
+            $queueFile = WRITEPATH . 'websocket_queue.json';
+            $messages = [];
+            
+            // Read existing messages if file exists
+            if (file_exists($queueFile)) {
+                $content = file_get_contents($queueFile);
+                $messages = json_decode($content, true) ?: [];
+            }
+            
+            // Add new message with timestamp
+            $data['queued_at'] = time();
+            $messages[] = $data;
+            
+            // Keep only last 100 messages to prevent file from growing too large
+            $messages = array_slice($messages, -100);
+            
+            // Write back to file
+            file_put_contents($queueFile, json_encode($messages, JSON_PRETTY_PRINT));
+            
+        } catch (\Exception $e) {
+            error_log('WebSocket queue write failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Trigger WebSocket agent assignment using the existing WebSocket infrastructure
+     * This sends an assign_agent message that will be handled by the ChatServer handleAgentAssignment method
+     */
+    private function triggerWebSocketAgentAssignment($sessionId, $agentId)
+    {
+        try {
+            // Create a simple message format that the WebSocket server expects
+            $assignmentData = [
+                'type' => 'assign_agent',
+                'session_id' => $sessionId,
+                'agent_id' => $agentId
+            ];
+            
+            // Write to the WebSocket queue
+            $this->writeToMessageQueue($assignmentData);
+            
+            // Also try direct WebSocket notification with multiple methods
+            $this->sendWebSocketNotification($assignmentData);
+            
+            // Additional fallback: Try to send via ReactPHP socket if available
+            $this->sendReactPHPWebSocketMessage($assignmentData);
+            
+        } catch (\Exception $e) {
+            error_log('WebSocket agent assignment trigger failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Send message via ReactPHP WebSocket (alternative method)
+     */
+    private function sendReactPHPWebSocketMessage($data)
+    {
+        try {
+            // Try to connect to the WebSocket server directly via socket
+            $socket = @fsockopen('127.0.0.1', 8080, $errno, $errstr, 2);
+            
+            if ($socket) {
+                $payload = json_encode($data);
+                fwrite($socket, $payload);
+                fclose($socket);
+            }
+        } catch (\Exception $e) {
+            // Silent fallback
+        }
     }
     
     /**
