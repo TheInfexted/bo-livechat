@@ -8,14 +8,14 @@ class AdminController extends General
     public function dashboard()
     {
         if (!$this->isAuthenticated()) {
-            return redirect()->to('/login');
+            return redirect()->to(getDomainSpecificUrl('login', 'admin'));
         }
         
         $currentUser = $this->getCurrentUser();
         
         // Redirect clients to client dashboard
         if ($currentUser['role'] === 'client') {
-            return redirect()->to('/client/dashboard');
+            return redirect()->to(getDomainSpecificUrl('dashboard', 'client'));
         }
         
         // Get dashboard statistics
@@ -44,12 +44,12 @@ class AdminController extends General
     public function agents()
     {
         if (!$this->isAuthenticated()) {
-            return redirect()->to('/login');
+            return redirect()->to(getDomainSpecificUrl('login', 'admin'));
         }
         
         // Only admins can access agent management
         if (!$this->isAdmin()) {
-            return redirect()->to('/admin')->with('error', 'Access denied. Only administrators can manage agents.');
+            return redirect()->to(getDomainSpecificUrl('dashboard', 'admin'))->with('error', 'Access denied. Only administrators can manage agents.');
         }
         
         $data = [
@@ -212,7 +212,7 @@ class AdminController extends General
     public function apiKeys()
     {
         if (!$this->isAuthenticated()) {
-            return redirect()->to('/login');
+            return redirect()->to(getDomainSpecificUrl('login', 'admin'));
         }
         
         $currentUser = $this->getCurrentUser();
@@ -230,7 +230,7 @@ class AdminController extends General
             $title = 'API Key Management';
         } else {
             // Support users cannot access API keys
-            return redirect()->to('/admin')->with('error', 'Access denied.');
+            return redirect()->to(getDomainSpecificUrl('dashboard', 'admin'))->with('error', 'Access denied.');
         }
         
         $data = [
@@ -438,7 +438,7 @@ class AdminController extends General
     public function settings()
     {
         if (!$this->isAuthenticated()) {
-            return redirect()->to('/login');
+            return redirect()->to(getDomainSpecificUrl('login', 'admin'));
         }
 
         $currentUser = $this->getCurrentUser();

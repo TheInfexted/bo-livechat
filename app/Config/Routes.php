@@ -6,15 +6,28 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
-// Home route - redirect to appropriate dashboard based on user type
+// Domain-based home route - redirect to appropriate dashboard based on domain and user type
 $routes->get('/', function() {
+    helper('domain');
     $session = session();
-    if ($session->has('user_id')) {
-        return redirect()->to('/admin');
-    } elseif ($session->has('client_user_id') || $session->has('agent_user_id')) {
-        return redirect()->to('/client');
+    
+    if (isAdminDomain()) {
+        // Admin domain - only allow admin users
+        if ($session->has('user_id')) {
+            return redirect()->to('dashboard');
+        } else {
+            return redirect()->to('login');
+        }
+    } elseif (isClientDomain()) {
+        // Client domain - only allow clients and agents
+        if ($session->has('client_user_id') || $session->has('agent_user_id')) {
+            return redirect()->to('dashboard');
+        } else {
+            return redirect()->to('login');
+        }
     } else {
-        return redirect()->to('/login');
+        // Unknown domain - redirect to login
+        return redirect()->to('login');
     }
 });
 
@@ -40,8 +53,11 @@ $routes->group('chat-history', ['filter' => 'authfilter'], function($routes) {
     $routes->get('get-chat-history-for-api-key', 'ChatHistoryController::getChatHistoryForApiKey');
 });
 
-// Client routes
-$routes->group('client', ['filter' => 'clientfilter'], function($routes) {
+// Domain-aware dashboard route
+$routes->get('dashboard', 'DomainAwareDashboard::index');
+
+// Client routes (legacy - keeping for backwards compatibility)
+$routes->group('client', ['filter' => ['client_domain', 'clientfilter']], function($routes) {
     $routes->get('/', 'ClientController::dashboard');
     $routes->get('dashboard', 'ClientController::dashboard');
     $routes->get('api-keys', 'ClientController::apiKeys');
@@ -75,8 +91,8 @@ $routes->group('client', ['filter' => 'clientfilter'], function($routes) {
     $routes->post('agents/delete', 'ClientController::deleteAgent');
 });
 
-// Admin routes
-$routes->group('admin', ['filter' => 'adminfilter'], function($routes) {
+// Admin routes (legacy - keeping for backwards compatibility)
+$routes->group('admin', ['filter' => ['admin_domain', 'adminfilter']], function($routes) {
     $routes->get('/', 'AdminController::dashboard');
     $routes->get('dashboard', 'AdminController::dashboard');
     $routes->get('agents', 'AdminController::agents');
@@ -111,12 +127,12 @@ $routes->group('webhook', function($routes) {
     $routes->post('status-update', 'WebhookController::statusUpdate');
 });
 
-// Authentication routes
-$routes->get('/login', 'Auth::login');
-$routes->post('/login', 'Auth::attemptLogin');
-$routes->get('/logout', 'Auth::logout');
+// Domain-aware login routes - Handle domain detection in controllers
+$routes->get('login', 'DomainAwareAuth::login');
+$routes->post('login', 'DomainAwareAuth::attemptLogin');
+$routes->get('logout', 'DomainAwareAuth::logout');
 
-// Admin Authentication routes
+// Legacy admin routes (keeping for backwards compatibility)
 $routes->get('/admin/login', 'AdminAuth::login');
 $routes->post('/admin/login', 'AdminAuth::attemptLogin');
 $routes->get('/admin/logout', 'AdminAuth::logout');

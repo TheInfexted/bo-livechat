@@ -7,7 +7,7 @@ class ClientController extends General
     public function dashboard()
     {
         if (!$this->isClientAuthenticated()) {
-            return redirect()->to('/login');
+            return redirect()->to(getDomainSpecificUrl('login', 'client'));
         }
         
         $currentUser = $this->getCurrentClientUser();
@@ -64,7 +64,7 @@ class ClientController extends General
     public function apiKeys()
     {
         if (!$this->isClientAuthenticated()) {
-            return redirect()->to('/login');
+            return redirect()->to(getDomainSpecificUrl('login', 'client'));
         }
         
         $currentUser = $this->getCurrentClientUser();
@@ -105,7 +105,7 @@ class ClientController extends General
     public function chatHistory()
     {
         if (!$this->isClientAuthenticated()) {
-            return redirect()->to('/login');
+            return redirect()->to(getDomainSpecificUrl('login', 'client'));
         }
         
         $currentUser = $this->getCurrentClientUser();

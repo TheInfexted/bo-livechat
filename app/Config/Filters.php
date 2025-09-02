@@ -37,6 +37,8 @@ class Filters extends BaseFilters
         'authfilter'    => \App\Filters\AuthFilter::class,
         'adminfilter'   => \App\Filters\AdminFilter::class,
         'clientfilter'  => \App\Filters\ClientFilter::class,
+        'admin_domain'  => \App\Filters\AdminDomainFilter::class,
+        'client_domain' => \App\Filters\ClientDomainFilter::class,
     ];
 
     /**

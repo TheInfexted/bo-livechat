@@ -11,7 +11,7 @@
 <div class="login-container">
     <div class="login-header">
         <h2><i class="bi bi-people"></i> Client Portal</h2>
-        <p>Client & Agent Access</p>
+        <p>Business Client Access</p>
     </div>
     
     <div class="login-body">

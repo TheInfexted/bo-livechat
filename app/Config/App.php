@@ -15,6 +15,9 @@ class App extends BaseConfig
      * WITH a trailing slash:
      *
      * E.g., http://example.com/
+     * 
+     * We use the client domain as base since it's the primary interface,
+     * but allow both domains via allowedHostnames.
      */
     public string $baseURL = 'https://kiosk-chat.kopisugar.cc/';
 
@@ -22,14 +25,13 @@ class App extends BaseConfig
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.
      * If you want to accept multiple Hostnames, set this.
      *
-     * E.g.,
-     * When your site URL ($baseURL) is 'http://example.com/', and your site
-     * also accepts 'http://media.example.com/' and 'http://accounts.example.com/':
-     *     ['media.example.com', 'accounts.example.com']
+     * We allow the admin domain in addition to the base client domain.
      *
      * @var list<string>
      */
-    public array $allowedHostnames = [];
+    public array $allowedHostnames = [
+        'kiosk-admin.kopisugar.cc'
+    ];
 
     /**
      * --------------------------------------------------------------------------

@@ -6,14 +6,19 @@ class Auth extends BaseController
 {
     public function login()
     {
-        // If already logged in as client/agent, redirect to client dashboard
-        if ($this->session->has('client_user_id') || $this->session->has('agent_user_id')) {
-            return redirect()->to('/client');
+        // Check if we're on the wrong domain
+        if (!isClientDomain()) {
+            return redirectToDomain('client', 'login');
         }
         
-        // If logged in as admin, redirect to admin login
+        // If already logged in as client/agent, redirect to dashboard
+        if ($this->session->has('client_user_id') || $this->session->has('agent_user_id')) {
+            return redirect()->to('/dashboard');
+        }
+        
+        // If logged in as admin, redirect to admin domain
         if ($this->session->has('user_id')) {
-            return redirect()->to('/admin/login')->with('error', 'Please use admin login for admin access');
+            return redirectToDomain('admin', 'login');
         }
         
         return view('auth/login');
@@ -44,7 +49,8 @@ class Auth extends BaseController
                 'user_type' => 'client'
             ]);
             
-            return redirect()->to('/client/dashboard');
+            // Use relative redirect to stay on same domain
+            return redirect()->to('dashboard');
         }
         
         // If not found in clients, try agents table
@@ -59,7 +65,7 @@ class Auth extends BaseController
                 'user_type' => 'agent'
             ]);
             
-            return redirect()->to('/client/dashboard');
+            return redirect()->to('dashboard');
         }
         
         return redirect()->back()->with('error', 'Invalid client/agent credentials');

@@ -6,14 +6,19 @@ class AdminAuth extends BaseController
 {
     public function login()
     {
-        // If already logged in as admin, redirect to admin dashboard
-        if ($this->session->has('user_id')) {
-            return redirect()->to('/admin');
+        // Check if we're on the wrong domain
+        if (!isAdminDomain()) {
+            return redirectToDomain('admin', 'login');
         }
         
-        // If logged in as client/agent, show message to logout first
+        // If already logged in as admin, redirect to dashboard
+        if ($this->session->has('user_id')) {
+            return redirect()->to('/dashboard');
+        }
+        
+        // If logged in as client/agent, redirect to client domain
         if ($this->session->has('client_user_id') || $this->session->has('agent_user_id')) {
-            return redirect()->to('/logout')->with('error', 'Please logout first to access admin login');
+            return redirectToDomain('client', 'login');
         }
         
         return view('auth/admin-login');
@@ -43,7 +48,7 @@ class AdminAuth extends BaseController
                 'role' => $user['role']
             ]);
             
-            return redirect()->to('/admin');
+            return redirect()->to('/dashboard');
         }
         
         return redirect()->back()->with('error', 'Invalid admin credentials');
@@ -52,6 +57,6 @@ class AdminAuth extends BaseController
     public function logout()
     {
         $this->session->destroy();
-        return redirect()->to('/admin/login');
+        return redirect()->to('/login');
     }
 }
