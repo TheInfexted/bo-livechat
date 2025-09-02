@@ -459,7 +459,7 @@ class ClientController extends General
     }
     
     /**
-     * Get a specific canned response for client use
+     * Get a specific canned response for client use with variable replacement
      */
     public function getCannedResponse($id)
     {
@@ -478,6 +478,12 @@ class ClientController extends General
         
         if (!$response) {
             return $this->jsonResponse(['error' => 'Response not found'], 404);
+        }
+        
+        // Get session ID from request to fetch user info for variable replacement
+        $sessionId = $this->request->getGet('session_id');
+        if ($sessionId) {
+            $response = $this->processVariableReplacement($response, $sessionId);
         }
         
         return $this->jsonResponse([
@@ -1225,5 +1231,52 @@ class ClientController extends General
         }
         
         return $this->jsonResponse(['error' => 'Failed to update status'], 500);
+    }
+    
+    /**
+     * Process variable replacement in canned responses
+     * Replaces variables like {uid}, {name}, {email} with actual user data
+     */
+    private function processVariableReplacement($response, $sessionId)
+    {
+        if (!$sessionId) {
+            return $response;
+        }
+        
+        // Get session data with user info
+        $session = $this->chatModel->where('session_id', $sessionId)->first();
+        
+        if (!$session) {
+            return $response;
+        }
+        
+        // Define variable mappings
+        $variables = [
+            '{uid}' => $session['external_system_id'] ?? $session['customer_id'] ?? '',
+            '{user_id}' => $session['external_system_id'] ?? $session['customer_id'] ?? '',
+            '{name}' => $this->processCustomerName($session),
+            '{customer_name}' => $this->processCustomerName($session),
+            '{email}' => $session['customer_email'] ?? '',
+            '{customer_email}' => $session['customer_email'] ?? '',
+            '{username}' => $session['external_username'] ?? $session['customer_name'] ?? '',
+            '{topic}' => $session['chat_topic'] ?? 'General Support',
+            '{session_id}' => $session['session_id'] ?? '',
+            '{api_key}' => $session['api_key'] ?? ''
+        ];
+        
+        // Debug: Log the variables for troubleshooting
+        log_message('debug', 'Variable replacement for session ' . $sessionId . ': ' . json_encode($variables));
+        
+        // Replace variables in content
+        $content = $response['content'];
+        foreach ($variables as $placeholder => $value) {
+            $content = str_replace($placeholder, $value, $content);
+        }
+        
+        // Create a copy of the response and update the content
+        $processedResponse = $response;
+        $processedResponse['content'] = $content;
+        
+        return $processedResponse;
     }
 }

@@ -234,7 +234,7 @@
 
 <!-- API Key Integration Modal -->
 <div class="modal fade" id="keyDetailsModal" tabindex="-1">
-    <div class="modal-dialog modal-custom-wide">
+    <div class="modal-dialog modal-xl" style="max-width: 90vw; width: 1200px;">
         <div class="modal-content simple-modal">
             <!-- Modal Header -->
             <div class="modal-header">
@@ -365,6 +365,8 @@ var selectedType = 'basic';
 
 // Integration templates
 var basicTemplate = [
+    '<!-- Basic Chat Widget - Auto User Detection -->',
+    '<!-- INSTRUCTIONS: Replace the placeholder values with your website\'s user variables -->',
     '<script>',
     'window.LiveChatConfig = {',
     '    baseUrl: \'https://livechat.kopisugar.cc\',',
@@ -375,8 +377,42 @@ var basicTemplate = [
     '',
     'var script = document.createElement(\'script\');',
     'script.src = \'https://livechat.kopisugar.cc/assets/js/widget.js\';',
+    '',
+    '// CUSTOMIZE THESE LINES for your website visitors:',
+    'script.setAttribute(\'data-user-id\', \'<\?php echo $your_user["id"] ?? ""; ?\>\');',
+    'script.setAttribute(\'data-user-name\', \'<\?php echo $your_user["name"] ?? ""; ?\>\');',
+    'script.setAttribute(\'data-user-email\', \'<\?php echo $your_user["email"] ?? ""; ?\>\');',
+    '',
     'document.head.appendChild(script);',
-    '<\/script>'
+    '<\/script>',
+    '',
+    '<!-- INTEGRATION EXAMPLES - Choose one that matches your user system: -->',
+    '',
+    '<!-- Example 1: WordPress users -->',
+    '<!-- script.setAttribute(\'data-user-id\', \'<\?php echo get_current_user_id(); ?\>\'); -->',
+    '<!-- script.setAttribute(\'data-user-name\', \'<\?php echo wp_get_current_user()->display_name; ?\>\'); -->',
+    '<!-- script.setAttribute(\'data-user-email\', \'<\?php echo wp_get_current_user()->user_email; ?\>\'); -->',
+    '',
+    '<!-- Example 2: Custom $customer variable -->',
+    '<!-- script.setAttribute(\'data-user-id\', \'<\?php echo $customer["id"] ?? ""; ?\>\'); -->',
+    '<!-- script.setAttribute(\'data-user-name\', \'<\?php echo $customer["first_name"] . " " . $customer["last_name"]; ?\>\'); -->',
+    '<!-- script.setAttribute(\'data-user-email\', \'<\?php echo $customer["email"] ?? ""; ?\>\'); -->',
+    '',
+    '<!-- Example 3: Session-based authentication -->',
+    '<!-- script.setAttribute(\'data-user-id\', \'<\?php echo $_SESSION["user_id"] ?? ""; ?\>\'); -->',
+    '<!-- script.setAttribute(\'data-user-name\', \'<\?php echo $_SESSION["first_name"] . " " . $_SESSION["last_name"]; ?\>\'); -->',
+    '<!-- script.setAttribute(\'data-user-email\', \'<\?php echo $_SESSION["email"] ?? ""; ?\>\'); -->',
+    '',
+    '<!-- Example 4: Laravel Auth -->',
+    '<!-- script.setAttribute(\'data-user-id\', \'<\?php echo Auth::id(); ?\>\'); -->',
+    '<!-- script.setAttribute(\'data-user-name\', \'<\?php echo Auth::user()->name ?? ""; ?\>\'); -->',
+    '<!-- script.setAttribute(\'data-user-email\', \'<\?php echo Auth::user()->email ?? ""; ?\>\'); -->',
+    '',
+    '<!-- IMPORTANT NOTES: -->',
+    '<!-- - Replace the empty strings with your actual PHP variables -->',
+    '<!-- - This captures YOUR WEBSITE VISITORS, not your livechat account -->',
+    '<!-- - Widget works in anonymous mode if user info is empty -->',
+    '<!-- - User info helps us provide better support to your customers -->' 
 ];
 
 var welcomeTemplate = [

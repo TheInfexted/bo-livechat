@@ -195,23 +195,61 @@
 }
 
 /* Message Links Styling */
-.message-link {
-    color: var(--primary-color) !important;
+.message-content .message-link,
+.message-content a {
+    color: #0066cc !important;
     text-decoration: underline !important;
     word-break: break-word;
     transition: all 0.2s ease;
+    font-weight: 500;
+    cursor: pointer;
 }
 
-.message-link:hover {
-    color: var(--primary-hover) !important;
+.message-content .message-link:hover,
+.message-content a:hover {
+    color: #004499 !important;
     text-decoration: underline !important;
-    background-color: rgba(102, 126, 234, 0.1);
-    padding: 0.1rem 0.2rem;
-    border-radius: 0.2rem;
 }
 
-.message-link:visited {
-    color: var(--info-color) !important;
+.message-content .message-link:visited,
+.message-content a:visited {
+    color: #7b2cbf !important;
+}
+
+.message-content .message-link:active,
+.message-content a:active {
+    color: #003d7a !important;
+}
+
+/* Specific styling for agent messages */
+.message.agent .message-content .message-link,
+.message.agent .message-content a {
+    color: #ffffff !important;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.message.agent .message-content .message-link:hover,
+.message.agent .message-content a:hover {
+    color: #ffffff !important;
+    text-decoration: underline;
+}
+
+.message.agent .message-content .message-link:visited,
+.message.agent .message-content a:visited {
+    color: #f0f0f0 !important;
+}
+
+/* Specific styling for customer messages */
+.message.customer .message-content .message-link,
+.message.customer .message-content a {
+    color: #0066cc !important;
+    font-weight: 500;
+}
+
+.message.customer .message-content .message-link:hover,
+.message.customer .message-content a:hover {
+    color: #004499 !important;
 }
 
 /* Sessions List */

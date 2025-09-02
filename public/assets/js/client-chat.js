@@ -11,6 +11,8 @@ let ws = null;
 let reconnectInterval = null;
 let displayedMessages = new Set();
 let messageQueue = [];
+let chatInitializationBuffer = [];
+let isChatInitializing = false;
 
 // WebSocket URLs for connection
 let wsUrls = [
@@ -334,6 +336,21 @@ function updateSessionCounts(sessions) {
 function openChat(sessionId) {
     currentSessionId = sessionId;
     
+    // Enable message buffering during initialization
+    isChatInitializing = true;
+    chatInitializationBuffer = [];
+    
+    // Register with WebSocket for this session FIRST to ensure real-time message reception
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        const registerData = {
+            type: 'register',
+            session_id: sessionId,
+            user_type: 'agent', // Client acts as agent
+            user_id: getUserId()
+        };
+        ws.send(JSON.stringify(registerData));
+    }
+    
     // Show chat panel
     const chatPanel = document.getElementById('chat-panel');
     if (chatPanel) {
@@ -382,11 +399,23 @@ function openChat(sessionId) {
     // Load chat history
     loadChatHistoryForSession(sessionId);
     
-    // Show input area for active sessions
+    // Show input area for active sessions but disable it initially
     const sessionStatus = sessionItem?.dataset.status;
     const inputArea = document.getElementById('chat-input-area');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    
     if (sessionStatus === 'active') {
         inputArea.style.display = 'block';
+        
+        // Disable input temporarily while initializing
+        if (messageInput) {
+            messageInput.disabled = true;
+            messageInput.placeholder = 'Loading chat...';
+        }
+        if (sendBtn) {
+            sendBtn.disabled = true;
+        }
     } else {
         inputArea.style.display = 'none';
     }
@@ -399,17 +428,6 @@ function openChat(sessionId) {
     
     // Load session details for customer info panel
     loadSessionDetails(sessionId);
-    
-    // Register with WebSocket for this session
-    if (ws && ws.readyState === WebSocket.OPEN) {
-        const registerData = {
-            type: 'register',
-            session_id: sessionId,
-            user_type: 'agent', // Client acts as agent
-            user_id: getUserId()
-        };
-        ws.send(JSON.stringify(registerData));
-    }
 }
 
 function loadChatHistoryForSession(sessionId) {
@@ -458,12 +476,18 @@ function loadChatHistoryForSession(sessionId) {
             
             // Scroll to bottom
             container.scrollTop = container.scrollHeight;
+            
+            // Chat initialization is complete - process buffered messages
+            finalizeChatInitialization();
         })
         .catch(error => {
             const container = document.getElementById('messages-container');
             if (container) {
                 container.innerHTML = '<div class="text-center p-4 text-danger">Error loading messages</div>';
             }
+            
+            // Even on error, finalize initialization
+            finalizeChatInitialization();
         });
 }
 
@@ -484,6 +508,62 @@ function hideChat() {
 
     // Update header
     document.getElementById('chat-header-title').textContent = 'Select a chat session';
+}
+
+// ============================================================================
+// CHAT INITIALIZATION FINALIZATION
+// ============================================================================
+
+function finalizeChatInitialization() {
+    if (!isChatInitializing) {
+        return; // Already finalized
+    }
+    
+    console.log('Finalizing chat initialization. Processing', chatInitializationBuffer.length, 'buffered messages.');
+    
+    // Process any buffered messages
+    if (chatInitializationBuffer.length > 0) {
+        const container = document.getElementById('messages-container');
+        
+        chatInitializationBuffer.forEach(messageData => {
+            // Create message ID for deduplication
+            const messageId = messageData.id ? `db_${messageData.id}` : `${messageData.sender_type}_${(messageData.message || '').toLowerCase().trim()}_${messageData.timestamp || messageData.created_at}`;
+            
+            // Only display if we haven't already shown this message
+            if (!displayedMessages.has(messageId)) {
+                if (container) {
+                    displayClientMessage(messageData);
+                    displayedMessages.add(messageId);
+                }
+            }
+        });
+        
+        // Scroll to bottom after processing buffered messages
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        console.log('Processed', chatInitializationBuffer.length, 'buffered messages.');
+    }
+    
+    // Clear the buffer and disable initialization mode
+    chatInitializationBuffer = [];
+    isChatInitializing = false;
+    
+    // Re-enable the message input fields after initialization is complete
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (messageInput) {
+        messageInput.disabled = false;
+        messageInput.placeholder = 'Type your message...';
+    }
+    
+    if (sendBtn) {
+        sendBtn.disabled = false;
+    }
+    
+    console.log('Chat initialization completed. Real-time messaging is now active.');
 }
 
 // ============================================================================
@@ -567,12 +647,13 @@ function makeLinksClickable(text) {
     const escapedText = escapeHtml(text);
     
     // URL regex pattern to match various URL formats
-    const urlPattern = /(https?:\/\/(?:[-\w.])+(?::[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[&\w\/.=])*)?(?:#(?:[\w\/.])*)?)(![^<]*>|[^<>]*<\/)/gi;
+    const urlPattern = /(https?:\/\/[^\s<>"']+)/gi;
     
     // Replace URLs with clickable links
     return escapedText.replace(urlPattern, function(url) {
-        const fullUrl = url.match(/^https?:\/\//i) ? url : 'http://' + url;
-        return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="message-link">${url}</a>`;
+        // Clean up trailing punctuation that shouldn't be part of the URL
+        const cleanUrl = url.replace(/[.,;!?)]+$/, '');
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="message-link">${cleanUrl}</a>`;
     });
 }
 
@@ -738,6 +819,13 @@ function sendMessageDirect(message) {
 // ============================================================================
 
 function acceptChat(sessionId) {
+    // Disable accept button to prevent double-clicking
+    const acceptBtn = document.querySelector(`[onclick="acceptChat('${sessionId}')"]`);
+    if (acceptBtn) {
+        acceptBtn.disabled = true;
+        acceptBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accepting...';
+    }
+    
     const acceptUrl = window.clientConfig ? window.clientConfig.acceptSessionUrl : '/chat/acceptSession';
     
     fetch(acceptUrl, {
@@ -764,13 +852,43 @@ function acceptChat(sessionId) {
             }
             
             loadSessions();
-            setTimeout(() => openChat(sessionId), 500);
+            
+            // Increase delay to ensure WebSocket registration is complete and reduce chance of race condition
+            setTimeout(() => {
+                openChat(sessionId);
+                
+                // Additional delay to ensure UI is fully loaded before enabling message input
+                setTimeout(() => {
+                    const messageInput = document.getElementById('message-input');
+                    if (messageInput) {
+                        messageInput.disabled = false;
+                        messageInput.placeholder = 'Type your message...';
+                    }
+                    
+                    const sendBtn = document.getElementById('send-btn');
+                    if (sendBtn) {
+                        sendBtn.disabled = false;
+                    }
+                }, 750); // Give extra time for chat interface to fully load
+            }, 750); // Increased delay for better stability
         } else {
             showError('Failed to accept session: ' + (data.message || 'Unknown error'));
+            
+            // Re-enable accept button on error
+            if (acceptBtn) {
+                acceptBtn.disabled = false;
+                acceptBtn.innerHTML = 'Accept';
+            }
         }
     })
     .catch(error => {
         showError('Network error accepting session');
+        
+        // Re-enable accept button on error
+        if (acceptBtn) {
+            acceptBtn.disabled = false;
+            acceptBtn.innerHTML = 'Accept';
+        }
     });
 }
 
@@ -879,6 +997,13 @@ function handleWebSocketMessage(data) {
                 if (data.message && data.message.includes('has joined the chat')) {
                     return;
                 }
+            }
+            
+            // If chat is still initializing, buffer the message
+            if (isChatInitializing) {
+                chatInitializationBuffer.push(data);
+                console.log('Buffering message during initialization:', data.message);
+                return;
             }
             
             // Create message ID for deduplication
@@ -1353,7 +1478,10 @@ function useCannedResponse(responseId) {
         window.clientConfig.getCannedResponseUrl.replace(':responseId', responseId) :
         `/client/get-canned-response/${responseId}`;
     
-    fetch(getCannedResponseUrl)
+    // Add session_id parameter for variable replacement
+    const urlWithSession = `${getCannedResponseUrl}?session_id=${encodeURIComponent(currentSessionId)}`;
+    
+    fetch(urlWithSession)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.response && data.response.content) {

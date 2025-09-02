@@ -246,24 +246,37 @@
     }
 }
 
-/* Modal Dialog Adjustments - Custom Wide Modal */
-.modal-custom-wide .modal-dialog {
-    max-width: 1600px;
-    width: 98%;
-    margin: 1.75rem auto;
+/* Modal Dialog Adjustments - API Keys Integration Modal */
+#keyDetailsModal .modal-dialog {
+    max-width: 1400px !important;
+    width: 90vw !important;
+    margin: 1.75rem auto !important;
 }
 
-@media (max-width: 1200px) {
-    .modal-custom-wide .modal-dialog {
-        max-width: 95%;
-        width: 95%;
+/* Ensure the modal content uses full width */
+#keyDetailsModal .modal-content {
+    width: 100% !important;
+}
+
+/* Make the code textarea taller for better visibility */
+#keyDetailsModal .code-textarea {
+    height: 350px !important;
+    min-height: 350px !important;
+}
+
+@media (max-width: 1450px) {
+    #keyDetailsModal .modal-dialog {
+        width: 95vw !important;
     }
 }
 
 @media (max-width: 768px) {
-    .modal-custom-wide .modal-dialog {
-        margin: 0.5rem;
-        max-width: calc(100vw - 1rem);
-        width: calc(100vw - 1rem);
+    #keyDetailsModal .modal-dialog {
+        margin: 0.5rem auto !important;
+        width: 98vw !important;
+    }
+    
+    #keyDetailsModal .code-textarea {
+        height: 250px !important;
     }
 }
