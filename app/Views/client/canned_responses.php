@@ -95,7 +95,7 @@
                     <thead>
                         <tr>
                             <th>Title</th>
-                            <th>Category</th>
+                            <th>Type</th>
                             <th>Content Preview</th>
                             <th>Status</th>
                             <th>Created</th>
@@ -159,28 +159,71 @@
                             <div class="form-text">A short, descriptive name for this response</div>
                         </div>
                         <div class="col-md-4">
-                            <label for="responseCategory" class="form-label">
-                                <i class="bi bi-tags me-1"></i>
-                                Category
+                            <label for="responseType" class="form-label">
+                                <i class="bi bi-gear me-1"></i>
+                                Response Type <span class="text-danger">*</span>
                             </label>
-                            <select class="form-select" id="responseCategory" name="category">
-                                <option value="general">General</option>
-                                <option value="greeting">Greeting</option>
-                                <option value="closing">Closing</option>
-                                <option value="technical">Technical</option>
-                                <option value="billing">Billing</option>
-                                <option value="support">Support</option>
+                            <select class="form-select" id="responseType" name="response_type" required>
+                                <option value="plain_text">💬 Plain Text</option>
+                                <option value="api">⚙️ API Action</option>
                             </select>
                         </div>
+                    </div>
+                    
+                    <!-- API Action Type Field (only shown for API responses) -->
+                    <div class="mb-3" id="apiActionTypeGroup" style="display: none;">
+                        <label for="apiActionType" class="form-label">
+                            <i class="bi bi-lightning me-1"></i>
+                            API Action Type <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="apiActionType" name="api_action_type">
+                            <option value="">Select an action...</option>
+                            <option value="give_tokens">🎁 Give Tokens</option>
+                            <option value="deposit_bonus">💰 Deposit Bonus</option>
+                            <option value="account_update">👤 Account Update</option>
+                            <option value="promo_apply">🎟️ Apply Promo Code</option>
+                            <option value="custom">⚙️ Custom Action</option>
+                        </select>
+                        <div class="form-text">The type of backend action to perform</div>
+                    </div>
+                    
+                    <!-- API Parameters Field (only shown for API responses) -->
+                    <div class="mb-3" id="apiParametersGroup" style="display: none;">
+                        <label for="apiParameters" class="form-label">
+                            <i class="bi bi-code-square me-1"></i>
+                            API Parameters
+                        </label>
+                        <div id="apiParametersContainer">
+                            <div class="api-param-row mb-2">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control param-key" placeholder="Parameter name (e.g., promo_id)">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control param-value" placeholder="Parameter value (e.g., 28)">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-param" onclick="removeParamRow(this)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addParamRow()">
+                            <i class="bi bi-plus me-1"></i> Add Parameter
+                        </button>
+                        <div class="form-text">Parameters to send with the API call. Supports variables like {uid}, {name}, etc.</div>
+                        <input type="hidden" id="apiParametersJson" name="api_parameters">
                     </div>
                     
                     <div class="mb-3">
                         <label for="responseContent" class="form-label">
                             <i class="bi bi-chat-quote me-1"></i>
-                            Response Content <span class="text-danger">*</span>
+                            <span id="contentLabel">Response Content <span class="text-danger">*</span></span>
                         </label>
                         <textarea class="form-control" id="responseContent" name="content" rows="6" required placeholder="Type your response message here..."></textarea>
-                        <div class="form-text">The text that will be sent when this response is used in a chat</div>
+                        <div class="form-text" id="contentHelpText">The text that will be sent when this response is used in a chat</div>
                     </div>
                     
                     <div class="form-check">
@@ -245,6 +288,45 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentApiKey = '';
     let currentResponseId = null;
+
+    // Response type change handler
+    document.getElementById('responseType').addEventListener('change', function() {
+        const responseType = this.value;
+        const apiActionTypeGroup = document.getElementById('apiActionTypeGroup');
+        const apiParametersGroup = document.getElementById('apiParametersGroup');
+        const contentField = document.getElementById('responseContent');
+        const contentLabel = document.getElementById('contentLabel');
+        const contentHelpText = document.getElementById('contentHelpText');
+        const apiActionType = document.getElementById('apiActionType');
+        
+        if (responseType === 'api') {
+            // Show API fields
+            apiActionTypeGroup.style.display = 'block';
+            apiParametersGroup.style.display = 'block';
+            
+            // Update content field for API responses
+            contentLabel.innerHTML = 'Description/Notes';
+            contentField.placeholder = 'Optional description or notes for agents (not sent to customers)';
+            contentField.required = false;
+            contentHelpText.textContent = 'Optional description or notes about this API action for other agents';
+            
+            // Make API action type required
+            apiActionType.required = true;
+        } else {
+            // Hide API fields
+            apiActionTypeGroup.style.display = 'none';
+            apiParametersGroup.style.display = 'none';
+            
+            // Reset content field for plain text responses
+            contentLabel.innerHTML = 'Response Content <span class="text-danger">*</span>';
+            contentField.placeholder = 'Type your response message here...';
+            contentField.required = true;
+            contentHelpText.textContent = 'The text that will be sent when this response is used in a chat';
+            
+            // Make API action type not required
+            apiActionType.required = false;
+        }
+    });
 
     // API Key selection handler
     apiKeySelect.addEventListener('change', function() {
@@ -314,14 +396,20 @@ document.addEventListener('DOMContentLoaded', function() {
         responsesTableBody.innerHTML = responses.map(response => `
             <tr class="fade-in">
                 <td>
-                    <strong>${escapeHtml(response.title)}</strong>
+                    ${response.response_type === 'api' ? '⚙️' : '💬'} <strong>${escapeHtml(response.title)}</strong>
+                    ${response.response_type === 'api' && response.api_action_type ? `<br><small class="text-muted">Action: ${escapeHtml(response.api_action_type)}</small>` : ''}
                 </td>
                 <td>
-                    <span class="badge bg-secondary">${escapeHtml(response.category || 'general')}</span>
+                    <span class="badge bg-${response.response_type === 'api' ? 'warning' : 'secondary'}">
+                        ${response.response_type === 'api' ? 'API' : 'Text'}
+                    </span>
                 </td>
                 <td>
                     <div class="content-preview">
-                        ${escapeHtml(response.content.substring(0, 80))}${response.content.length > 80 ? '...' : ''}
+                        ${response.response_type === 'api' ? 
+                            (response.content ? escapeHtml(response.content.substring(0, 80)) + (response.content.length > 80 ? '...' : '') : '<em class="text-muted">API Action</em>') :
+                            escapeHtml(response.content.substring(0, 80)) + (response.content.length > 80 ? '...' : '')
+                        }
                     </div>
                 </td>
                 <td>
@@ -365,6 +453,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('responseId').value = '';
         document.getElementById('selectedApiKey').value = currentApiKey;
         document.getElementById('responseActive').checked = true;
+        document.getElementById('responseType').value = 'plain_text';
+        
+        // Trigger response type change to hide API fields
+        document.getElementById('responseType').dispatchEvent(new Event('change'));
+        
+        // Reset API parameters
+        addEmptyParamRow();
+        
         currentResponseId = null;
         responseModal.show();
     }
@@ -382,10 +478,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     document.getElementById('responseId').value = response.id;
                     document.getElementById('responseTitle').value = response.title;
-                    document.getElementById('responseCategory').value = response.category || 'general';
+                    document.getElementById('responseType').value = response.response_type || 'plain_text';
+                    document.getElementById('apiActionType').value = response.api_action_type || '';
                     document.getElementById('responseContent').value = response.content;
                     document.getElementById('responseActive').checked = response.is_active == 1;
                     document.getElementById('selectedApiKey').value = response.api_key;
+                    
+                    // Trigger response type change to show/hide fields
+                    document.getElementById('responseType').dispatchEvent(new Event('change'));
+                    
+                    // Populate API parameters if available
+                    if (response.api_parameters) {
+                        populateApiParameters(response.api_parameters);
+                    } else {
+                        addEmptyParamRow();
+                    }
                     
                     responseModal.show();
                 } else {
@@ -434,6 +541,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading state
         saveBtn.innerHTML = '<i class="bi bi-arrow-repeat spinner-border-sm me-2"></i>Saving...';
         saveBtn.disabled = true;
+        
+        // Collect API parameters if response type is API
+        const responseType = document.getElementById('responseType').value;
+        if (responseType === 'api') {
+            const apiParams = collectApiParameters();
+            document.getElementById('apiParametersJson').value = apiParams;
+        }
         
         const formData = new FormData(responseForm);
         
@@ -526,6 +640,119 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // API Parameters management functions
+    window.addParamRow = function() {
+        const container = document.getElementById('apiParametersContainer');
+        const newRow = document.createElement('div');
+        newRow.className = 'api-param-row mb-2';
+        newRow.innerHTML = `
+            <div class="row">
+                <div class="col-md-5">
+                    <input type="text" class="form-control param-key" placeholder="Parameter name (e.g., promo_id)">
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control param-value" placeholder="Parameter value (e.g., 28)">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-param" onclick="removeParamRow(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(newRow);
+    };
+    
+    window.removeParamRow = function(button) {
+        const container = document.getElementById('apiParametersContainer');
+        const rows = container.querySelectorAll('.api-param-row');
+        
+        // Don't remove if it's the last row
+        if (rows.length > 1) {
+            button.closest('.api-param-row').remove();
+        } else {
+            // Clear the inputs in the last row instead
+            const row = button.closest('.api-param-row');
+            row.querySelector('.param-key').value = '';
+            row.querySelector('.param-value').value = '';
+        }
+    };
+    
+    function collectApiParameters() {
+        const container = document.getElementById('apiParametersContainer');
+        const rows = container.querySelectorAll('.api-param-row');
+        const params = {};
+        
+        rows.forEach(row => {
+            const key = row.querySelector('.param-key').value.trim();
+            const value = row.querySelector('.param-value').value.trim();
+            if (key && value) {
+                params[key] = value;
+            }
+        });
+        
+        return Object.keys(params).length > 0 ? JSON.stringify(params) : '';
+    }
+    
+    function populateApiParameters(parametersJson) {
+        const container = document.getElementById('apiParametersContainer');
+        container.innerHTML = ''; // Clear existing rows
+        
+        if (parametersJson) {
+            try {
+                const params = JSON.parse(parametersJson);
+                Object.entries(params).forEach(([key, value], index) => {
+                    const newRow = document.createElement('div');
+                    newRow.className = 'api-param-row mb-2';
+                    newRow.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-5">
+                                <input type="text" class="form-control param-key" value="${escapeHtml(key)}" placeholder="Parameter name (e.g., promo_id)">
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" class="form-control param-value" value="${escapeHtml(value)}" placeholder="Parameter value (e.g., 28)">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-param" onclick="removeParamRow(this)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(newRow);
+                });
+            } catch (e) {
+                // If JSON parsing fails, create an empty row
+                addEmptyParamRow();
+            }
+        } else {
+            // Create an empty row
+            addEmptyParamRow();
+        }
+    }
+    
+    function addEmptyParamRow() {
+        const container = document.getElementById('apiParametersContainer');
+        const emptyRow = document.createElement('div');
+        emptyRow.className = 'api-param-row mb-2';
+        emptyRow.innerHTML = `
+            <div class="row">
+                <div class="col-md-5">
+                    <input type="text" class="form-control param-key" placeholder="Parameter name (e.g., promo_id)">
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control param-value" placeholder="Parameter value (e.g., 28)">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-param" onclick="removeParamRow(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(emptyRow);
     }
 
     // Auto-dismiss existing alerts

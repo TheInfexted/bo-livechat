@@ -1419,30 +1419,61 @@ function displayQuickResponses(responses) {
         return;
     }
     
-    const categories = {};
+    // Group by response type first, then by category
+    const responseTypes = {
+        'plain_text': [],
+        'api': []
+    };
+    
     responses.forEach(response => {
-        const category = response.category || 'general';
-        if (!categories[category]) {
-            categories[category] = [];
+        const type = response.response_type || 'plain_text';
+        if (!responseTypes[type]) {
+            responseTypes[type] = [];
         }
-        categories[category].push(response);
+        responseTypes[type].push(response);
     });
     
     let html = '';
-    Object.keys(categories).forEach(category => {
+    
+    // Display Plain Text responses first
+    if (responseTypes.plain_text && responseTypes.plain_text.length > 0) {
         html += `<div class="response-category">
-            <div class="category-header">${category.charAt(0).toUpperCase() + category.slice(1)}</div>
+            <div class="category-header">💬 Plain Text Responses</div>
             <div class="category-responses">`;
         
-        categories[category].forEach(response => {
-            html += `<div class="quick-response-item" onclick="useCannedResponse(${response.id})" title="${escapeHtml(response.content)}">
-                <div class="response-title">${escapeHtml(response.title)}</div>
-                <div class="response-preview">${escapeHtml(response.content.substring(0, 60))}${response.content.length > 60 ? '...' : ''}</div>
+        responseTypes.plain_text.forEach(response => {
+            const title = escapeHtml(response.title);
+            const content = response.content || '';
+            const preview = content.length > 60 ? content.substring(0, 60) + '...' : content;
+            
+            html += `<div class="quick-response-item plain-text-response" onclick="useCannedResponse(${response.id})" title="${escapeHtml(content)}">
+                <div class="response-title">${title}</div>
+                <div class="response-preview">${escapeHtml(preview)}</div>
             </div>`;
         });
         
         html += '</div></div>';
-    });
+    }
+    
+    // Display API responses
+    if (responseTypes.api && responseTypes.api.length > 0) {
+        html += `<div class="response-category">
+            <div class="category-header">⚙️ API Actions</div>
+            <div class="category-responses">`;
+        
+        responseTypes.api.forEach(response => {
+            const title = escapeHtml(response.title);
+            const actionType = response.api_action_type || 'Unknown';
+            const description = response.content || `API Action: ${actionType}`;
+            
+            html += `<div class="quick-response-item api-response" onclick="useCannedResponse(${response.id})" title="${escapeHtml(description)}">
+                <div class="response-title">${title}</div>
+                <div class="response-preview"><em>API: ${escapeHtml(actionType)}</em></div>
+            </div>`;
+        });
+        
+        html += '</div></div>';
+    }
     
     list.innerHTML = html;
 }
@@ -1474,6 +1505,23 @@ function useCannedResponse(responseId) {
         return;
     }
     
+    // Find the response in our loaded responses to check the type
+    const response = cannedResponses.find(r => r.id == responseId);
+    if (!response) {
+        showError('Response not found');
+        return;
+    }
+    
+    if (response.response_type === 'api') {
+        // Handle API response
+        handleApiResponse(response);
+    } else {
+        // Handle plain text response (existing behavior)
+        handlePlainTextResponse(responseId);
+    }
+}
+
+function handlePlainTextResponse(responseId) {
     const getCannedResponseUrl = window.clientConfig ?
         window.clientConfig.getCannedResponseUrl.replace(':responseId', responseId) :
         `/client/get-canned-response/${responseId}`;
@@ -1494,6 +1542,154 @@ function useCannedResponse(responseId) {
         .catch(error => {
             showError('Error loading response');
         });
+}
+
+function handleApiResponse(response) {
+    // Show loading toast
+    showToast('info', `Executing ${response.api_action_type || 'API action'}...`, 'API Action');
+    
+    // Get current session details for variable replacement
+    const sessionDetailsUrl = window.clientConfig ? 
+        window.clientConfig.sessionDetailsUrl.replace(':sessionId', currentSessionId) :
+        `/client/session-details/${currentSessionId}`;
+    
+    fetch(sessionDetailsUrl)
+        .then(response => response.json())
+        .then(sessionData => {
+            if (!sessionData.success || !sessionData.session) {
+                throw new Error('Failed to get session data');
+            }
+            
+            const session = sessionData.session;
+            
+            // Prepare session data for API call
+            const sessionInfo = {
+                session_id: session.session_id,
+                customer_id: session.customer_id,
+                customer_name: session.customer_name,
+                customer_fullname: session.customer_fullname,
+                customer_email: session.customer_email,
+                external_system_id: session.external_system_id,
+                external_username: session.external_username,
+                external_fullname: session.external_fullname,
+                api_key: session.api_key
+            };
+            
+            // Process API parameters with variable replacement
+            let apiData = {};
+            if (response.api_parameters) {
+                try {
+                    const params = JSON.parse(response.api_parameters);
+                    apiData = processVariableReplacement(params, session);
+                } catch (e) {
+                    console.error('Failed to parse API parameters:', e);
+                    apiData = {};
+                }
+            }
+            
+            // Make API call
+            const apiPayload = {
+                action_type: response.api_action_type,
+                session_data: sessionInfo,
+                action_data: apiData
+            };
+            
+            console.log('API Payload being sent:', apiPayload);
+            console.log('Original session data:', session);
+            console.log('Processed action data:', apiData);
+            
+            return fetch('/api/canned-response-action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(apiPayload)
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('API Response:', data); // Log for development
+            
+            if (data.success) {
+                showToast('success', data.message || 'API action completed successfully', 'Success');
+            } else {
+                showToast('error', data.message || data.error || 'API action failed', 'Error');
+            }
+            
+            hideQuickResponses();
+        })
+        .catch(error => {
+            console.error('API Error:', error);
+            showToast('error', 'Failed to execute API action: ' + error.message, 'Error');
+        });
+}
+
+function processVariableReplacement(params, session) {
+    const processedParams = {};
+    
+    // Variable mappings based on session data
+    const variables = {
+        '{uid}': session.external_system_id || session.customer_id || '',
+        '{user_id}': session.external_system_id || session.customer_id || '',
+        '{name}': session.customer_fullname || session.customer_name || 'Customer',
+        '{customer_name}': session.customer_fullname || session.customer_name || 'Customer',
+        '{email}': session.customer_email || '',
+        '{customer_email}': session.customer_email || '',
+        '{username}': session.external_username || session.customer_name || '',
+        '{topic}': session.chat_topic || 'General Support',
+        '{session_id}': session.session_id || '',
+        '{api_key}': session.api_key || ''
+    };
+    
+    // Replace variables in each parameter value
+    for (const [key, value] of Object.entries(params)) {
+        let processedValue = String(value);
+        for (const [placeholder, replacement] of Object.entries(variables)) {
+            processedValue = processedValue.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), replacement);
+        }
+        processedParams[key] = processedValue;
+    }
+    
+    return processedParams;
+}
+
+function showToast(type, message, title = '') {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create toast element
+    const toastId = 'toast-' + Date.now();
+    const toastHtml = `
+        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="toast-header ${type === 'success' ? 'bg-success text-white' : type === 'error' ? 'bg-danger text-white' : 'bg-info text-white'}">
+                <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                <strong class="me-auto">${title || (type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info')}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    // Initialize and show toast
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
 }
 
 function useFallbackResponse(responseType) {

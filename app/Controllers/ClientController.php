@@ -857,6 +857,9 @@ class ClientController extends General
                 $session['updated_at_formatted'] = date('M d, Y h:i A', strtotime($session['updated_at']));
             }
             
+            // Debug: Log session data to see what fields are available
+            log_message('debug', 'ClientController::getSessionDetails - Session data: ' . json_encode($session));
+            
             return $this->jsonResponse([
                 'success' => true,
                 'session' => $session
@@ -1113,19 +1116,36 @@ class ClientController extends General
             return $this->jsonResponse(['error' => 'Unauthorized'], 401);
         }
         
+        try {
+        
         $currentUser = $this->getCurrentClientUser();
         $clientId = $this->getClientId();
         
         $id = $this->request->getPost('id');
         $title = $this->request->getPost('title');
         $content = $this->request->getPost('content');
-        $category = $this->request->getPost('category') ?: 'general';
+        $responseType = $this->request->getPost('response_type') ?: 'plain_text';
+        $apiActionType = $this->request->getPost('api_action_type');
+        $apiParameters = $this->request->getPost('api_parameters');
         $apiKey = $this->request->getPost('api_key');
         $isActive = $this->request->getPost('is_active') ? 1 : 0;
         
         // Validate required fields
-        if (!$title || !$content || !$apiKey) {
-            return $this->jsonResponse(['error' => 'Title, content, and API key are required'], 400);
+        if (!$title || !$apiKey) {
+            return $this->jsonResponse(['error' => 'Title and API key are required'], 400);
+        }
+        
+        // Validate response type specific requirements
+        if ($responseType === 'api') {
+            if (!$apiActionType) {
+                return $this->jsonResponse(['error' => 'API action type is required for API responses'], 400);
+            }
+            // For API responses, content is optional (used as description/note)
+        } else {
+            // For plain_text responses, content is required
+            if (!$content) {
+                return $this->jsonResponse(['error' => 'Content is required for plain text responses'], 400);
+            }
         }
         
         // Verify API key belongs to this client
@@ -1137,10 +1157,21 @@ class ClientController extends General
             return $this->jsonResponse(['error' => 'Invalid API key'], 403);
         }
         
+        // Validate and format API parameters if provided
+        if ($responseType === 'api' && !empty($apiParameters)) {
+            // Try to decode JSON to validate format
+            $decodedParams = json_decode($apiParameters, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return $this->jsonResponse(['error' => 'API parameters must be valid JSON'], 400);
+            }
+        }
+        
         $data = [
             'title' => $title,
-            'content' => $content,
-            'category' => $category,
+            'content' => $content ?: '', // Allow empty content for API responses
+            'response_type' => $responseType,
+            'api_action_type' => $responseType === 'api' ? $apiActionType : null,
+            'api_parameters' => $responseType === 'api' ? $apiParameters : null,
             'api_key' => $apiKey,
             'created_by_user_type' => $currentUser['type'],
             'created_by_user_id' => $currentUser['id'],
@@ -1175,6 +1206,12 @@ class ClientController extends General
         }
         
         return $this->jsonResponse(['error' => 'Failed to save canned response'], 500);
+        
+        } catch (\Exception $e) {
+            log_message('error', 'Save Canned Response Error: ' . $e->getMessage());
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
+            return $this->jsonResponse(['error' => 'Server error: ' . $e->getMessage()], 500);
+        }
     }
     
     // Delete canned response
@@ -1231,6 +1268,259 @@ class ClientController extends General
         }
         
         return $this->jsonResponse(['error' => 'Failed to update status'], 500);
+    }
+    
+    /**
+     * Check if current client user has access to specified API key
+     */
+    private function userHasAccessToApiKey($apiKey)
+    {
+        $currentUser = $this->getCurrentClientUser();
+        if (!$currentUser) {
+            return false;
+        }
+        
+        // For super admin and admin, check if API key belongs to their client
+        if ($currentUser['type'] === 'super_admin' || $currentUser['type'] === 'admin') {
+            $apiKeyData = $this->apiKeyModel->where('api_key', $apiKey)->first();
+            return $apiKeyData && $apiKeyData['client_id'] == $currentUser['client_id'];
+        }
+        
+        // For regular users, they should only see API keys they have explicit access to
+        // This can be expanded based on your user permission model
+        return false;
+    }
+    
+    /**
+     * Get API integration configuration for an API key
+     */
+    public function getApiIntegrationConfig()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $apiKey = $this->request->getGet('api_key');
+        
+        if (!$apiKey) {
+            return $this->jsonResponse(['error' => 'API key is required'], 400);
+        }
+        
+        // Verify the API key belongs to current client
+        if (!$this->userHasAccessToApiKey($apiKey)) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        try {
+            $db = \Config\Database::connect();
+            $config = $db->table('client_api_configs')
+                        ->where('api_key', $apiKey)
+                        ->where('is_active', 1)
+                        ->get()
+                        ->getRowArray();
+            
+            if ($config) {
+                // Don't return auth_value for security
+                unset($config['auth_value']);
+                return $this->jsonResponse([
+                    'success' => true,
+                    'config' => $config
+                ]);
+            } else {
+                return $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'No configuration found'
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Get API Integration Config Error: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to load configuration'], 500);
+        }
+    }
+    
+    /**
+     * Save API integration configuration
+     */
+    public function saveApiIntegration()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $apiKey = $this->request->getPost('api_key');
+        $baseUrl = $this->request->getPost('base_url');
+        $authType = $this->request->getPost('auth_type');
+        $authValue = $this->request->getPost('auth_value');
+        $configName = $this->request->getPost('config_name');
+        $customerIdField = $this->request->getPost('customer_id_field') ?: 'customer_id';
+        
+        // Validation
+        if (!$apiKey || !$baseUrl || !$authType) {
+            return $this->jsonResponse(['error' => 'API key, base URL, and authentication type are required'], 400);
+        }
+        
+        // Verify the API key belongs to current client
+        if (!$this->userHasAccessToApiKey($apiKey)) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        // Validate URL format
+        if (!filter_var($baseUrl, FILTER_VALIDATE_URL)) {
+            return $this->jsonResponse(['error' => 'Please enter a valid URL'], 400);
+        }
+        
+        // Validate auth value if auth type is not 'none'
+        if ($authType !== 'none' && empty($authValue)) {
+            return $this->jsonResponse(['error' => 'Authentication value is required for the selected auth type'], 400);
+        }
+        
+        try {
+            $db = \Config\Database::connect();
+            
+            // Auto-generate config name if not provided
+            if (!$configName) {
+                // Get client name from API key
+                $apiKeyData = $this->apiKeyModel->where('api_key', $apiKey)->first();
+                $configName = ($apiKeyData['client_name'] ?? 'Client') . ' API';
+            }
+            
+            $data = [
+                'api_key' => $apiKey,
+                'config_name' => $configName,
+                'base_url' => rtrim($baseUrl, '/'),
+                'auth_type' => $authType,
+                'auth_value' => $authType === 'none' ? null : $authValue,
+                'customer_id_field' => $customerIdField,
+                'is_active' => 1,
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+            
+            // Check if config already exists
+            $existing = $db->table('client_api_configs')
+                          ->where('api_key', $apiKey)
+                          ->get()
+                          ->getRowArray();
+            
+            if ($existing) {
+                // Update existing
+                $updated = $db->table('client_api_configs')
+                             ->where('api_key', $apiKey)
+                             ->update($data);
+                             
+                if ($updated !== false) {
+                    return $this->jsonResponse([
+                        'success' => true,
+                        'message' => 'API integration updated successfully'
+                    ]);
+                }
+            } else {
+                // Create new
+                $data['created_at'] = date('Y-m-d H:i:s');
+                $inserted = $db->table('client_api_configs')->insert($data);
+                
+                if ($inserted) {
+                    return $this->jsonResponse([
+                        'success' => true,
+                        'message' => 'API integration saved successfully'
+                    ]);
+                }
+            }
+            
+            return $this->jsonResponse(['error' => 'Failed to save configuration'], 500);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Save API Integration Error: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to save configuration'], 500);
+        }
+    }
+    
+    /**
+     * Test API integration configuration
+     */
+    public function testApiIntegration()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $input = $this->request->getJSON(true);
+        
+        if (!$input) {
+            return $this->jsonResponse(['error' => 'Invalid JSON payload'], 400);
+        }
+        
+        $baseUrl = $input['base_url'] ?? '';
+        $authType = $input['auth_type'] ?? 'none';
+        $authValue = $input['auth_value'] ?? '';
+        $customerIdField = $input['customer_id_field'] ?? 'customer_id';
+        
+        if (!$baseUrl) {
+            return $this->jsonResponse(['error' => 'Base URL is required'], 400);
+        }
+        
+        try {
+            // Build test URL
+            $testUrl = rtrim($baseUrl, '/') . '/check_balance'; // Use a simple test endpoint
+            
+            // Build test payload
+            $testPayload = [
+                $customerIdField => 'test_customer_123',
+                'action' => 'check_balance'
+            ];
+            
+            // Build headers
+            $headers = ['Content-Type' => 'application/json'];
+            
+            switch ($authType) {
+                case 'bearer_token':
+                    $headers['Authorization'] = 'Bearer ' . $authValue;
+                    break;
+                case 'api_key':
+                    $headers['X-API-Key'] = $authValue;
+                    break;
+                case 'basic':
+                    $headers['Authorization'] = 'Basic ' . base64_encode($authValue);
+                    break;
+            }
+            
+            // Make test request
+            $client = \Config\Services::curlrequest();
+            $response = $client->post($testUrl, [
+                'headers' => $headers,
+                'json' => $testPayload,
+                'timeout' => 10,
+                'http_errors' => false // Don't throw on HTTP errors
+            ]);
+            
+            $statusCode = $response->getStatusCode();
+            $body = $response->getBody();
+            
+            // Consider test successful if we get any response (even errors)
+            // The important thing is that the endpoint is reachable
+            if ($statusCode > 0) {
+                return $this->jsonResponse([
+                    'success' => true,
+                    'message' => "Connection successful (HTTP {$statusCode}). Endpoint is reachable.",
+                    'details' => [
+                        'status_code' => $statusCode,
+                        'response_length' => strlen($body)
+                    ]
+                ]);
+            } else {
+                return $this->jsonResponse([
+                    'success' => false,
+                    'error' => 'No response received from endpoint'
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Test API Integration Error: ' . $e->getMessage());
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => 'Connection failed: ' . $e->getMessage()
+            ]);
+        }
     }
     
     /**

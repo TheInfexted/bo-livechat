@@ -199,6 +199,14 @@
                                 </button>
                                 <button 
                                     class="btn btn-sm" 
+                                    style="background: var(--light-bg); color: var(--warning-color); border: 1px solid var(--border-color);"
+                                    onclick="openApiSettings('<?= esc($key['api_key']) ?>', '<?= esc($key['client_name']) ?>')"
+                                    title="API Integration Settings"
+                                >
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                                <button 
+                                    class="btn btn-sm" 
                                     style="background: var(--light-bg); color: var(--info-color); border: 1px solid var(--border-color);"
                                     onclick="showKeyDetails('<?= esc($key['key_id']) ?>')"
                                     title="View Details"
@@ -229,6 +237,140 @@
             </div>
         </div>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- API Integration Settings Modal -->
+<div class="modal fade" id="apiSettingsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-gear me-2"></i>API Integration Settings
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="apiSettingsForm">
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Configure API Integration for: <strong><span id="modalClientName"></span></strong>
+                        </h6>
+                        <p class="small text-muted">Set up your backend system connection for API-based canned responses.</p>
+                    </div>
+
+                    <input type="hidden" id="settingsApiKey" name="api_key" value="">
+
+                    <!-- Required Fields -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="baseUrl" class="form-label">
+                                <i class="bi bi-link-45deg me-1"></i>
+                                Base URL <span class="text-danger">*</span>
+                            </label>
+                            <input type="url" class="form-control" id="baseUrl" name="base_url" required 
+                                   placeholder="https://your-system.com/api/livechat">
+                            <div class="form-text">Your backend API base URL for live chat actions</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="authType" class="form-label">
+                                <i class="bi bi-shield-lock me-1"></i>
+                                Authentication <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="authType" name="auth_type" required>
+                                <option value="none">None (No Authentication)</option>
+                                <option value="bearer_token">Bearer Token</option>
+                                <option value="api_key">API Key</option>
+                                <option value="basic">Basic Auth (Username:Password)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Auth Value Field (shows based on auth type) -->
+                    <div class="row mb-4" id="authValueGroup" style="display: none;">
+                        <div class="col-12">
+                            <label for="authValue" class="form-label">
+                                <i class="bi bi-key me-1"></i>
+                                <span id="authValueLabel">Authentication Value</span>
+                            </label>
+                            <input type="password" class="form-control" id="authValue" name="auth_value" 
+                                   placeholder="Enter your token/key/credentials">
+                            <div class="form-text" id="authValueHelp">Your authentication credentials</div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Settings (Collapsible) -->
+                    <div class="card">
+                        <div class="card-header py-2 px-3 bg-light">
+                            <button type="button" class="btn btn-link text-decoration-none p-0 text-start w-100" 
+                                    data-bs-toggle="collapse" data-bs-target="#advancedSettings" 
+                                    aria-expanded="false">
+                                <i class="bi bi-chevron-right me-2" id="advancedChevron"></i>
+                                Advanced Settings (Optional)
+                            </button>
+                        </div>
+                        <div class="collapse" id="advancedSettings">
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="configName" class="form-label">
+                                            <i class="bi bi-tag me-1"></i>
+                                            Configuration Name
+                                        </label>
+                                        <input type="text" class="form-control" id="configName" name="config_name" 
+                                               placeholder="Will auto-generate if empty">
+                                        <div class="form-text">Friendly name for this integration</div>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="customerIdField" class="form-label">
+                                            <i class="bi bi-person-badge me-1"></i>
+                                            Customer ID Field
+                                        </label>
+                                        <input type="text" class="form-control" id="customerIdField" 
+                                               name="customer_id_field" value="customer_id" 
+                                               placeholder="customer_id">
+                                        <div class="form-text">Field name your API uses to identify customers</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Connection Section -->
+                    <div class="mt-4 p-3 bg-light rounded" id="testSection">
+                        <h6 class="mb-3">Test Your Configuration</h6>
+                        <div class="d-flex gap-2 align-items-center">
+                            <button type="button" class="btn btn-outline-primary" id="testConnectionBtn" 
+                                    onclick="testApiConnection()">
+                                <i class="bi bi-wifi me-2"></i>Test Connection
+                            </button>
+                            <div id="testResult" class="ms-2"></div>
+                        </div>
+                        <div class="form-text mt-2">
+                            This will test if your API endpoint is reachable and properly configured.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="saveConfigBtn">
+                        <i class="bi bi-check2 me-2"></i>Save Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -666,5 +808,243 @@ function copyFromModal() {
         }, 2000);
     });
 }
+
+// API Settings Modal Functions
+function openApiSettings(apiKey, clientName) {
+    // Set modal data
+    document.getElementById('modalClientName').textContent = clientName;
+    document.getElementById('settingsApiKey').value = apiKey;
+    
+    // Reset form
+    document.getElementById('apiSettingsForm').reset();
+    document.getElementById('settingsApiKey').value = apiKey; // Set again after reset
+    
+    // Auto-generate config name
+    document.getElementById('configName').value = clientName + ' API';
+    
+    // Hide auth value field initially
+    document.getElementById('authValueGroup').style.display = 'none';
+    
+    // Clear test results
+    document.getElementById('testResult').innerHTML = '';
+    
+    // Load existing configuration if available
+    loadExistingConfig(apiKey);
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('apiSettingsModal')).show();
+}
+
+// Load existing configuration for the API key
+function loadExistingConfig(apiKey) {
+    fetch(`<?= base_url('client/api-integration-config') ?>?api_key=${encodeURIComponent(apiKey)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.config) {
+                const config = data.config;
+                document.getElementById('baseUrl').value = config.base_url || '';
+                document.getElementById('authType').value = config.auth_type || 'none';
+                document.getElementById('configName').value = config.config_name || '';
+                document.getElementById('customerIdField').value = config.customer_id_field || 'customer_id';
+                
+                // Handle auth value (don't populate for security)
+                updateAuthFields();
+            }
+        })
+        .catch(error => {
+            console.log('No existing config found (this is normal for new integrations)');
+        });
+}
+
+// Handle auth type change
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('authType').addEventListener('change', updateAuthFields);
+    
+    // Handle advanced settings collapse
+    document.getElementById('advancedSettings').addEventListener('show.bs.collapse', function() {
+        document.getElementById('advancedChevron').className = 'bi bi-chevron-down me-2';
+    });
+    
+    document.getElementById('advancedSettings').addEventListener('hide.bs.collapse', function() {
+        document.getElementById('advancedChevron').className = 'bi bi-chevron-right me-2';
+    });
+    
+    // Handle form submission
+    document.getElementById('apiSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveApiConfiguration();
+    });
+});
+
+// Update auth fields based on selected auth type
+function updateAuthFields() {
+    const authType = document.getElementById('authType').value;
+    const authValueGroup = document.getElementById('authValueGroup');
+    const authValueLabel = document.getElementById('authValueLabel');
+    const authValueHelp = document.getElementById('authValueHelp');
+    const authValueInput = document.getElementById('authValue');
+    
+    if (authType === 'none') {
+        authValueGroup.style.display = 'none';
+        authValueInput.required = false;
+    } else {
+        authValueGroup.style.display = 'block';
+        authValueInput.required = true;
+        
+        switch (authType) {
+            case 'bearer_token':
+                authValueLabel.textContent = 'Bearer Token';
+                authValueHelp.textContent = 'Your API bearer token (e.g., abc123xyz...)';
+                authValueInput.placeholder = 'Enter your bearer token';
+                break;
+            case 'api_key':
+                authValueLabel.textContent = 'API Key';
+                authValueHelp.textContent = 'Your API key for authentication';
+                authValueInput.placeholder = 'Enter your API key';
+                break;
+            case 'basic':
+                authValueLabel.textContent = 'Username:Password';
+                authValueHelp.textContent = 'Format: username:password (e.g., user:pass123)';
+                authValueInput.placeholder = 'username:password';
+                break;
+        }
+    }
+}
+
+// Test API connection
+function testApiConnection() {
+    const baseUrl = document.getElementById('baseUrl').value;
+    const authType = document.getElementById('authType').value;
+    const authValue = document.getElementById('authValue').value;
+    const customerIdField = document.getElementById('customerIdField').value || 'customer_id';
+    
+    if (!baseUrl) {
+        showTestResult('error', 'Please enter a Base URL first');
+        return;
+    }
+    
+    const testBtn = document.getElementById('testConnectionBtn');
+    const originalText = testBtn.innerHTML;
+    testBtn.innerHTML = '<i class="bi bi-arrow-repeat spin me-2"></i>Testing...';
+    testBtn.disabled = true;
+    
+    // Test data
+    const testData = {
+        base_url: baseUrl,
+        auth_type: authType,
+        auth_value: authValue,
+        customer_id_field: customerIdField
+    };
+    
+    fetch('<?= base_url('client/test-api-integration') ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(testData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showTestResult('success', 'Connection successful! Your API endpoint is reachable.');
+        } else {
+            showTestResult('error', `Connection failed: ${data.error || 'Unknown error'}`);
+        }
+    })
+    .catch(error => {
+        showTestResult('error', `Test failed: ${error.message}`);
+    })
+    .finally(() => {
+        testBtn.innerHTML = originalText;
+        testBtn.disabled = false;
+    });
+}
+
+// Show test result
+function showTestResult(type, message) {
+    const resultDiv = document.getElementById('testResult');
+    const iconClass = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+    const textClass = type === 'success' ? 'text-success' : 'text-danger';
+    
+    resultDiv.innerHTML = `
+        <div class="${textClass}">
+            <i class="bi ${iconClass} me-1"></i>
+            <small>${message}</small>
+        </div>
+    `;
+    
+    // Auto-hide after 10 seconds
+    setTimeout(() => {
+        resultDiv.innerHTML = '';
+    }, 10000);
+}
+
+// Save API configuration
+function saveApiConfiguration() {
+    const saveBtn = document.getElementById('saveConfigBtn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="bi bi-arrow-repeat spin me-2"></i>Saving...';
+    saveBtn.disabled = true;
+    
+    const formData = new FormData(document.getElementById('apiSettingsForm'));
+    
+    fetch('<?= base_url('client/save-api-integration') ?>', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="bi bi-check-circle-fill me-2"></i>
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert alert at the top of the container
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('apiSettingsModal')).hide();
+            
+            // Auto-dismiss alert
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to save configuration'));
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    })
+    .finally(() => {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
 </script>
+
+<style>
+/* Add spin animation for loading buttons */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Style for auth value group transition */
+#authValueGroup {
+    transition: all 0.3s ease;
+}
+</style>
 <?= $this->endSection() ?>

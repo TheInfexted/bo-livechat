@@ -465,6 +465,127 @@
     outline-offset: 2px;
 }
 
+/* Response Type Distinctions in Quick Responses */
+.quick-response-item.plain-text-response {
+    border-left: 3px solid #10b981;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.02) 0%, transparent 100%);
+}
+
+.quick-response-item.api-response {
+    border-left: 3px solid #f59e0b;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.02) 0%, transparent 100%);
+}
+
+.quick-response-item.plain-text-response:hover {
+    border-left-color: #059669;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
+}
+
+.quick-response-item.api-response:hover {
+    border-left-color: #d97706;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.05) 0%, transparent 100%);
+}
+
+.quick-response-item .response-title {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.quick-response-item.api-response .response-preview {
+    color: #f59e0b;
+    font-style: italic;
+    font-size: 0.8125rem;
+}
+
+.category-header {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #374151;
+    padding: 0.75rem 1rem 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Toast Notifications */
+.toast-container {
+    z-index: 10000;
+}
+
+.toast {
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.toast-header {
+    font-weight: 600;
+}
+
+.toast-body {
+    padding: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+/* API Response Specific Styling in Management Table */
+.responses-table tbody tr:has(.badge.bg-warning) {
+    background: rgba(245, 158, 11, 0.02);
+}
+
+.responses-table tbody tr:has(.badge.bg-warning):hover {
+    background: rgba(245, 158, 11, 0.05);
+}
+
+/* API Parameters Form Styling */
+.api-param-row {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.api-param-row:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.api-param-row .form-control {
+    background: white;
+    border: 1px solid #d1d5db;
+}
+
+.api-param-row .form-control:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.remove-param {
+    min-width: 38px;
+    height: 38px;
+}
+
+#apiParametersContainer {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background: #fafbfc;
+}
+
+/* Response Type Selection Styling */
+#responseType option[value="plain_text"] {
+    background: #f0fdf4;
+}
+
+#responseType option[value="api"] {
+    background: #fefce8;
+}
+
 /* High Contrast Support */
 @media (prefers-contrast: high) {
     :root {

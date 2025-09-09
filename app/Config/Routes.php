@@ -6,6 +6,10 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
+// Canned Response Action API (no auth filter)
+$routes->post('api/canned-response-action', 'CannedResponseActionController::executeAction');
+$routes->options('api/canned-response-action', 'CannedResponseActionController::executeAction');
+
 // Domain-based home route - redirect to appropriate dashboard based on domain and user type
 $routes->get('/', function() {
     helper('domain');
@@ -83,6 +87,11 @@ $routes->group('client', ['filter' => ['client_domain', 'clientfilter']], functi
     $routes->post('save-canned-response', 'ClientController::saveCannedResponse');
     $routes->post('delete-canned-response', 'ClientController::deleteCannedResponse');
     $routes->post('toggle-canned-response-status', 'ClientController::toggleCannedResponseStatus');
+    
+    // API Integration routes
+    $routes->get('api-integration-config', 'ClientController::getApiIntegrationConfig');
+    $routes->post('save-api-integration', 'ClientController::saveApiIntegration');
+    $routes->post('test-api-integration', 'ClientController::testApiIntegration');
     
     // Agent Management routes (clients only)
     $routes->get('manage-agents', 'ClientController::manageAgents');

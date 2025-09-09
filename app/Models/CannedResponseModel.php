@@ -13,7 +13,8 @@ class CannedResponseModel extends Model
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     protected $allowedFields = [
-        'title', 'content', 'category', 'api_key', 'created_by_user_type', 
+        'title', 'content', 'category', 'response_type', 'api_action_type', 
+        'api_parameters', 'api_key', 'created_by_user_type', 
         'created_by_user_id', 'is_active', 'created_at', 'updated_at'
     ];
 
@@ -26,8 +27,9 @@ class CannedResponseModel extends Model
     // Validation
     protected $validationRules = [
         'title' => 'required|min_length[1]|max_length[100]',
-        'content' => 'required|min_length[1]',
         'category' => 'max_length[50]',
+        'response_type' => 'in_list[plain_text,api]',
+        'api_action_type' => 'max_length[100]',
         'api_key' => 'required|max_length[255]',
         'created_by_user_type' => 'required|in_list[client,agent]',
         'created_by_user_id' => 'required|integer'
@@ -39,9 +41,11 @@ class CannedResponseModel extends Model
             'min_length' => 'Title must be at least 1 character long',
             'max_length' => 'Title cannot exceed 100 characters'
         ],
-        'content' => [
-            'required' => 'Content is required',
-            'min_length' => 'Content must be at least 1 character long'
+        'response_type' => [
+            'in_list' => 'Response type must be either plain_text or api'
+        ],
+        'api_action_type' => [
+            'max_length' => 'API action type cannot exceed 100 characters'
         ],
         'api_key' => [
             'required' => 'API key is required'
