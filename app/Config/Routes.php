@@ -88,6 +88,7 @@ $routes->group('client', ['filter' => ['client_domain', 'clientfilter']], functi
     $routes->post('delete-canned-response', 'ClientController::deleteCannedResponse');
     $routes->post('toggle-canned-response-status', 'ClientController::toggleCannedResponseStatus');
     
+    
     // API Integration routes
     $routes->get('api-integration-config', 'ClientController::getApiIntegrationConfig');
     $routes->post('save-api-integration', 'ClientController::saveApiIntegration');

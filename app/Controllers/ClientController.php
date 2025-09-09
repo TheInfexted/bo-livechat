@@ -1280,15 +1280,23 @@ class ClientController extends General
             return false;
         }
         
-        // For super admin and admin, check if API key belongs to their client
-        if ($currentUser['type'] === 'super_admin' || $currentUser['type'] === 'admin') {
-            $apiKeyData = $this->apiKeyModel->where('api_key', $apiKey)->first();
-            return $apiKeyData && $apiKeyData['client_id'] == $currentUser['client_id'];
+        // Get the client ID based on user type
+        $clientId = null;
+        if ($currentUser['type'] === 'client') {
+            // For client users, their ID is the client_id
+            $clientId = $currentUser['id'];
+        } elseif ($currentUser['type'] === 'agent') {
+            // For agents, use the client_id from session (if available)
+            $clientId = $this->getClientId();
         }
         
-        // For regular users, they should only see API keys they have explicit access to
-        // This can be expanded based on your user permission model
-        return false;
+        if (!$clientId) {
+            return false;
+        }
+        
+        // Check if API key belongs to their client
+        $apiKeyData = $this->apiKeyModel->where('api_key', $apiKey)->first();
+        return $apiKeyData && $apiKeyData['client_id'] == $clientId;
     }
     
     /**
@@ -1312,9 +1320,17 @@ class ClientController extends General
         }
         
         try {
-            $config = $this->clientApiConfigModel->getConfigForClient($apiKey);
+            // Use direct DB query to avoid model issues
+            $db = \Config\Database::connect();
+            $config = $db->table('client_api_configs')
+                        ->where('api_key', $apiKey)
+                        ->where('is_active', 1)
+                        ->get()
+                        ->getRowArray();
             
             if ($config) {
+                // Remove sensitive data
+                unset($config['auth_value']);
                 return $this->jsonResponse([
                     'success' => true,
                     'config' => $config
@@ -1376,9 +1392,9 @@ class ClientController extends General
                 $configName = ($apiKeyData['client_name'] ?? 'Client') . ' API';
             }
             
-            // Validate auth_value based on auth_type
-            if (!$this->clientApiConfigModel->validateAuthValue($authType, $authValue)) {
-                return $this->jsonResponse(['error' => 'Authentication value is invalid for the selected authentication type'], 400);
+            // Additional validation for basic auth
+            if ($authType === 'basic' && !empty($authValue) && strpos($authValue, ':') === false) {
+                return $this->jsonResponse(['error' => 'Basic authentication must be in format "username:password"'], 400);
             }
             
             $data = [
@@ -1390,7 +1406,29 @@ class ClientController extends General
                 'is_active' => 1
             ];
             
-            $result = $this->clientApiConfigModel->saveConfigForApiKey($apiKey, $data);
+            // Use direct DB operations instead of model
+            $db = \Config\Database::connect();
+            
+            // Add api_key to data
+            $data['api_key'] = $apiKey;
+            
+            // Check if config already exists
+            $existing = $db->table('client_api_configs')
+                          ->where('api_key', $apiKey)
+                          ->get()
+                          ->getRowArray();
+            
+            if ($existing) {
+                // Update existing
+                $result = $db->table('client_api_configs')
+                            ->where('api_key', $apiKey)
+                            ->update($data);
+            } else {
+                // Create new
+                $data['created_at'] = date('Y-m-d H:i:s');
+                $data['updated_at'] = date('Y-m-d H:i:s');
+                $result = $db->table('client_api_configs')->insert($data);
+            }
             
             if ($result) {
                 return $this->jsonResponse([

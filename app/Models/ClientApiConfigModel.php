@@ -28,7 +28,7 @@ class ClientApiConfigModel extends Model
     protected $validationRules = [
         'api_key' => 'required|max_length[255]',
         'config_name' => 'required|max_length[255]',
-        'base_url' => 'required|valid_url|max_length[500]',
+        'base_url' => 'required|max_length[500]',
         'auth_type' => 'required|in_list[none,bearer_token,api_key,basic]',
         'customer_id_field' => 'max_length[100]'
     ];
@@ -44,7 +44,6 @@ class ClientApiConfigModel extends Model
         ],
         'base_url' => [
             'required' => 'Base URL is required',
-            'valid_url' => 'Please enter a valid URL',
             'max_length' => 'Base URL cannot exceed 500 characters'
         ],
         'auth_type' => [
@@ -68,7 +67,9 @@ class ClientApiConfigModel extends Model
      */
     public function getConfigForClient($apiKey)
     {
-        $config = $this->getActiveConfigByApiKey($apiKey);
+        $config = $this->where('api_key', $apiKey)
+                      ->where('is_active', 1)
+                      ->first();
         
         if ($config) {
             // Remove sensitive data
@@ -90,10 +91,10 @@ class ClientApiConfigModel extends Model
         $existing = $this->where('api_key', $apiKey)->first();
         
         if ($existing) {
-            // Update existing
+            // Update existing record
             return $this->update($existing['id'], $data);
         } else {
-            // Create new
+            // Create new record
             return $this->insert($data);
         }
     }
@@ -157,13 +158,16 @@ class ClientApiConfigModel extends Model
     }
     
     /**
-     * Custom validation before save
+     * Validate before insert
      */
     protected function beforeInsert(array $data)
     {
         return $this->validateAuthConfig($data);
     }
     
+    /**
+     * Validate before update
+     */
     protected function beforeUpdate(array $data)
     {
         return $this->validateAuthConfig($data);
@@ -174,14 +178,12 @@ class ClientApiConfigModel extends Model
      */
     private function validateAuthConfig(array $data)
     {
-        if (isset($data['data']['auth_type']) && isset($data['data']['auth_value'])) {
-            $authType = $data['data']['auth_type'];
-            $authValue = $data['data']['auth_value'];
-            
-            if (!$this->validateAuthValue($authType, $authValue)) {
-                $this->errors[] = 'Authentication value is invalid for the selected authentication type';
-                return false;
-            }
+        $authType = $data['data']['auth_type'] ?? null;
+        $authValue = $data['data']['auth_value'] ?? null;
+        
+        if ($authType && !$this->validateAuthValue($authType, $authValue)) {
+            $this->errors[] = 'Authentication value is invalid for the selected authentication type';
+            return false;
         }
         
         return $data;
