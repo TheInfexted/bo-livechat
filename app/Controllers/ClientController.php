@@ -1312,16 +1312,9 @@ class ClientController extends General
         }
         
         try {
-            $db = \Config\Database::connect();
-            $config = $db->table('client_api_configs')
-                        ->where('api_key', $apiKey)
-                        ->where('is_active', 1)
-                        ->get()
-                        ->getRowArray();
+            $config = $this->clientApiConfigModel->getConfigForClient($apiKey);
             
             if ($config) {
-                // Don't return auth_value for security
-                unset($config['auth_value']);
                 return $this->jsonResponse([
                     'success' => true,
                     'config' => $config
@@ -1376,8 +1369,6 @@ class ClientController extends General
         }
         
         try {
-            $db = \Config\Database::connect();
-            
             // Auto-generate config name if not provided
             if (!$configName) {
                 // Get client name from API key
@@ -1385,46 +1376,27 @@ class ClientController extends General
                 $configName = ($apiKeyData['client_name'] ?? 'Client') . ' API';
             }
             
+            // Validate auth_value based on auth_type
+            if (!$this->clientApiConfigModel->validateAuthValue($authType, $authValue)) {
+                return $this->jsonResponse(['error' => 'Authentication value is invalid for the selected authentication type'], 400);
+            }
+            
             $data = [
-                'api_key' => $apiKey,
                 'config_name' => $configName,
                 'base_url' => rtrim($baseUrl, '/'),
                 'auth_type' => $authType,
                 'auth_value' => $authType === 'none' ? null : $authValue,
                 'customer_id_field' => $customerIdField,
-                'is_active' => 1,
-                'updated_at' => date('Y-m-d H:i:s')
+                'is_active' => 1
             ];
             
-            // Check if config already exists
-            $existing = $db->table('client_api_configs')
-                          ->where('api_key', $apiKey)
-                          ->get()
-                          ->getRowArray();
+            $result = $this->clientApiConfigModel->saveConfigForApiKey($apiKey, $data);
             
-            if ($existing) {
-                // Update existing
-                $updated = $db->table('client_api_configs')
-                             ->where('api_key', $apiKey)
-                             ->update($data);
-                             
-                if ($updated !== false) {
-                    return $this->jsonResponse([
-                        'success' => true,
-                        'message' => 'API integration updated successfully'
-                    ]);
-                }
-            } else {
-                // Create new
-                $data['created_at'] = date('Y-m-d H:i:s');
-                $inserted = $db->table('client_api_configs')->insert($data);
-                
-                if ($inserted) {
-                    return $this->jsonResponse([
-                        'success' => true,
-                        'message' => 'API integration saved successfully'
-                    ]);
-                }
+            if ($result) {
+                return $this->jsonResponse([
+                    'success' => true,
+                    'message' => 'API integration saved successfully'
+                ]);
             }
             
             return $this->jsonResponse(['error' => 'Failed to save configuration'], 500);

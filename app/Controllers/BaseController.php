@@ -51,6 +51,7 @@ abstract class BaseController extends Controller
     protected $customerModel;
     protected $keywordResponseModel;
     protected $userRoleModel;
+    protected $clientApiConfigModel;
 
     
     /**
@@ -81,6 +82,7 @@ abstract class BaseController extends Controller
         $this->cannedResponseModel = new \App\Models\CannedResponseModel();
         $this->keywordResponseModel = new \App\Models\KeywordResponseModel();
         $this->userRoleModel = new \App\Models\UserRoleModel();
+        $this->clientApiConfigModel = new \App\Models\ClientApiConfigModel();
     }
     
     protected function jsonResponse($data, $statusCode = 200)
