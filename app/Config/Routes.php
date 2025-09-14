@@ -69,6 +69,7 @@ $routes->group('client', ['filter' => ['client_domain', 'clientfilter']], functi
     $routes->get('manage-chats', 'ClientController::manageChats');
     $routes->get('profile', 'ClientController::profile');
     $routes->post('profile/update', 'ClientController::updateProfile');
+    $routes->post('profile/update-api', 'ClientController::updateApiCredentials');
     $routes->get('realtime-stats', 'ClientController::getRealtimeStats');
     $routes->get('sessions-data', 'ClientController::getSessionsData');
     $routes->get('session-details/(:segment)', 'ClientController::getSessionDetails/$1');
@@ -123,6 +124,12 @@ $routes->group('admin', ['filter' => ['admin_domain', 'adminfilter']], function(
     $routes->post('api-keys/activate/(:num)', 'AdminController::activateApiKey/$1');
     $routes->post('api-keys/revoke/(:num)', 'AdminController::revokeApiKey/$1');
     $routes->post('api-keys/delete/(:num)', 'AdminController::deleteApiKey/$1');
+    
+    // Client Management routes
+    $routes->get('manage-clients', 'ManageClientController::index');
+    $routes->post('manage-clients/add', 'ManageClientController::add');
+    $routes->post('manage-clients/edit', 'ManageClientController::edit');
+    $routes->post('manage-clients/delete', 'ManageClientController::delete');
 });
 
 // Real-time notifications (for WebSocket fallback)

@@ -173,8 +173,13 @@
                         <!-- Customer Details -->
                         <div class="customer-details">
                             <div class="detail-item">
-                                <label>Chat Topic:</label>
-                                <span id="chat-topic-detail">-</span>
+                                <label>Username:</label>
+                                <span id="customer-username-detail">-</span>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <label>Phone Number:</label>
+                                <span id="customer-phone-detail">-</span>
                             </div>
                             
                             <div class="detail-item">
@@ -211,11 +216,6 @@
                                 <label>Status:</label>
                                 <span class="status-badge" id="chat-status-detail">-</span>
                             </div>
-                            
-                            <div class="detail-item">
-                                <label>API Key:</label>
-                                <span id="api-key-detail">-</span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -242,8 +242,17 @@
                         <div class="col-12">
                             <div class="card border-0 bg-light">
                                 <div class="card-body py-2">
-                                    <label class="fw-bold text-primary mb-1" style="font-size: 0.8rem;">CHAT TOPIC</label>
-                                    <div id="chat-topic-detail-modal" style="font-size: 0.95rem; color: #333;">-</div>
+                                    <label class="fw-bold text-primary mb-1" style="font-size: 0.8rem;">USERNAME</label>
+                                    <div id="customer-username-detail-modal" style="font-size: 0.95rem; color: #333;">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body py-2">
+                                    <label class="fw-bold text-primary mb-1" style="font-size: 0.8rem;">PHONE NUMBER</label>
+                                    <div id="customer-phone-detail-modal" style="font-size: 0.95rem; color: #333;">-</div>
                                 </div>
                             </div>
                         </div>
@@ -302,20 +311,11 @@
                             </div>
                         </div>
                         
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <div class="card border-0 bg-light">
                                 <div class="card-body py-2">
                                     <label class="fw-bold text-primary mb-1" style="font-size: 0.8rem;">STATUS</label>
                                     <div><span class="status-badge" id="chat-status-detail-modal" style="font-size: 0.85rem;">-</span></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body py-2">
-                                    <label class="fw-bold text-primary mb-1" style="font-size: 0.8rem;">API KEY</label>
-                                    <div id="api-key-detail-modal" style="font-size: 0.9rem; color: #333; font-family: monospace;">-</div>
                                 </div>
                             </div>
                         </div>

@@ -212,6 +212,27 @@ class ClientController extends General
         $currentUser = $this->getCurrentClientUser();
         $clientId = $this->getClientId();
         
+        // Get complete user data from database including API credentials
+        if ($this->isClientUser()) {
+            $userFromDb = $this->clientModel->find($clientId);
+            if ($userFromDb) {
+                // Merge session data with database data
+                $currentUser = array_merge($currentUser, [
+                    'api_username' => $userFromDb['api_username'],
+                    'api_password' => $userFromDb['api_password']
+                ]);
+            }
+        } elseif ($this->isAgentUser()) {
+            $userFromDb = $this->agentModel->find($currentUser['id']);
+            if ($userFromDb) {
+                // Merge session data with database data
+                $currentUser = array_merge($currentUser, [
+                    'api_username' => $userFromDb['api_username'],
+                    'api_password' => $userFromDb['api_password']
+                ]);
+            }
+        }
+        
         // Get client's API keys
         $apiKeys = $this->apiKeyModel->where('client_id', $clientId)->findAll();
         
@@ -290,47 +311,78 @@ class ClientController extends General
         }
         
         $currentUser = $this->getCurrentClientUser();
-        $username = $this->request->getPost('username');
         $email = $this->request->getPost('email');
-        $password = $this->request->getPost('password');
+        $fullName = $this->request->getPost('full_name');
         
-        if (!$username || !$email) {
-            return $this->jsonResponse(['error' => 'Missing required fields'], 400);
+        if (!$email) {
+            return $this->jsonResponse(['error' => 'Email is required'], 400);
         }
         
-        // Check if username already exists (excluding current user)
-        $existingUser = $this->userModel->where('username', $username)
-                                       ->where('id !=', $currentUser['id'])
-                                       ->first();
-        if ($existingUser) {
-            return $this->jsonResponse(['error' => 'Username already exists'], 400);
-        }
+        // Determine which model to use based on user type
+        $model = $this->isClientUser() ? $this->clientModel : $this->agentModel;
         
         // Check if email already exists (excluding current user)
-        $existingEmail = $this->userModel->where('email', $email)
-                                        ->where('id !=', $currentUser['id'])
-                                        ->first();
+        $existingEmail = $model->where('email', $email)
+                              ->where('id !=', $currentUser['id'])
+                              ->first();
         if ($existingEmail) {
             return $this->jsonResponse(['error' => 'Email already exists'], 400);
         }
         
         $data = [
-            'username' => $username,
-            'email' => $email
+            'email' => $email,
+            'full_name' => $fullName
         ];
         
-        // Only update password if provided
-        if (!empty($password)) {
-            $data['password'] = password_hash($password, PASSWORD_DEFAULT);
-        }
-        
-        $updated = $this->userModel->update($currentUser['id'], $data);
+        $updated = $model->update($currentUser['id'], $data);
         
         if ($updated) {
-            return $this->jsonResponse(['success' => true, 'message' => 'Profile updated successfully']);
+            return $this->jsonResponse(['success' => true, 'message' => 'Personal information updated successfully']);
         }
         
         return $this->jsonResponse(['error' => 'Failed to update profile'], 500);
+    }
+    
+    public function updateApiCredentials()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $apiUsername = $this->request->getPost('api_username');
+        $apiPassword = $this->request->getPost('api_password');
+        
+        // Determine which model to use based on user type
+        $model = $this->isClientUser() ? $this->clientModel : $this->agentModel;
+        
+        // Check API username uniqueness if provided
+        if (!empty($apiUsername)) {
+            // Check in both clients and agents tables for API username uniqueness
+            $existingClientApi = $this->clientModel->where('api_username', $apiUsername)
+                                                  ->where('id !=', $currentUser['id'])
+                                                  ->first();
+            $existingAgentApi = $this->agentModel->where('api_username', $apiUsername)
+                                                ->where('id !=', $currentUser['id'])
+                                                ->first();
+                                                
+            if ($existingClientApi || $existingAgentApi) {
+                return $this->jsonResponse(['error' => 'API username already exists'], 400);
+            }
+        }
+        
+        $data = [
+            'api_username' => $apiUsername,
+            'api_password' => !empty($apiPassword) ? $apiPassword : null
+        ];
+        
+        $updated = $model->update($currentUser['id'], $data);
+        
+        if ($updated) {
+            return $this->jsonResponse(['success' => true, 'message' => 'API credentials updated successfully']);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to update API credentials'], 500);
     }
     
     public function manageChats()
@@ -1126,6 +1178,7 @@ class ClientController extends General
         $content = $this->request->getPost('content');
         $responseType = $this->request->getPost('response_type') ?: 'plain_text';
         $apiActionType = $this->request->getPost('api_action_type');
+        $customActionValue = $this->request->getPost('custom_action_value');
         $apiParameters = $this->request->getPost('api_parameters');
         $apiKey = $this->request->getPost('api_key');
         $isActive = $this->request->getPost('is_active') ? 1 : 0;
@@ -1139,6 +1192,10 @@ class ClientController extends General
         if ($responseType === 'api') {
             if (!$apiActionType) {
                 return $this->jsonResponse(['error' => 'API action type is required for API responses'], 400);
+            }
+            // If custom action is selected, validate custom action value
+            if ($apiActionType === 'custom' && empty($customActionValue)) {
+                return $this->jsonResponse(['error' => 'Custom action value is required when using custom action'], 400);
             }
             // For API responses, content is optional (used as description/note)
         } else {
@@ -1166,11 +1223,17 @@ class ClientController extends General
             }
         }
         
+        // Determine the final action type to store
+        $finalActionType = $apiActionType;
+        if ($responseType === 'api' && $apiActionType === 'custom' && !empty($customActionValue)) {
+            $finalActionType = $customActionValue;
+        }
+        
         $data = [
             'title' => $title,
             'content' => $content ?: '', // Allow empty content for API responses
             'response_type' => $responseType,
-            'api_action_type' => $responseType === 'api' ? $apiActionType : null,
+            'api_action_type' => $responseType === 'api' ? $finalActionType : null,
             'api_parameters' => $responseType === 'api' ? $apiParameters : null,
             'api_key' => $apiKey,
             'created_by_user_type' => $currentUser['type'],
@@ -1362,7 +1425,12 @@ class ClientController extends General
         $authType = $this->request->getPost('auth_type');
         $authValue = $this->request->getPost('auth_value');
         $configName = $this->request->getPost('config_name');
-        $customerIdField = $this->request->getPost('customer_id_field') ?: 'customer_id';
+        $customerIdField = $this->request->getPost('customer_id_field');
+        // If not provided at all (null), default to 'customer_id'
+        // But if provided as empty string, respect the user's choice to leave it empty
+        if ($customerIdField === null) {
+            $customerIdField = 'customer_id';
+        }
         
         // Validation
         if (!$apiKey || !$baseUrl || !$authType) {
@@ -1385,12 +1453,12 @@ class ClientController extends General
         }
         
         try {
-            // Auto-generate config name if not provided
-            if (!$configName) {
-                // Get client name from API key
-                $apiKeyData = $this->apiKeyModel->where('api_key', $apiKey)->first();
-                $configName = ($apiKeyData['client_name'] ?? 'Client') . ' API';
-            }
+        // Auto-generate config name if not provided
+        if (!$configName || trim($configName) === '') {
+            // Get client name from API key
+            $apiKeyData = $this->apiKeyModel->where('api_key', $apiKey)->first();
+            $configName = ($apiKeyData['client_name'] ?? 'Client') . ' API';
+        }
             
             // Additional validation for basic auth
             if ($authType === 'basic' && !empty($authValue) && strpos($authValue, ':') === false) {
@@ -1463,7 +1531,11 @@ class ClientController extends General
         $baseUrl = $input['base_url'] ?? '';
         $authType = $input['auth_type'] ?? 'none';
         $authValue = $input['auth_value'] ?? '';
-        $customerIdField = $input['customer_id_field'] ?? 'customer_id';
+        $customerIdField = $input['customer_id_field'] ?? '';
+        // If truly empty, use a default for testing purposes only
+        if (empty($customerIdField)) {
+            $customerIdField = 'customer_id'; // Just for testing
+        }
         
         if (!$baseUrl) {
             return $this->jsonResponse(['error' => 'Base URL is required'], 400);

@@ -213,6 +213,13 @@
                                 >
                                     <i class="bi bi-eye"></i>
                                 </button>
+                                <button 
+                                    class="btn btn-sm btn-chat" 
+                                    onclick="openChatWithApiKey('<?= esc($key['api_key']) ?>')"
+                                    title="Open Chat Page"
+                                >
+                                    <i class="bi bi-chat-dots"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -337,8 +344,8 @@
                                             Customer ID Field
                                         </label>
                                         <input type="text" class="form-control" id="customerIdField" 
-                                               name="customer_id_field" value="customer_id" 
-                                               placeholder="customer_id">
+                                               name="customer_id_field" value="" 
+                                               placeholder="">
                                         <div class="form-text">Field name your API uses to identify customers</div>
                                     </div>
                                 </div>
@@ -501,6 +508,12 @@ function copyToClipboard(text, button) {
     });
 }
 
+// Open chat page with API key
+function openChatWithApiKey(apiKey) {
+    const chatUrl = `https://livechat.kopisugar.cc/?api_key=${encodeURIComponent(apiKey)}`;
+    window.open(chatUrl, '_blank', 'noopener,noreferrer');
+}
+
 // Global variables for integration functionality
 var globalApiKey = '';
 var selectedType = 'basic';
@@ -615,7 +628,7 @@ var ecommerceTemplate = [
 var helperTemplate = [
     '<!-- LiveChat Helper - Fullscreen Integration -->',
     '<!-- STEP 1: Add this HTML to your navigation menu -->',
-    '<!-- <a href="#" onclick="openLiveChat(); return false;" class="nav-link">Live Chat</a> -->',
+    '<a href="#" onclick="openLiveChat(); return false;" class="nav-link">Live Chat</a>',
     '',
     '<!-- STEP 2: Add this JavaScript before closing </body> tag -->',
     '<script src="https://livechat.kopisugar.cc/assets/js/livechat-helper.js"><\/script>',
@@ -632,7 +645,7 @@ var helperTemplate = [
     '    // Check if user is logged in',
     '    if (currentUser && currentUser.isLoggedIn) {',
     '        LiveChatHelper.openChat({',
-    '            // Map your user fields to LiveChat fields',
+    '            // Map your user fields to LiveChat fields - adjust field names as needed',
     '            userId: currentUser.id,           // or currentUser.user_id',
     '            name: currentUser.name,           // or currentUser.user_name, currentUser.fullName',
     '            email: currentUser.email,         // or currentUser.user_email',
@@ -644,62 +657,14 @@ var helperTemplate = [
     '    }',
     '}',
     '',
-    '// Example: Custom field mapping for different user object structures',
-    'function openLiveChatWithCustomFields() {',
-    '    // Example 1: If your user object uses user_id and user_name',
-    '    if (currentUser && currentUser.isLoggedIn) {',
-    '        LiveChatHelper.openChat({',
-    '            userId: currentUser.user_id,',
-    '            name: currentUser.user_name,',
-    '            email: currentUser.user_email || currentUser.email,',
-    '            username: currentUser.username || currentUser.user_name',
-    '        });',
-    '    }',
-    '',
-    '    // Example 2: If your user object has different field names',
-    '    // LiveChatHelper.openChat({',
-    '    //     userId: userProfile.memberId,',
-    '    //     name: userProfile.displayName,',
-    '    //     email: userProfile.emailAddress,',
-    '    //     username: userProfile.loginName',
-    '    // });',
-    '}',
-    '',
-    '// Example usage for custom buttons',
+    '// Auto-bind to elements with class "live-chat"',
     'document.addEventListener(\'DOMContentLoaded\', function() {',
-    '    // Method 1: Navigation menu integration',
-    '    // <a href="#" onclick="openLiveChat(); return false;">Live Chat</a>',
-    '    ',
-    '    // Method 2: Button with class "live-chat"',
     '    var chatButtons = document.querySelectorAll(\'.live-chat\');',
     '    for (var i = 0; i < chatButtons.length; i++) {',
     '        chatButtons[i].addEventListener(\'click\', function() {',
     '            openLiveChat();',
     '        });',
     '    }',
-    '    ',
-    '    // Method 3: Direct integration with existing user system',
-    '    // Replace this with your actual user detection logic',
-    '    /*',
-    '    var supportButton = document.getElementById(\'contact-support\');',
-    '    if (supportButton) {',
-    '        supportButton.addEventListener(\'click\', function() {',
-    '            // Get current user from your system',
-    '            var user = getUserFromYourSystem(); // Your function here',
-    '            ',
-    '            if (user && user.isAuthenticated) {',
-    '                LiveChatHelper.openChat({',
-    '                    userId: user.id,              // Adjust field names as needed',
-    '                    name: user.fullName,          // Adjust field names as needed', 
-    '                    email: user.emailAddress,     // Adjust field names as needed',
-    '                    username: user.loginId        // Adjust field names as needed',
-    '                });',
-    '            } else {',
-    '                LiveChatHelper.openAnonymousChat();',
-    '            }',
-    '        });',
-    '    }',
-    '    */',
     '});',
     '<\/script>'
 ];
@@ -819,8 +784,8 @@ function openApiSettings(apiKey, clientName) {
     document.getElementById('apiSettingsForm').reset();
     document.getElementById('settingsApiKey').value = apiKey; // Set again after reset
     
-    // Auto-generate config name
-    document.getElementById('configName').value = clientName + ' API';
+    // Don't auto-generate config name - let user choose
+    document.getElementById('configName').value = '';
     
     // Hide auth value field initially
     document.getElementById('authValueGroup').style.display = 'none';
@@ -845,7 +810,7 @@ function loadExistingConfig(apiKey) {
                 document.getElementById('baseUrl').value = config.base_url || '';
                 document.getElementById('authType').value = config.auth_type || 'none';
                 document.getElementById('configName').value = config.config_name || '';
-                document.getElementById('customerIdField').value = config.customer_id_field || 'customer_id';
+                document.getElementById('customerIdField').value = config.customer_id_field || '';
                 
                 // Handle auth value (don't populate for security)
                 updateAuthFields();

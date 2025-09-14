@@ -9,7 +9,7 @@ class ClientModel extends Model
     protected $table = 'clients';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'username', 'password', 'email', 'status', 'created_at', 'updated_at'
+        'username', 'password', 'email', 'full_name', 'api_username', 'api_password', 'status', 'created_at', 'updated_at'
     ];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';

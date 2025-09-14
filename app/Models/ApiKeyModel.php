@@ -14,7 +14,7 @@ class ApiKeyModel extends Model
     protected $protectFields = true;
     
     protected $allowedFields = [
-        'key_id', 'api_key', 'client_name', 'client_email', 'client_domain',
+        'client_id', 'key_id', 'api_key', 'client_name', 'client_email', 'client_domain',
         'status', 'last_used_at'
     ];
     

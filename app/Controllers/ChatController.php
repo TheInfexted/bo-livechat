@@ -62,6 +62,11 @@ class ChatController extends General
         $topicInput = $this->sanitizeInput($this->request->getPost('chat_topic'));
         $legacyNameInput = $this->sanitizeInput($this->request->getPost('name')); // For backwards compatibility
         $email = $this->sanitizeInput($this->request->getPost('email'));
+        $customerPhone = $this->sanitizeInput($this->request->getPost('customer_phone'));
+        // Normalize phone to digits only
+        if ($customerPhone) {
+            $customerPhone = preg_replace('/\D/', '', $customerPhone);
+        }
         
         // Role-based parameters
         $userRole = $this->sanitizeInput($this->request->getPost('user_role')) ?: 'anonymous';
@@ -137,12 +142,16 @@ class ChatController extends General
             }
         }
         
+        // Debug logging for email field
+        error_log('DEBUG - BO-LIVECHAT Email field specifically: ' . var_export($email, true));
+        
         $data = [
             'session_id' => $sessionId,
             'customer_name' => $customerName,
             'customer_fullname' => $customerFullName,
             'chat_topic' => $topic,
             'customer_email' => $email,
+            'customer_phone' => $customerPhone,
             'user_role' => $userRole,
             'external_username' => $externalUsername,
             'external_fullname' => $externalFullname,

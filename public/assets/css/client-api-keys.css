@@ -415,6 +415,33 @@
     font-size: 0.9rem;
 }
 
+/* Chat button in API keys table */
+.btn-chat {
+    background: var(--success-color, #28a745);
+    border-color: var(--success-color, #28a745);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.2rem;
+    transition: all 0.15s ease-in-out;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-chat:hover {
+    background: #218838;
+    border-color: #1e7e34;
+    color: white;
+    transform: scale(1.02);
+}
+
+.btn-chat i {
+    font-size: 1rem;
+}
+
 @media (max-width: 768px) {
     #apiIntegrationModal .modal-dialog {
         margin: 0.5rem;

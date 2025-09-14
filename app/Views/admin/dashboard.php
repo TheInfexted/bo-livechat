@@ -41,6 +41,7 @@
     <div class="dashboard-actions">
         <?php if ($user['role'] === 'admin'): ?>
             <a href="<?= base_url('admin/agents') ?>" class="btn btn-primary">Manage Users</a>
+            <a href="<?= base_url('admin/manage-clients') ?>" class="btn btn-primary">Manage Clients</a>
             <a href="<?= base_url('admin/api-keys') ?>" class="btn btn-secondary">API Key Management</a>
             <a href="<?= base_url('chat-history') ?>" class="btn btn-info">Chat History</a>
             <a href="<?= base_url('admin/settings') ?>" class="btn btn-info">Profile Settings</a>

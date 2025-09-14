@@ -187,6 +187,16 @@
                         <div class="form-text">The type of backend action to perform</div>
                     </div>
                     
+                    <!-- Custom Action Input Field (only shown when Custom Action is selected) -->
+                    <div class="mb-3" id="customActionGroup" style="display: none;">
+                        <label for="customActionValue" class="form-label">
+                            <i class="bi bi-code-slash me-1"></i>
+                            Custom Action Endpoint <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="customActionValue" name="custom_action_value" placeholder="e.g., new-member">
+                        <div class="form-text">The endpoint path to append to your base URL (e.g., "new-member" for /api/new-member)</div>
+                    </div>
+                    
                     <!-- API Parameters Field (only shown for API responses) -->
                     <div class="mb-3" id="apiParametersGroup" style="display: none;">
                         <label for="apiParameters" class="form-label">
@@ -325,6 +335,24 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Make API action type not required
             apiActionType.required = false;
+        }
+    });
+    
+    // API Action Type change handler
+    document.getElementById('apiActionType').addEventListener('change', function() {
+        const actionType = this.value;
+        const customActionGroup = document.getElementById('customActionGroup');
+        const customActionValue = document.getElementById('customActionValue');
+        
+        if (actionType === 'custom') {
+            // Show custom action input field
+            customActionGroup.style.display = 'block';
+            customActionValue.required = true;
+        } else {
+            // Hide custom action input field
+            customActionGroup.style.display = 'none';
+            customActionValue.required = false;
+            customActionValue.value = '';
         }
     });
 
@@ -479,13 +507,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('responseId').value = response.id;
                     document.getElementById('responseTitle').value = response.title;
                     document.getElementById('responseType').value = response.response_type || 'plain_text';
-                    document.getElementById('apiActionType').value = response.api_action_type || '';
+                    
+                    // Handle API action type - check if it's a custom action
+                    const apiActionType = response.api_action_type || '';
+                    const isCustomAction = apiActionType && !['give_tokens', 'deposit_bonus', 'account_update', 'promo_apply'].includes(apiActionType);
+                    
+                    if (isCustomAction) {
+                        // It's a custom action - set dropdown to custom and fill custom value field
+                        document.getElementById('apiActionType').value = 'custom';
+                        document.getElementById('customActionValue').value = apiActionType;
+                    } else {
+                        // It's a predefined action or empty
+                        document.getElementById('apiActionType').value = apiActionType;
+                        document.getElementById('customActionValue').value = '';
+                    }
+                    
                     document.getElementById('responseContent').value = response.content;
                     document.getElementById('responseActive').checked = response.is_active == 1;
                     document.getElementById('selectedApiKey').value = response.api_key;
                     
                     // Trigger response type change to show/hide fields
                     document.getElementById('responseType').dispatchEvent(new Event('change'));
+                    
+                    // Trigger API action type change to show/hide custom action field
+                    document.getElementById('apiActionType').dispatchEvent(new Event('change'));
                     
                     // Populate API parameters if available
                     if (response.api_parameters) {

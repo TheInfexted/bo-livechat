@@ -262,7 +262,12 @@ class AdminController extends General
             return $this->jsonResponse(['error' => 'Missing required fields'], 400);
         }
         
+        // Find the client_id based on the email
+        $client = $this->clientModel->where('email', $clientEmail)->first();
+        $clientId = $client ? $client['id'] : null;
+        
         $data = [
+            'client_id' => $clientId,
             'key_id' => $apiKeyModel->generateKeyId(),
             'api_key' => $apiKeyModel->generateApiKey(),
             'client_name' => $clientName,

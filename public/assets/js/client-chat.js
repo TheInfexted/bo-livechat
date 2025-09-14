@@ -144,6 +144,10 @@ let clientApiKeys = [];
 let clientName = 'Client User';
 let refreshInterval = null;
 
+// Session details refresh throttling
+let sessionDetailsRefreshTimer = null;
+let lastSessionDetailsRefresh = 0;
+
 // Typing indicator variables
 let clientIsTyping = false;
 let clientTypingTimer = null;
@@ -869,6 +873,9 @@ function acceptChat(sessionId) {
                     if (sendBtn) {
                         sendBtn.disabled = false;
                     }
+                    
+                    // Refresh session details to reflect the accepted status
+                    refreshCurrentSessionDetails();
                 }, 750); // Give extra time for chat interface to fully load
             }, 750); // Increased delay for better stability
         } else {
@@ -1034,6 +1041,12 @@ function handleWebSocketMessage(data) {
         loadSessions();
     }
     
+    // Handle session detail updates (e.g., when customer info changes)
+    if (data.type === 'session_updated' && currentSessionId && data.session_id === currentSessionId) {
+        // Refresh session details to get latest customer information
+        refreshCurrentSessionDetails();
+    }
+    
     // Handle typing indicators
     if (data.type === 'typing') {
         handleClientTypingIndicator(data);
@@ -1043,6 +1056,14 @@ function handleWebSocketMessage(data) {
     if (data.type === 'session_closed' && currentSessionId && data.session_id === currentSessionId) {
         showError('Chat session was closed by admin');
         hideChat();
+        loadSessions();
+    }
+    
+    // Handle session status changes (accepted, closed, etc.)
+    if (data.type === 'session_status_changed' && currentSessionId && data.session_id === currentSessionId) {
+        // Refresh session details to reflect status change
+        refreshCurrentSessionDetails();
+        // Also update the session list
         loadSessions();
     }
 }
@@ -1204,70 +1225,133 @@ function loadSessionDetails(sessionId) {
         })
         .then(data => {
             if (data.success && data.session) {
-                const session = data.session;
-                
-                // Update chat header with topic
-                const chatTopic = session.chat_topic || 'No topic specified';
-                document.getElementById('chat-header-title').textContent = chatTopic;
-                
-                // Update customer info panel header
-                const nameElement = document.getElementById('customer-name-large');
-                if (nameElement && session.customer_name) {
-                    nameElement.textContent = session.customer_name;
-                }
-                
-                // Update avatar with proper initials
-                const avatarElement = document.getElementById('customer-avatar-large');
-                const customerName = session.customer_name || 'Anonymous';
-                let avatarInitials;
-                if (customerName === 'Anonymous' || customerName.startsWith('Customer ')) {
-                    avatarInitials = 'AN';
-                } else {
-                    const words = customerName.trim().split(' ');
-                    if (words.length >= 2) {
-                        avatarInitials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
-                    } else {
-                        avatarInitials = customerName.substring(0, 2).toUpperCase();
-                    }
-                }
-                
-                if (avatarElement) {
-                    avatarElement.textContent = avatarInitials;
-                }
-                
-                // Update detailed information in side panel
-                updateDetailElement('chat-topic-detail', session.chat_topic || 'No topic specified');
-                updateDetailElement('customer-email-detail', session.customer_email || session.email || '-');
-                updateDetailElement('chat-started-detail', formatDateTime(session.created_at));
-                updateDetailElement('chat-accepted-detail', session.accepted_at ? formatDateTime(session.accepted_at) : '-');
-                updateDetailElement('chat-accepted-by-detail', session.accepted_by || session.agent_name || '-');
-                updateDetailElement('last-reply-by-detail', getLastReplyBy(session));
-                updateDetailElement('agents-involved-detail', getAgentsInvolved(session));
-                updateStatusBadge('chat-status-detail', session.status);
-                updateDetailElement('api-key-detail', session.api_key ? `${session.api_key.substring(0, 12)}...` : '-');
-                
-                // Also update modal elements
-                updateModalElement('chat-topic-detail-modal', session.chat_topic || 'No topic specified');
-                updateModalElement('customer-email-detail-modal', session.customer_email || session.email || '-');
-                updateModalElement('chat-started-detail-modal', formatDateTime(session.created_at));
-                updateModalElement('chat-accepted-detail-modal', session.accepted_at ? formatDateTime(session.accepted_at) : '-');
-                updateModalElement('chat-accepted-by-detail-modal', session.accepted_by || session.agent_name || '-');
-                updateModalElement('last-reply-by-detail-modal', getLastReplyBy(session));
-                updateModalElement('agents-involved-detail-modal', getAgentsInvolved(session));
-                updateStatusBadge('chat-status-detail-modal', session.status);
-                updateModalElement('api-key-detail-modal', session.api_key ? `${session.api_key.substring(0, 12)}...` : '-');
-                
-                // Update modal customer name and avatar
-                updateDetailElement('customer-name-modal', customerName);
-                const modalAvatarElement = document.getElementById('customer-avatar-large-modal');
-                if (modalAvatarElement) {
-                    modalAvatarElement.textContent = avatarInitials;
-                }
+                updateSessionDetailsUI(data.session);
             }
         })
         .catch(error => {
             // Handle error with default values
         });
+}
+
+/**
+ * Refresh session details for the currently open chat
+ * Used for real-time updates with throttling to prevent excessive API calls
+ */
+function refreshCurrentSessionDetails() {
+    if (!currentSessionId) {
+        return;
+    }
+    
+    // Throttle refresh to prevent excessive API calls (minimum 1 second between calls)
+    const now = Date.now();
+    const timeSinceLastRefresh = now - lastSessionDetailsRefresh;
+    
+    if (timeSinceLastRefresh < 1000) {
+        // If called too frequently, debounce it
+        clearTimeout(sessionDetailsRefreshTimer);
+        sessionDetailsRefreshTimer = setTimeout(() => {
+            refreshCurrentSessionDetailsNow();
+        }, 1000 - timeSinceLastRefresh);
+        return;
+    }
+    
+    refreshCurrentSessionDetailsNow();
+}
+
+/**
+ * Immediately refresh session details without throttling
+ * Internal function used by the throttled version
+ */
+function refreshCurrentSessionDetailsNow() {
+    if (!currentSessionId) {
+        return;
+    }
+    
+    lastSessionDetailsRefresh = Date.now();
+    
+    const sessionDetailsUrl = window.clientConfig ? 
+        window.clientConfig.sessionDetailsUrl.replace(':sessionId', currentSessionId) :
+        `/client/session-details/${currentSessionId}`;
+    
+    fetch(sessionDetailsUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.session) {
+                updateSessionDetailsUI(data.session);
+            }
+        })
+        .catch(error => {
+            // Silently handle errors to avoid console spam during auto-refresh
+        });
+}
+
+/**
+ * Update the session details UI elements
+ * Shared function for both initial load and refresh
+ */
+function updateSessionDetailsUI(session) {
+    // Update chat header with topic
+    const chatTopic = session.chat_topic || 'No topic specified';
+    document.getElementById('chat-header-title').textContent = chatTopic;
+    
+    // Update customer info panel header
+    const nameElement = document.getElementById('customer-name-large');
+    if (nameElement && session.customer_name) {
+        nameElement.textContent = session.customer_name;
+    }
+    
+    // Update avatar with proper initials
+    const avatarElement = document.getElementById('customer-avatar-large');
+    const customerName = session.customer_name || 'Anonymous';
+    let avatarInitials;
+    if (customerName === 'Anonymous' || customerName.startsWith('Customer ')) {
+        avatarInitials = 'AN';
+    } else {
+        const words = customerName.trim().split(' ');
+        if (words.length >= 2) {
+            avatarInitials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
+        } else {
+            avatarInitials = customerName.substring(0, 2).toUpperCase();
+        }
+    }
+    
+    if (avatarElement) {
+        avatarElement.textContent = avatarInitials;
+    }
+    
+    // Update detailed information in side panel
+    updateDetailElement('customer-username-detail', session.external_username || '-');
+    updateDetailElement('customer-phone-detail', session.customer_phone || '-');
+    updateDetailElement('customer-email-detail', session.customer_email || session.email || '-');
+    updateDetailElement('chat-started-detail', formatDateTime(session.created_at));
+    updateDetailElement('chat-accepted-detail', session.accepted_at ? formatDateTime(session.accepted_at) : '-');
+    updateDetailElement('chat-accepted-by-detail', session.accepted_by || session.agent_name || '-');
+    updateDetailElement('last-reply-by-detail', getLastReplyBy(session));
+    updateDetailElement('agents-involved-detail', getAgentsInvolved(session));
+    updateStatusBadge('chat-status-detail', session.status);
+    
+    // Also update modal elements
+    updateModalElement('customer-username-detail-modal', session.external_username || '-');
+    updateModalElement('customer-phone-detail-modal', session.customer_phone || '-');
+    updateModalElement('customer-email-detail-modal', session.customer_email || session.email || '-');
+    updateModalElement('chat-started-detail-modal', formatDateTime(session.created_at));
+    updateModalElement('chat-accepted-detail-modal', session.accepted_at ? formatDateTime(session.accepted_at) : '-');
+    updateModalElement('chat-accepted-by-detail-modal', session.accepted_by || session.agent_name || '-');
+    updateModalElement('last-reply-by-detail-modal', getLastReplyBy(session));
+    updateModalElement('agents-involved-detail-modal', getAgentsInvolved(session));
+    updateStatusBadge('chat-status-detail-modal', session.status);
+    
+    // Update modal customer name and avatar
+    updateDetailElement('customer-name-modal', customerName);
+    const modalAvatarElement = document.getElementById('customer-avatar-large-modal');
+    if (modalAvatarElement) {
+        modalAvatarElement.textContent = avatarInitials;
+    }
 }
 
 function updateDetailElement(elementId, value) {
@@ -1547,6 +1631,15 @@ function handlePlainTextResponse(responseId) {
 function handleApiResponse(response) {
     // Show loading toast
     showToast('info', `Executing ${response.api_action_type || 'API action'}...`, 'API Action');
+
+    // Immediately inform the customer that processing has started (as agent)
+    if (typeof sendCannedMessage === 'function' && currentSessionId) {
+        try {
+            sendCannedMessage('Processing your request please wait');
+        } catch (e) {
+            // fail silently
+        }
+    }
     
     // Get current session details for variable replacement
     const sessionDetailsUrl = window.clientConfig ? 
@@ -1594,9 +1687,6 @@ function handleApiResponse(response) {
                 action_data: apiData
             };
             
-            console.log('API Payload being sent:', apiPayload);
-            console.log('Original session data:', session);
-            console.log('Processed action data:', apiData);
             
             return fetch('/api/canned-response-action', {
                 method: 'POST',
@@ -1608,10 +1698,16 @@ function handleApiResponse(response) {
         })
         .then(response => response.json())
         .then(data => {
-            console.log('API Response:', data); // Log for development
-            
             if (data.success) {
                 showToast('success', data.message || 'API action completed successfully', 'Success');
+                // Inform the customer that the action has completed (success only)
+                if (typeof sendCannedMessage === 'function' && currentSessionId) {
+                    try {
+                        sendCannedMessage('Action completed.');
+                    } catch (e) {
+                        // fail silently
+                    }
+                }
             } else {
                 showToast('error', data.message || data.error || 'API action failed', 'Error');
             }
@@ -1619,7 +1715,6 @@ function handleApiResponse(response) {
             hideQuickResponses();
         })
         .catch(error => {
-            console.error('API Error:', error);
             showToast('error', 'Failed to execute API action: ' + error.message, 'Error');
         });
 }
@@ -1732,7 +1827,13 @@ function sendCannedMessage(message) {
 // ============================================================================
 
 function startAutoRefresh() {
-    refreshInterval = setInterval(loadSessions, 3000);
+    refreshInterval = setInterval(() => {
+        loadSessions();
+        // Also refresh session details if a chat is currently open
+        if (currentSessionId) {
+            refreshCurrentSessionDetails();
+        }
+    }, 3000);
 }
 
 function showError(message, type = 'error') {
@@ -1860,6 +1961,7 @@ function initializeClientChat(config) {
 // Clean up intervals when page is closed
 window.addEventListener('beforeunload', function() {
     if (refreshInterval) clearInterval(refreshInterval);
+    if (sessionDetailsRefreshTimer) clearTimeout(sessionDetailsRefreshTimer);
 });
 
 // Export main functions for global access
