@@ -546,13 +546,75 @@
     align-self: center;
     justify-content: center;
     text-align: center;
+    max-width: 70%;
+    flex-direction: column;
+}
+
+.message.system .message-content {
+    background: rgba(108, 117, 125, 0.1);
     color: var(--text-secondary);
     font-style: italic;
     font-size: 0.9rem;
-    max-width: 70%;
-    background: rgba(108, 117, 125, 0.1);
+    text-align: center;
+    border: 1px solid rgba(108, 117, 125, 0.2);
     border-radius: var(--border-radius);
-    padding: 0.75rem;
+    padding: 0.75rem 1rem;
+    box-shadow: none;
+    margin: 0;
+}
+
+.message.system .message-time {
+    color: var(--text-secondary);
+    opacity: 0.8;
+    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+}
+
+/* Archived Chats Styling */
+.session-item.archived {
+    opacity: 0.9;
+    border-left: 3px solid var(--text-secondary);
+    background: var(--light-bg);
+}
+
+.session-item.archived:hover {
+    background: var(--border-color);
+    opacity: 1;
+}
+
+.session-item.archived.active {
+    background: rgba(108, 117, 125, 0.1);
+    border-left: 3px solid var(--text-secondary);
+}
+
+.archived-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(108, 117, 125, 0.1);
+    border-radius: 50%;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.archived-badge i {
+    opacity: 0.7;
+}
+
+/* Read-only chat interface styling */
+.chat-header .text-muted {
+    font-weight: normal;
+    font-size: 0.85rem;
+}
+
+/* Status badge for archived */
+.status-badge.archived {
+    background: var(--text-secondary);
+    color: white;
 }
 
 .message-content {

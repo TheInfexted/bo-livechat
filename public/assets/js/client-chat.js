@@ -187,8 +187,8 @@ function loadSessions() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                displaySessions(data.sessions);
-                updateSessionCounts(data.sessions);
+                displaySessions(data.sessions, data.archivedChats);
+                updateSessionCounts(data.sessions, data.archivedChats);
             } else {
                 showError('Failed to load chat sessions. Please refresh the page.');
             }
@@ -198,9 +198,10 @@ function loadSessions() {
         });
 }
 
-function displaySessions(sessions) {
+function displaySessions(sessions, archivedChats = []) {
     const waitingList = document.getElementById('waiting-sessions-list');
     const activeList = document.getElementById('active-sessions-list');
+    const archivedList = document.getElementById('archived-sessions-list');
 
     const waiting = sessions.filter(s => s.status === 'waiting');
     const active = sessions.filter(s => s.status === 'active');
@@ -221,6 +222,7 @@ function displaySessions(sessions) {
     // Update each section
     updateSessionSection(waitingList, waiting, 'waiting', 'No customers waiting');
     updateSessionSection(activeList, active, 'active', 'No active chats');
+    updateArchivedSection(archivedList, archivedChats);
     
     // Restore real-time states after refresh
     realtimeStates.forEach((state, sessionId) => {
@@ -325,12 +327,230 @@ function createSessionItem(session, status) {
     return item;
 }
 
-function updateSessionCounts(sessions) {
+function updateArchivedSection(listElement, archivedChats) {
+    listElement.innerHTML = '';
+    
+    if (archivedChats.length === 0) {
+        listElement.innerHTML = '<div class="no-sessions"><p class="text-muted small">No archived chats</p></div>';
+    } else {
+        archivedChats.forEach(archivedUser => {
+            listElement.appendChild(createArchivedItem(archivedUser));
+        });
+    }
+}
+
+function createArchivedItem(archivedUser) {
+    const item = document.createElement('div');
+    item.className = 'session-item archived';
+    item.dataset.externalUsername = archivedUser.external_username;
+    item.dataset.externalSystemId = archivedUser.external_system_id;
+    item.dataset.isArchived = 'true';
+    
+    const displayName = archivedUser.display_name;
+    const initials = archivedUser.initials;
+    
+    // Format last session date
+    const lastSessionDate = formatTimeAgo(archivedUser.last_session_date);
+    
+    item.innerHTML = `
+        <div class="avatar customer">${initials}</div>
+        <div class="session-info">
+            <div class="session-header">
+                <strong>${escapeHtml(displayName)}</strong>
+            </div>
+            <small class="session-message">
+                <i class="fas fa-archive text-secondary"></i> 
+                Last active ${lastSessionDate}
+            </small>
+        </div>
+        <span class="archived-badge">
+            <i class="fas fa-eye" title="Read-only"></i>
+        </span>
+    `;
+    
+    // Add click handler for opening archived chat (read-only)
+    item.addEventListener('click', function(e) {
+        openArchivedChat(archivedUser.external_username, archivedUser.external_system_id, displayName);
+    });
+    
+    return item;
+}
+
+function openArchivedChat(externalUsername, externalSystemId, displayName) {
+    // Create a virtual session ID for archived chats
+    const virtualSessionId = `archived_${externalUsername}_${externalSystemId}`;
+    currentSessionId = virtualSessionId;
+    
+    // Show chat panel
+    const chatPanel = document.getElementById('chat-panel');
+    if (chatPanel) {
+        chatPanel.style.display = 'flex';
+    }
+    
+    // Hide welcome state and show chat window
+    document.getElementById('welcome-state').style.display = 'none';
+    document.getElementById('chat-window').style.display = 'flex';
+    document.getElementById('close-chat-btn').style.display = 'block';
+    document.getElementById('customer-info-panel').style.display = 'block';
+    document.getElementById('customer-info-toggle').style.display = 'inline-flex';
+    
+    // Clear displayed messages for new session
+    displayedMessages.clear();
+    
+    // Update header with read-only indicator
+    const headerTitle = document.getElementById('chat-header-title');
+    headerTitle.innerHTML = `${escapeHtml(displayName)} <span class="text-muted small">(Archived - Read Only)</span>`;
+    
+    // Update customer info
+    document.getElementById('customer-name-large').textContent = displayName;
+    
+    // Generate proper avatar initials
+    let avatarInitials;
+    const words = displayName.trim().split(' ');
+    if (words.length >= 2) {
+        avatarInitials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    } else {
+        avatarInitials = displayName.substring(0, 2).toUpperCase();
+    }
+    document.getElementById('customer-avatar-large').textContent = avatarInitials;
+    
+    // Set active session
+    document.querySelectorAll('.session-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const archivedItem = document.querySelector(`[data-external-username="${externalUsername}"][data-external-system-id="${externalSystemId}"]`);
+    if (archivedItem) {
+        archivedItem.classList.add('active');
+    }
+    
+    // Load archived chat history (30-day history for logged users)
+    loadArchivedChatHistory(externalUsername, externalSystemId);
+    
+    // Hide input area (read-only)
+    const inputArea = document.getElementById('chat-input-area');
+    inputArea.style.display = 'none';
+    
+    // Load session details (will show combined info from all sessions)
+    // We'll create a dummy session ID for this purpose
+    setTimeout(() => {
+        loadArchivedSessionDetails(externalUsername, externalSystemId, displayName);
+    }, 500);
+}
+
+function loadArchivedChatHistory(externalUsername, externalSystemId) {
+    // We need to get the most recent session for this user to load their history
+    // The 30-day history logic will automatically include all their messages
+    
+    const sessionsUrl = window.clientConfig ? window.clientConfig.sessionsUrl : '/client/sessions-data';
+    
+    // First, get all sessions to find the most recent one for this user
+    fetch(sessionsUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.sessions) {
+                // Find the most recent session for this user
+                const userSessions = data.sessions.filter(s => 
+                    s.external_username === externalUsername && 
+                    s.external_system_id === externalSystemId
+                );
+                
+                if (userSessions.length === 0) {
+                    // If no active sessions, we need to find from closed sessions
+                    // For now, show a message that history is not available
+                    const container = document.getElementById('messages-container');
+                    container.innerHTML = '<div class="text-center p-4 text-muted">Archived chat history will be loaded here</div>';
+                    return;
+                }
+                
+                // Use the most recent session to load history
+                const recentSession = userSessions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                loadChatHistoryForArchivedSession(recentSession.session_id);
+            }
+        })
+        .catch(error => {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '<div class="text-center p-4 text-danger">Error loading archived chat history</div>';
+        });
+}
+
+function loadChatHistoryForArchivedSession(sessionId) {
+    // Load messages with history enabled (30-day history for logged users)
+    const messagesUrl = window.clientConfig ? 
+        window.clientConfig.messagesUrl.replace(':sessionId', sessionId) + '?backend=1&include_history=1' :
+        `/chat/getMessages/${sessionId}?backend=1&include_history=1`;
+    
+    fetch(messagesUrl)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('messages-container');
+            if (!container) {
+                return;
+            }
+            
+            container.innerHTML = '';
+            displayedMessages.clear();
+            
+            if (data.success && data.messages && data.messages.length > 0) {
+                // Process messages with date separators
+                let previousDate = null;
+                
+                data.messages.forEach((message, index) => {
+                    // Ensure each message has proper timestamp
+                    if (!message.timestamp && message.created_at) {
+                        message.timestamp = message.created_at;
+                    }
+                    
+                    // Check if we need to add a date separator
+                    const messageDate = new Date(message.created_at || message.timestamp).toDateString();
+                    if (previousDate !== messageDate) {
+                        displayDateSeparator(formatChatDate(message.created_at || message.timestamp));
+                        previousDate = messageDate;
+                    }
+                    
+                    // Display message (read-only)
+                    displayClientMessage(message);
+                    
+                    // Track displayed messages
+                    const messageId = message.id ? `db_${message.id}` : `${message.sender_type}_${(message.message || '').toLowerCase().trim()}_${message.timestamp || message.created_at}`;
+                    displayedMessages.add(messageId);
+                });
+            } else {
+                container.innerHTML = '<div class="text-center p-4 text-muted">No message history found for this user</div>';
+            }
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        })
+        .catch(error => {
+            const container = document.getElementById('messages-container');
+            if (container) {
+                container.innerHTML = '<div class="text-center p-4 text-danger">Error loading archived messages</div>';
+            }
+        });
+}
+
+function loadArchivedSessionDetails(externalUsername, externalSystemId, displayName) {
+    // For archived chats, we show combined information from the archived data
+    // Update customer info panel with available information
+    updateDetailElement('customer-username-detail', externalUsername || '-');
+    updateDetailElement('customer-phone-detail', '-'); // Not available in archived data
+    updateDetailElement('customer-email-detail', '-'); // Could be added to archived data if needed
+    updateDetailElement('chat-started-detail', '-'); // Could show first session date
+    updateDetailElement('chat-accepted-detail', '-');
+    updateDetailElement('chat-accepted-by-detail', '-');
+    updateDetailElement('last-reply-by-detail', '-');
+    updateDetailElement('agents-involved-detail', '-');
+    updateStatusBadge('chat-status-detail', 'archived');
+}
+
+function updateSessionCounts(sessions, archivedChats = []) {
     const waitingCount = sessions.filter(s => s.status === 'waiting').length;
     const activeCount = sessions.filter(s => s.status === 'active').length;
+    const archivedCount = archivedChats.length;
 
     document.getElementById('waiting-count').textContent = waitingCount;
     document.getElementById('active-count').textContent = activeCount;
+    document.getElementById('archived-count').textContent = archivedCount;
 }
 
 // ============================================================================
@@ -585,27 +805,40 @@ function displayClientMessage(message) {
     }
     
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${message.sender_type}`;
     
-    // Get the actual sender name from the message data
-    let senderName;
-    if (message.sender_type === 'customer') {
-        senderName = message.sender_name || message.customer_name || 'Customer';
+    // Handle system messages specially - check for message_type = 'system' OR sender_type = 'system'
+    if (message.message_type === 'system' || message.sender_type === 'system') {
+        messageDiv.className = 'message system';
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                ${escapeHtml(message.message)}
+                <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
+            </div>
+        `;
     } else {
-        senderName = message.sender_name || 'Agent';
+        // Regular message handling with avatars
+        messageDiv.className = `message ${message.sender_type}`;
+        
+        // Get the actual sender name from the message data
+        let senderName;
+        if (message.sender_type === 'customer') {
+            senderName = message.sender_name || message.customer_name || 'Customer';
+        } else {
+            senderName = message.sender_name || 'Agent';
+        }
+        
+        const avatar = generateAvatarInitials(senderName, message.sender_type);
+        
+        messageDiv.innerHTML = `
+            <div class="avatar ${message.sender_type}">
+                ${avatar}
+            </div>
+            <div class="message-content">
+                ${makeLinksClickable(message.message)}
+                <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
+            </div>
+        `;
     }
-    
-    const avatar = generateAvatarInitials(senderName, message.sender_type);
-    
-    messageDiv.innerHTML = `
-        <div class="avatar ${message.sender_type}">
-            ${avatar}
-        </div>
-        <div class="message-content">
-            ${makeLinksClickable(message.message)}
-            <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
-        </div>
-    `;
     
     container.appendChild(messageDiv);
 }
@@ -735,6 +968,7 @@ function getDateType(dateString) {
     }
     return '';
 }
+
 
 // ============================================================================
 // MESSAGE FORM HANDLING
@@ -1348,6 +1582,7 @@ function updateSessionDetailsUI(session) {
     
     // Update modal customer name and avatar
     updateDetailElement('customer-name-modal', customerName);
+    
     const modalAvatarElement = document.getElementById('customer-avatar-large-modal');
     if (modalAvatarElement) {
         modalAvatarElement.textContent = avatarInitials;

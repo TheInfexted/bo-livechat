@@ -86,6 +86,27 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Archived Chats Section -->
+                    <div class="panel-section">
+                        <div class="section-header" data-bs-toggle="collapse" data-bs-target="#archived-sessions" aria-expanded="true">
+                            <div class="header-content">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-archive text-secondary"></i>
+                                    <span>Archived Chats</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="count" id="archived-count">0</span>
+                                    <i class="fas fa-chevron-down collapse-icon"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="collapse show" id="archived-sessions">
+                            <div class="sessions-list" id="archived-sessions-list">
+                                <!-- Archived sessions will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Chat Panel -->

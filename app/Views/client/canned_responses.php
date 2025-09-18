@@ -149,52 +149,36 @@
                     <input type="hidden" id="responseId" name="id" value="">
                     <input type="hidden" id="selectedApiKey" name="api_key" value="">
                     
-                    <div class="row mb-3">
-                        <div class="col-md-8">
-                            <label for="responseTitle" class="form-label">
-                                <i class="bi bi-card-text me-1"></i>
-                                Title <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" id="responseTitle" name="title" required maxlength="100" placeholder="e.g., Welcome Message">
-                            <div class="form-text">A short, descriptive name for this response</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="responseType" class="form-label">
-                                <i class="bi bi-gear me-1"></i>
-                                Response Type <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select" id="responseType" name="response_type" required>
-                                <option value="plain_text">💬 Plain Text</option>
-                                <option value="api">⚙️ API Action</option>
-                            </select>
-                        </div>
+                    <!-- Title Field -->
+                    <div class="mb-3">
+                        <label for="responseTitle" class="form-label">
+                            <i class="bi bi-card-text me-1"></i>
+                            Title <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="responseTitle" name="title" required maxlength="100" placeholder="e.g., Welcome Message">
+                        <div class="form-text">A short, descriptive name for this response</div>
                     </div>
                     
-                    <!-- API Action Type Field (only shown for API responses) -->
-                    <div class="mb-3" id="apiActionTypeGroup" style="display: none;">
-                        <label for="apiActionType" class="form-label">
-                            <i class="bi bi-lightning me-1"></i>
-                            API Action Type <span class="text-danger">*</span>
+                    <!-- Response Type Field -->
+                    <div class="mb-3">
+                        <label for="responseType" class="form-label">
+                            <i class="bi bi-gear me-1"></i>
+                            Response Type <span class="text-danger">*</span>
                         </label>
-                        <select class="form-select" id="apiActionType" name="api_action_type">
-                            <option value="">Select an action...</option>
-                            <option value="give_tokens">🎁 Give Tokens</option>
-                            <option value="deposit_bonus">💰 Deposit Bonus</option>
-                            <option value="account_update">👤 Account Update</option>
-                            <option value="promo_apply">🎟️ Apply Promo Code</option>
-                            <option value="custom">⚙️ Custom Action</option>
+                        <select class="form-select" id="responseType" name="response_type" required>
+                            <option value="plain_text">💬 Plain Text</option>
+                            <option value="api">⚙️ API Action</option>
                         </select>
-                        <div class="form-text">The type of backend action to perform</div>
                     </div>
                     
-                    <!-- Custom Action Input Field (only shown when Custom Action is selected) -->
-                    <div class="mb-3" id="customActionGroup" style="display: none;">
-                        <label for="customActionValue" class="form-label">
+                    <!-- Custom Endpoint Field (only shown for API responses) -->
+                    <div class="mb-3" id="customEndpointGroup" style="display: none;">
+                        <label for="customEndpoint" class="form-label">
                             <i class="bi bi-code-slash me-1"></i>
-                            Custom Action Endpoint <span class="text-danger">*</span>
+                            Custom Endpoint <span class="text-danger">*</span>
                         </label>
-                        <input type="text" class="form-control" id="customActionValue" name="custom_action_value" placeholder="e.g., new-member">
-                        <div class="form-text">The endpoint path to append to your base URL (e.g., "new-member" for /api/new-member)</div>
+                        <input type="text" class="form-control" id="customEndpoint" name="api_action_type" placeholder="e.g., new-member">
+                        <div class="form-text">The endpoint path to append to your base URL (e.g., "new-member" for /api/new-member). Only alphanumeric characters, hyphens, and underscores allowed.</div>
                     </div>
                     
                     <!-- API Parameters Field (only shown for API responses) -->
@@ -302,16 +286,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Response type change handler
     document.getElementById('responseType').addEventListener('change', function() {
         const responseType = this.value;
-        const apiActionTypeGroup = document.getElementById('apiActionTypeGroup');
+        const customEndpointGroup = document.getElementById('customEndpointGroup');
         const apiParametersGroup = document.getElementById('apiParametersGroup');
         const contentField = document.getElementById('responseContent');
         const contentLabel = document.getElementById('contentLabel');
         const contentHelpText = document.getElementById('contentHelpText');
-        const apiActionType = document.getElementById('apiActionType');
+        const customEndpoint = document.getElementById('customEndpoint');
         
         if (responseType === 'api') {
             // Show API fields
-            apiActionTypeGroup.style.display = 'block';
+            customEndpointGroup.style.display = 'block';
             apiParametersGroup.style.display = 'block';
             
             // Update content field for API responses
@@ -320,11 +304,11 @@ document.addEventListener('DOMContentLoaded', function() {
             contentField.required = false;
             contentHelpText.textContent = 'Optional description or notes about this API action for other agents';
             
-            // Make API action type required
-            apiActionType.required = true;
+            // Make custom endpoint required
+            customEndpoint.required = true;
         } else {
             // Hide API fields
-            apiActionTypeGroup.style.display = 'none';
+            customEndpointGroup.style.display = 'none';
             apiParametersGroup.style.display = 'none';
             
             // Reset content field for plain text responses
@@ -333,26 +317,21 @@ document.addEventListener('DOMContentLoaded', function() {
             contentField.required = true;
             contentHelpText.textContent = 'The text that will be sent when this response is used in a chat';
             
-            // Make API action type not required
-            apiActionType.required = false;
+            // Make custom endpoint not required
+            customEndpoint.required = false;
+            customEndpoint.value = '';
         }
     });
-    
-    // API Action Type change handler
-    document.getElementById('apiActionType').addEventListener('change', function() {
-        const actionType = this.value;
-        const customActionGroup = document.getElementById('customActionGroup');
-        const customActionValue = document.getElementById('customActionValue');
+
+    // Custom endpoint validation
+    document.getElementById('customEndpoint').addEventListener('input', function() {
+        const value = this.value;
+        const pattern = /^[a-zA-Z0-9_-]*$/;
         
-        if (actionType === 'custom') {
-            // Show custom action input field
-            customActionGroup.style.display = 'block';
-            customActionValue.required = true;
+        if (value && !pattern.test(value)) {
+            this.setCustomValidity('Only alphanumeric characters, hyphens, and underscores are allowed');
         } else {
-            // Hide custom action input field
-            customActionGroup.style.display = 'none';
-            customActionValue.required = false;
-            customActionValue.value = '';
+            this.setCustomValidity('');
         }
     });
 
@@ -508,19 +487,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('responseTitle').value = response.title;
                     document.getElementById('responseType').value = response.response_type || 'plain_text';
                     
-                    // Handle API action type - check if it's a custom action
-                    const apiActionType = response.api_action_type || '';
-                    const isCustomAction = apiActionType && !['give_tokens', 'deposit_bonus', 'account_update', 'promo_apply'].includes(apiActionType);
-                    
-                    if (isCustomAction) {
-                        // It's a custom action - set dropdown to custom and fill custom value field
-                        document.getElementById('apiActionType').value = 'custom';
-                        document.getElementById('customActionValue').value = apiActionType;
-                    } else {
-                        // It's a predefined action or empty
-                        document.getElementById('apiActionType').value = apiActionType;
-                        document.getElementById('customActionValue').value = '';
-                    }
+                    // Set custom endpoint value
+                    const customEndpoint = response.api_action_type || '';
+                    document.getElementById('customEndpoint').value = customEndpoint;
                     
                     document.getElementById('responseContent').value = response.content;
                     document.getElementById('responseActive').checked = response.is_active == 1;
@@ -528,9 +497,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Trigger response type change to show/hide fields
                     document.getElementById('responseType').dispatchEvent(new Event('change'));
-                    
-                    // Trigger API action type change to show/hide custom action field
-                    document.getElementById('apiActionType').dispatchEvent(new Event('change'));
                     
                     // Populate API parameters if available
                     if (response.api_parameters) {
@@ -583,12 +549,42 @@ document.addEventListener('DOMContentLoaded', function() {
         const saveBtn = document.getElementById('saveResponseBtn');
         const originalText = saveBtn.innerHTML;
         
+        // Validate form before proceeding
+        const form = document.getElementById('responseForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        // Additional custom validation for API responses
+        const responseType = document.getElementById('responseType').value;
+        if (responseType === 'api') {
+            const customEndpoint = document.getElementById('customEndpoint').value.trim();
+            if (!customEndpoint) {
+                document.getElementById('customEndpoint').focus();
+                document.getElementById('customEndpoint').setCustomValidity('Custom endpoint is required for API responses');
+                document.getElementById('customEndpoint').reportValidity();
+                return;
+            }
+            
+            // Validate endpoint format
+            const pattern = /^[a-zA-Z0-9_-]+$/;
+            if (!pattern.test(customEndpoint)) {
+                document.getElementById('customEndpoint').focus();
+                document.getElementById('customEndpoint').setCustomValidity('Only alphanumeric characters, hyphens, and underscores are allowed');
+                document.getElementById('customEndpoint').reportValidity();
+                return;
+            }
+            
+            // Clear any previous validation errors
+            document.getElementById('customEndpoint').setCustomValidity('');
+        }
+        
         // Show loading state
         saveBtn.innerHTML = '<i class="bi bi-arrow-repeat spinner-border-sm me-2"></i>Saving...';
         saveBtn.disabled = true;
         
         // Collect API parameters if response type is API
-        const responseType = document.getElementById('responseType').value;
         if (responseType === 'api') {
             const apiParams = collectApiParameters();
             document.getElementById('apiParametersJson').value = apiParams;

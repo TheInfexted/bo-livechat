@@ -197,12 +197,19 @@ class ChatController extends General
     public function getMessages($sessionId)
     {
         $forBackend = $this->request->getGet('backend') === '1';
+        $includeHistory = $this->request->getGet('include_history') !== '0'; // Include by default
         
         if ($forBackend) {
-            // For backend (admin/client interfaces), filter out system messages
-            $messages = $this->messageModel->getSessionMessagesForBackend($sessionId);
+            // For backend (admin/client interfaces), check if we should include history
+            if ($includeHistory) {
+                // This method automatically checks if it's a logged user and includes 30-day history
+                $messages = $this->messageModel->getSessionMessagesWithHistoryForBackend($sessionId);
+            } else {
+                // Regular backend messages without history
+                $messages = $this->messageModel->getSessionMessagesForBackend($sessionId);
+            }
         } else {
-            // For frontend (customer interface), include all messages
+            // For frontend (customer interface), include all messages (no history needed)
             $messages = $this->messageModel->getSessionMessages($sessionId);
         }
         
@@ -422,7 +429,7 @@ class ChatController extends General
             // Add a system message that customer left and session is closed
             $messageData = [
                 'session_id' => $chatSession['id'],
-                'sender_type' => 'agent',
+                'sender_type' => 'system',
                 'sender_id' => null,
                 'message' => 'Customer left the chat - Session closed',
                 'message_type' => 'system'

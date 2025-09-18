@@ -8,9 +8,9 @@ use CodeIgniter\Config\BaseConfig;
 class Chat extends BaseConfig
 {
     // Session settings
-    public int $sessionTimeout = 1800; // 30 minutes
-    public int $inactiveSessionTimeout = 3600; // 1 hour
-    public bool $autoCloseInactiveSessions = true;
+    public int $sessionTimeout = 1800; // 30 minutes (applies to anonymous users only)
+    public int $inactiveSessionTimeout = 3600; // 1 hour (applies to anonymous users only)
+    public bool $autoCloseInactiveSessions = true; // Role-based cleanup enabled
     
     // Agent settings
     public int $defaultMaxConcurrentChats = 5;

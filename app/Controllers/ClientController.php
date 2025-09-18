@@ -469,10 +469,84 @@ class ClientController extends General
             }
         }
         
+        // Get archived chats - logged users with only closed sessions
+        $archivedChats = $this->getArchivedChats($clientId);
+        
         return $this->jsonResponse([
             'success' => true,
-            'sessions' => $allSessions
+            'sessions' => $allSessions,
+            'archivedChats' => $archivedChats
         ]);
+    }
+    
+    /**
+     * Get archived chats - logged users with only closed sessions
+     */
+    private function getArchivedChats($clientId)
+    {
+        $chatModel = new \App\Models\ChatModel();
+        
+        // Get unique logged users with only closed sessions (no active/waiting sessions)
+        $archivedUsers = $chatModel->select('
+                external_username,
+                external_system_id,
+                external_fullname,
+                customer_email,
+                api_key,
+                MAX(created_at) as last_session_date,
+                MIN(created_at) as first_session_date,
+                MAX(closed_at) as last_closed_date
+            ')
+            ->where('client_id', $clientId)
+            ->where('user_role', 'loggedUser')
+            ->where('status', 'closed')
+            ->where('external_username IS NOT NULL')
+            ->where('external_system_id IS NOT NULL')
+            // Only include users who don't have any active/waiting sessions
+            ->whereNotIn('(external_username, external_system_id)', function($builder) use ($clientId) {
+                return $builder->select('external_username, external_system_id')
+                              ->from('chat_sessions')
+                              ->where('client_id', $clientId)
+                              ->where('user_role', 'loggedUser')
+                              ->whereIn('status', ['active', 'waiting'])
+                              ->where('external_username IS NOT NULL')
+                              ->where('external_system_id IS NOT NULL');
+            })
+            ->groupBy('external_username, external_system_id')
+            ->orderBy('last_session_date', 'DESC')
+            ->findAll();
+        
+        // Process archived users for frontend display
+        $processedArchived = [];
+        foreach ($archivedUsers as $user) {
+            // Generate display name (external_fullname -> external_username)
+            $displayName = !empty($user['external_fullname']) && trim($user['external_fullname']) !== '' 
+                          ? trim($user['external_fullname']) 
+                          : trim($user['external_username']);
+            
+            // Generate avatar initials
+            $words = explode(' ', trim($displayName));
+            $initials = '';
+            if (count($words) >= 2) {
+                $initials = strtoupper($words[0][0] . $words[count($words)-1][0]);
+            } else {
+                $initials = strtoupper(substr($displayName, 0, 2));
+            }
+            
+            $processedArchived[] = [
+                'external_username' => $user['external_username'],
+                'external_system_id' => $user['external_system_id'],
+                'display_name' => $displayName,
+                'initials' => $initials,
+                'customer_email' => $user['customer_email'],
+                'api_key' => $user['api_key'],
+                'first_session_date' => $user['first_session_date'],
+                'last_session_date' => $user['last_session_date'],
+                'last_closed_date' => $user['last_closed_date']
+            ];
+        }
+        
+        return $processedArchived;
     }
     
     /**
@@ -1191,12 +1265,14 @@ class ClientController extends General
         // Validate response type specific requirements
         if ($responseType === 'api') {
             if (!$apiActionType) {
-                return $this->jsonResponse(['error' => 'API action type is required for API responses'], 400);
+                return $this->jsonResponse(['error' => 'Custom endpoint is required for API responses'], 400);
             }
-            // If custom action is selected, validate custom action value
-            if ($apiActionType === 'custom' && empty($customActionValue)) {
-                return $this->jsonResponse(['error' => 'Custom action value is required when using custom action'], 400);
+            
+            // Validate custom endpoint format
+            if (!preg_match('/^[a-zA-Z0-9_-]+$/', $apiActionType)) {
+                return $this->jsonResponse(['error' => 'Custom endpoint can only contain alphanumeric characters, hyphens, and underscores'], 400);
             }
+            
             // For API responses, content is optional (used as description/note)
         } else {
             // For plain_text responses, content is required
@@ -1223,17 +1299,11 @@ class ClientController extends General
             }
         }
         
-        // Determine the final action type to store
-        $finalActionType = $apiActionType;
-        if ($responseType === 'api' && $apiActionType === 'custom' && !empty($customActionValue)) {
-            $finalActionType = $customActionValue;
-        }
-        
         $data = [
             'title' => $title,
             'content' => $content ?: '', // Allow empty content for API responses
             'response_type' => $responseType,
-            'api_action_type' => $responseType === 'api' ? $finalActionType : null,
+            'api_action_type' => $responseType === 'api' ? $apiActionType : null,
             'api_parameters' => $responseType === 'api' ? $apiParameters : null,
             'api_key' => $apiKey,
             'created_by_user_type' => $currentUser['type'],
