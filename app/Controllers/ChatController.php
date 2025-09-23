@@ -363,22 +363,9 @@ class ChatController extends General
         ]);
         
         if ($updated) {
-            // Add system message
-            $messageData = [
-                'session_id' => $chatSession['id'],
-                'sender_type' => 'system',
-                'sender_id' => null,
-                'message' => $agentName . ' has joined the chat',
-                'message_type' => 'system'
-            ];
-            
-            $messageId = $this->messageModel->insert($messageData);
-            
             // Send WebSocket assign_agent message to trigger proper broadcasting
-            // This will use the existing WebSocket server handleAgentAssignment method
-            if ($messageId) {
-                $this->triggerWebSocketAgentAssignment($sessionId, $agentId);
-            }
+            // The WebSocket server will handle system message creation to avoid duplicates
+            $this->triggerWebSocketAgentAssignment($sessionId, $agentId);
             
             return $this->jsonResponse([
                 'success' => true,

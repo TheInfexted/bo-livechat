@@ -321,8 +321,8 @@ class ChatServer implements MessageComponentInterface
         $stmt->execute([$agentId]);
         $agentName = $stmt->fetchColumn() ?: 'Agent';
         
-        // Insert the system message into database
-        $systemMessage = $agentName . ' has joined the chat';
+        // Insert the system message into database with generic message
+        $systemMessage = 'An agent has joined the chat';
         $stmt = $this->pdo->prepare("
             INSERT INTO messages (session_id, sender_type, sender_id, message, message_type, created_at) 
             VALUES (?, 'system', NULL, ?, 'system', NOW())

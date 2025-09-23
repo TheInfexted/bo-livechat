@@ -1721,4 +1721,107 @@ class ClientController extends General
         
         return $processedResponse;
     }
+    
+    /**
+     * Export client's chat history to CSV
+     */
+    public function exportChatHistory()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $currentUser = $this->getCurrentClientUser();
+        $clientId = $this->getClientId();
+        
+        // Build query for client's sessions only
+        $builder = $this->chatModel->builder();
+        
+        $builder->select('
+            chat_sessions.id,
+            chat_sessions.session_id,
+            chat_sessions.customer_name as username,
+            chat_sessions.customer_fullname as fullname,
+            chat_sessions.created_at,
+            chat_sessions.closed_at,
+            chat_sessions.status,
+            chat_sessions.api_key,
+            users.username as agent_name
+        ');
+        
+        $builder->join('users', 'users.id = chat_sessions.agent_id', 'left');
+        
+        // Filter by client ID - this is the key security filter
+        $builder->where('chat_sessions.client_id', $clientId);
+        
+        // Apply same filters as the view
+        if ($this->request->getVar('status')) {
+            $builder->where('chat_sessions.status', $this->request->getVar('status'));
+        }
+        
+        if ($this->request->getVar('date_from')) {
+            $builder->where('chat_sessions.created_at >=', $this->request->getVar('date_from') . ' 00:00:00');
+        }
+        
+        if ($this->request->getVar('date_to')) {
+            $builder->where('chat_sessions.created_at <=', $this->request->getVar('date_to') . ' 23:59:59');
+        }
+        
+        if ($this->request->getVar('search')) {
+            $search = $this->request->getVar('search');
+            $builder->groupStart()
+                   ->like('chat_sessions.customer_name', $search)
+                   ->orLike('chat_sessions.customer_fullname', $search)
+                   ->groupEnd();
+        }
+        
+        $builder->orderBy('chat_sessions.created_at', 'DESC');
+        
+        $results = $builder->get()->getResultArray();
+        
+        // Generate CSV content
+        $filename = 'chat_history_' . date('Y-m-d_H-i-s') . '.csv';
+        
+        $this->response->setHeader('Content-Type', 'text/csv');
+        $this->response->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        
+        $output = fopen('php://output', 'w');
+        
+        // CSV headers
+        fputcsv($output, [
+            'Session ID',
+            'Username', 
+            'Full Name',
+            'Agent',
+            'Status',
+            'Created At',
+            'Closed At',
+            'Duration (minutes)'
+        ]);
+        
+        // CSV data rows
+        foreach ($results as $row) {
+            $duration = '';
+            if ($row['closed_at']) {
+                $start = new \DateTime($row['created_at']);
+                $end = new \DateTime($row['closed_at']);
+                $diff = $start->diff($end);
+                $duration = $diff->days * 24 * 60 + $diff->h * 60 + $diff->i;
+            }
+            
+            fputcsv($output, [
+                $row['session_id'],
+                $row['username'] ?? 'Anonymous',
+                $row['fullname'] ?? ($row['username'] ?? 'Anonymous'),
+                $row['agent_name'] ?? 'Unassigned',
+                ucfirst($row['status']),
+                $row['created_at'],
+                $row['closed_at'] ?? 'N/A',
+                $duration
+            ]);
+        }
+        
+        fclose($output);
+        return $this->response;
+    }
 }
