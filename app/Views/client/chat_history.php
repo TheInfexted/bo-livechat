@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
         exportBtn.addEventListener('click', function() {
             // Get current filter parameters
             const urlParams = new URLSearchParams(window.location.search);
-            const exportUrl = new URL('<?= base_url('chat-history/export') ?>', window.location.origin);
+            const exportUrl = new URL('<?= base_url('client/chat-history/export') ?>', window.location.origin);
             
             // Add filter parameters to export URL
             urlParams.forEach((value, key) => {

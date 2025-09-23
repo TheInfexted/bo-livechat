@@ -66,6 +66,7 @@ $routes->group('client', ['filter' => ['client_domain', 'clientfilter']], functi
     $routes->get('dashboard', 'ClientController::dashboard');
     $routes->get('api-keys', 'ClientController::apiKeys');
     $routes->get('chat-history', 'ClientController::chatHistory');
+    $routes->get('chat-history/export', 'ClientController::exportChatHistory');
     $routes->get('manage-chats', 'ClientController::manageChats');
     $routes->get('profile', 'ClientController::profile');
     $routes->post('profile/update', 'ClientController::updateProfile');
