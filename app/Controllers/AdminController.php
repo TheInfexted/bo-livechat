@@ -254,17 +254,29 @@ class AdminController extends General
         
         $apiKeyModel = new \App\Models\ApiKeyModel();
         
-        $clientName = $this->request->getPost('client_name');
-        $clientEmail = $this->request->getPost('client_email');
+        $clientId = $this->request->getPost('client_id');
         $clientDomain = $this->request->getPost('client_domain');
         
-        if (!$clientName || !$clientEmail) {
-            return $this->jsonResponse(['error' => 'Missing required fields'], 400);
+        if (!$clientId) {
+            return $this->jsonResponse(['error' => 'Client selection is required'], 400);
         }
         
-        // Find the client_id based on the email
-        $client = $this->clientModel->where('email', $clientEmail)->first();
-        $clientId = $client ? $client['id'] : null;
+        // Get client details from database
+        $client = $this->clientModel->find($clientId);
+        
+        if (!$client) {
+            return $this->jsonResponse(['error' => 'Selected client not found'], 404);
+        }
+        
+        $clientName = $client['username'] ?: $client['full_name'] ?: 'Client';
+        $clientEmail = $client['email'];
+        
+        // Check if client already has an API key
+        if ($apiKeyModel->clientHasApiKey($clientId, $clientEmail)) {
+            return $this->jsonResponse([
+                'error' => 'This client already has an API key. Each client can only have one API key.'
+            ], 400);
+        }
         
         $data = [
             'client_id' => $clientId,
@@ -367,6 +379,43 @@ class AdminController extends General
         }
         
         return $this->jsonResponse($apiKey);
+    }
+    
+    /**
+     * Get clients that don't have API keys yet
+     */
+    public function getAvailableClients()
+    {
+        if (!$this->isAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        if (!$this->isAdmin()) {
+            return $this->jsonResponse(['error' => 'Access denied'], 403);
+        }
+        
+        try {
+            $db = \Config\Database::connect();
+            
+            // Get clients that don't have any API keys
+            $availableClients = $db->query("
+                SELECT c.id, c.username, c.email, c.full_name
+                FROM clients c
+                LEFT JOIN api_keys ak ON c.id = ak.client_id OR c.email = ak.client_email
+                WHERE ak.id IS NULL
+                AND c.status = 'active'
+                ORDER BY c.username ASC
+            ")->getResultArray();
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'clients' => $availableClients
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Get Available Clients Error: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Failed to fetch available clients'], 500);
+        }
     }
     
     public function suspendApiKey($keyId)

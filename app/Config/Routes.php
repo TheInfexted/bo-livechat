@@ -118,6 +118,7 @@ $routes->group('admin', ['filter' => ['admin_domain', 'adminfilter']], function(
     
     // API Key Management routes
     $routes->get('api-keys', 'AdminController::apiKeys');
+    $routes->get('api-keys/available-clients', 'AdminController::getAvailableClients');
     $routes->post('api-keys/create', 'AdminController::createApiKey');
     $routes->post('api-keys/update', 'AdminController::updateApiKey');
     $routes->get('api-keys/edit/(:num)', 'AdminController::editApiKey/$1');

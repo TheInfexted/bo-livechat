@@ -198,23 +198,70 @@
             <button class="close-modal" onclick="hideCreateApiKeyModal()">×</button>
         </div>
         <form id="createApiKeyForm">
-            <div class="mb-3">
-                <label for="client_name" class="form-label">Client Name *</label>
-                <input type="text" id="client_name" name="client_name" class="form-control" required>
+            <!-- Loading State -->
+            <div id="loadingClients" class="mb-3 text-center" style="display: none;">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                Loading available clients...
             </div>
-            <div class="mb-3">
-                <label for="client_email" class="form-label">Client Email *</label>
-                <input type="email" id="client_email" name="client_email" class="form-control" required>
+            
+            <!-- Client Selection -->
+            <div id="clientSelectionSection" style="display: none;">
+                <div class="mb-3">
+                    <label for="client_select" class="form-label">Select Client *</label>
+                    <select id="client_select" name="client_id" class="form-select" required>
+                        <option value="">Choose a client...</option>
+                    </select>
+                    <div class="form-text">Only clients without existing API keys are shown.</div>
+                </div>
+                
+                <!-- Client Preview -->
+                <div id="clientPreview" class="mb-3" style="display: none;">
+                    <div class="card">
+                        <div class="card-body py-2">
+                            <h6 class="card-title mb-1">Selected Client:</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Username:</small><br>
+                                    <strong id="previewUsername">-</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Email:</small><br>
+                                    <strong id="previewEmail">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="client_domain" class="form-label">Allowed Domains (Optional)</label>
+                    <input type="text" id="client_domain" name="client_domain" class="form-control"
+                           placeholder="example.com, *.example.com, localhost">
+                    <div class="form-text">Leave blank to allow all domains. Use comma to separate multiple domains.</div>
+                </div>
             </div>
-            <div class="mb-3">
-                <label for="client_domain" class="form-label">Allowed Domains (Optional)</label>
-                <input type="text" id="client_domain" name="client_domain" class="form-control"
-                       placeholder="example.com, *.example.com, localhost">
-                <div class="form-text">Leave blank to allow all domains. Use comma to separate multiple domains.</div>
+            
+            <!-- No Clients Available State -->
+            <div id="noClientsAvailable" class="mb-3" style="display: none;">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>All clients already have API keys.</strong><br>
+                    To create a new API key, you must first delete or revoke an existing API key from another client.
+                </div>
             </div>
+            
+            <!-- Error State -->
+            <div id="clientLoadError" class="mb-3" style="display: none;">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Error loading clients.</strong><br>
+                    <span id="clientLoadErrorMessage">Please try again.</span>
+                </div>
+            </div>
+            
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="hideCreateApiKeyModal()">Cancel</button>
-                <button type="submit" class="btn btn-success">Create API Key</button>
+                <button type="submit" id="createApiKeyBtn" class="btn btn-success" disabled>Create API Key</button>
             </div>
         </form>
     </div>
@@ -443,12 +490,98 @@ function copyScriptCode() {
 
 function showCreateApiKeyModal() {
     document.getElementById('createApiKeyModal').style.display = 'block';
+    loadAvailableClients();
 }
 
 function hideCreateApiKeyModal() {
     document.getElementById('createApiKeyModal').style.display = 'none';
     document.getElementById('createApiKeyForm').reset();
+    resetModalState();
 }
+
+function resetModalState() {
+    // Hide all sections
+    document.getElementById('loadingClients').style.display = 'none';
+    document.getElementById('clientSelectionSection').style.display = 'none';
+    document.getElementById('clientPreview').style.display = 'none';
+    document.getElementById('noClientsAvailable').style.display = 'none';
+    document.getElementById('clientLoadError').style.display = 'none';
+    
+    // Reset form elements
+    document.getElementById('client_select').innerHTML = '<option value="">Choose a client...</option>';
+    document.getElementById('createApiKeyBtn').disabled = true;
+}
+
+function loadAvailableClients() {
+    resetModalState();
+    document.getElementById('loadingClients').style.display = 'block';
+    
+    fetch('<?= base_url('admin/api-keys/available-clients') ?>')
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            document.getElementById('loadingClients').style.display = 'none';
+            
+            if (data.success) {
+                if (data.clients.length > 0) {
+                    populateClientDropdown(data.clients);
+                    document.getElementById('clientSelectionSection').style.display = 'block';
+                } else {
+                    document.getElementById('noClientsAvailable').style.display = 'block';
+                }
+            } else {
+                showClientLoadError(data.error || 'Unknown error occurred');
+            }
+        })
+        .catch(function(error) {
+            document.getElementById('loadingClients').style.display = 'none';
+            showClientLoadError('Network error. Please check your connection.');
+            console.error('Error loading clients:', error);
+        });
+}
+
+function populateClientDropdown(clients) {
+    var select = document.getElementById('client_select');
+    select.innerHTML = '<option value="">Choose a client...</option>';
+    
+    clients.forEach(function(client) {
+        var option = document.createElement('option');
+        option.value = client.id;
+        option.textContent = client.username;
+        option.setAttribute('data-email', client.email || '');
+        option.setAttribute('data-full-name', client.full_name || '');
+        select.appendChild(option);
+    });
+}
+
+function showClientLoadError(message) {
+    document.getElementById('clientLoadErrorMessage').textContent = message;
+    document.getElementById('clientLoadError').style.display = 'block';
+}
+
+// Handle client selection change
+document.addEventListener('DOMContentLoaded', function() {
+    var clientSelect = document.getElementById('client_select');
+    if (clientSelect) {
+        clientSelect.addEventListener('change', function() {
+            var selectedOption = this.options[this.selectedIndex];
+            
+            if (selectedOption.value) {
+                // Show preview
+                var username = selectedOption.textContent;
+                var email = selectedOption.getAttribute('data-email') || 'Not provided';
+                
+                document.getElementById('previewUsername').textContent = username;
+                document.getElementById('previewEmail').textContent = email;
+                document.getElementById('clientPreview').style.display = 'block';
+                document.getElementById('createApiKeyBtn').disabled = false;
+            } else {
+                // Hide preview
+                document.getElementById('clientPreview').style.display = 'none';
+                document.getElementById('createApiKeyBtn').disabled = true;
+            }
+        });
+    }
+});
 
 function copyApiKey(apiKey) {
     var textArea = document.createElement('textarea');
@@ -557,11 +690,18 @@ document.getElementById('createApiKeyForm').addEventListener('submit', function(
     .then(function(response) { return response.json(); })
     .then(function(result) {
         if (result.success) {
-            alert('API Key created successfully!\n\nAPI Key: ' + result.api_key + '\n\nMake sure to save this key!');
+            var selectedClient = document.getElementById('client_select').options[document.getElementById('client_select').selectedIndex].textContent;
+            alert('API Key created successfully for ' + selectedClient + '!\n\nAPI Key: ' + result.api_key + '\n\nMake sure to save this key!');
             hideCreateApiKeyModal();
             location.reload();
         } else {
-            alert('Error: ' + result.error);
+            // Show more descriptive error message
+            var errorMsg = result.error;
+            if (errorMsg.includes('already has an API key')) {
+                alert('❌ Cannot Create API Key\n\n' + errorMsg + '\n\nTo create a new API key for this client, you must first delete or revoke their existing API key.');
+            } else {
+                alert('Error: ' + errorMsg);
+            }
         }
     });
 });
