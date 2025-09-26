@@ -142,8 +142,6 @@ class ChatController extends General
             }
         }
         
-        // Debug logging for email field
-        error_log('DEBUG - BO-LIVECHAT Email field specifically: ' . var_export($email, true));
         
         $data = [
             'session_id' => $sessionId,
@@ -196,27 +194,40 @@ class ChatController extends General
     
     public function getMessages($sessionId)
     {
-        $forBackend = $this->request->getGet('backend') === '1';
-        $includeHistory = $this->request->getGet('include_history') !== '0'; // Include by default
-        
-        if ($forBackend) {
-            // For backend (admin/client interfaces), check if we should include history
-            if ($includeHistory) {
-                // This method automatically checks if it's a logged user and includes 30-day history
-                $messages = $this->messageModel->getSessionMessagesWithHistoryForBackend($sessionId);
-            } else {
-                // Regular backend messages without history
-                $messages = $this->messageModel->getSessionMessagesForBackend($sessionId);
+        try {
+            if (!$sessionId) {
+                return $this->jsonResponse(['error' => 'Session ID is required'], 400);
             }
-        } else {
-            // For frontend (customer interface), include all messages (no history needed)
-            $messages = $this->messageModel->getSessionMessages($sessionId);
+            
+            $forBackend = $this->request->getGet('backend') === '1';
+            $includeHistory = $this->request->getGet('include_history') !== '0'; // Include by default
+            
+            // Use MongoDB for all message retrieval
+            $mongoModel = new \App\Models\MongoMessageModel();
+            
+            if ($forBackend && $includeHistory) {
+                // For backend with history, get session messages with 30-day history for logged users
+                $messages = $mongoModel->getSessionMessagesWithHistoryForBackend($sessionId);
+            } else {
+                // For regular message loading (frontend or backend without history)
+                $messages = $mongoModel->getSessionMessages($sessionId);
+            }
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'messages' => $messages,
+                'session_id' => $sessionId
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log('ERROR - ChatController::getMessages failed: ' . $e->getMessage());
+            error_log('ERROR - Stack trace: ' . $e->getTraceAsString());
+            return $this->jsonResponse([
+                'error' => 'Failed to fetch messages',
+                'debug' => 'Error occurred: ' . $e->getMessage(),
+                'session_id' => $sessionId
+            ], 500);
         }
-        
-        return $this->jsonResponse([
-            'success' => true,
-            'messages' => $messages
-        ]);
     }
     
     public function closeSession()
@@ -290,16 +301,21 @@ class ChatController extends General
             $senderUserType = null;
         }
         
+        // Store message in MongoDB using session_id string
+        $mongoModel = new \App\Models\MongoMessageModel();
         $messageData = [
-            'session_id' => $chatSession['id'],
+            'session_id' => $chatSession['session_id'], // Use session_id string for MongoDB
             'sender_type' => $senderType,
             'sender_id' => $senderId,
+            'sender_name' => $senderName ?: ($senderType === 'customer' ? 'Customer' : 'Agent'),
             'sender_user_type' => $senderUserType,
             'message' => $message,
-            'message_type' => 'text'
+            'message_type' => 'text',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
         ];
         
-        $messageId = $this->messageModel->insert($messageData);
+        $messageId = $mongoModel->insertMessage($messageData);
         
         if ($messageId) {
             // Update session timestamp - silently ignore any update errors since message was sent successfully
@@ -414,15 +430,21 @@ class ChatController extends General
         
         if ($sessionClosed) {
             // Add a system message that customer left and session is closed
+            // Use MongoDB for message storage with session_id string
+            $mongoModel = new \App\Models\MongoMessageModel();
             $messageData = [
-                'session_id' => $chatSession['id'],
+                'session_id' => $chatSession['session_id'], // Use session_id string for MongoDB
                 'sender_type' => 'system',
                 'sender_id' => null,
+                'sender_name' => 'System',
+                'sender_user_type' => null,
                 'message' => 'Customer left the chat - Session closed',
-                'message_type' => 'system'
+                'message_type' => 'system',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
             ];
             
-            $messageInserted = $this->messageModel->insert($messageData);
+            $messageInserted = $mongoModel->insertMessage($messageData);
             
             // Send WebSocket notification to close the session for all participants
             if ($messageInserted) {
@@ -527,15 +549,21 @@ class ChatController extends General
             return $this->jsonResponse(['error' => 'Chat session not found'], 404);
         }
 
+        // Use MongoDB for message storage with session_id string
+        $mongoModel = new \App\Models\MongoMessageModel();
         $messageData = [
-            'session_id' => $chatSession['id'],
+            'session_id' => $chatSession['session_id'], // Use session_id string for MongoDB
             'sender_type' => 'agent',
             'sender_id' => $agentId,
+            'sender_name' => $this->session->get('username') ?? 'Agent',
+            'sender_user_type' => 'admin', // Assuming this is from admin interface
             'message' => $cannedResponse['content'],
-            'message_type' => 'text'
+            'message_type' => 'text',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
         ];
 
-        $messageId = $this->messageModel->insert($messageData);
+        $messageId = $mongoModel->insertMessage($messageData);
 
         return $this->jsonResponse([
             'success' => true,

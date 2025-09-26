@@ -63,15 +63,35 @@ class ChatHistoryController extends General
             return redirect()->to('/chat-history')->with('error', 'Chat session not found');
         }
         
-        // Get all messages for this session
-        $messages = $this->messageModel->select('
-            messages.*,
-            users.username as sender_name
-        ')
-        ->join('users', 'users.id = messages.sender_id', 'left')
-        ->where('session_id', $sessionId)
-        ->orderBy('created_at', 'ASC')
-        ->findAll();
+        // Get all messages for this session from MongoDB
+        $mongoMessageModel = new \App\Models\MongoMessageModel();
+        
+        // Debug: log what we're looking for
+        log_message('debug', 'ChatHistory: Looking for messages with session_id: ' . $chatSession['session_id']);
+        log_message('debug', 'ChatHistory: Session data: ' . json_encode([
+            'session_id' => $chatSession['session_id'],
+            'api_key' => $chatSession['api_key'] ?? 'missing',
+            'customer_name' => $chatSession['customer_name'] ?? 'missing'
+        ]));
+        
+        $messages = $mongoMessageModel->getSessionMessages($chatSession['session_id']);
+        
+        log_message('debug', 'ChatHistory: Retrieved ' . count($messages) . ' messages');
+        if (count($messages) > 0) {
+            log_message('debug', 'ChatHistory: First message sample: ' . json_encode($messages[0]));
+        }
+        
+        // Add sender names for agents
+        foreach ($messages as &$message) {
+            if ($message['sender_type'] === 'agent' && $message['sender_id']) {
+                $user = $this->userModel->find($message['sender_id']);
+                $message['sender_name'] = $user ? $user['username'] : 'Agent';
+            } elseif ($message['sender_type'] === 'customer') {
+                $message['sender_name'] = $chatSession['customer_name'] ?: 'Customer';
+            } elseif ($message['sender_type'] === 'system') {
+                $message['sender_name'] = 'System';
+            }
+        }
         
         // Calculate session duration if closed
         $duration = null;
@@ -132,15 +152,7 @@ class ChatHistoryController extends General
             chat_sessions.status,
             chat_sessions.api_key,
             users.username as agent_name,
-            api_keys.client_name as api_client_name,
-            (SELECT created_at FROM messages 
-             WHERE session_id = chat_sessions.id 
-             AND sender_type = "customer" 
-             ORDER BY created_at DESC LIMIT 1) as client_last_reply,
-            (SELECT created_at FROM messages 
-             WHERE session_id = chat_sessions.id 
-             AND sender_type = "agent" 
-             ORDER BY created_at DESC LIMIT 1) as agent_last_reply
+            api_keys.client_name as api_client_name
         ');
         
         $builder->join('users', 'users.id = chat_sessions.agent_id', 'left');

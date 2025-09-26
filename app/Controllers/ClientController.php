@@ -156,19 +156,29 @@ class ClientController extends General
             // Process customer name
             $session['customer_name'] = $this->processCustomerName($session);
             
-            // Get last customer message time
-            $lastCustomerMessage = $messageModel->where('session_id', $session['id'])
-                                               ->where('sender_type', 'customer')
-                                               ->orderBy('created_at', 'DESC')
-                                               ->first();
-            $session['last_customer_message_time'] = $lastCustomerMessage ? $lastCustomerMessage['created_at'] : null;
+            // Get messages from MongoDB using session_id string
+            $mongoModel = new \App\Models\MongoMessageModel();
+            $messages = $mongoModel->getSessionMessages($session['session_id']);
             
-            // Get last agent message time
-            $lastAgentMessage = $messageModel->where('session_id', $session['id'])
-                                            ->where('sender_type', 'agent')
-                                            ->orderBy('created_at', 'DESC')
-                                            ->first();
-            $session['last_agent_message_time'] = $lastAgentMessage ? $lastAgentMessage['created_at'] : null;
+            // Find last customer and agent message times from MongoDB results
+            $lastCustomerMessageTime = null;
+            $lastAgentMessageTime = null;
+            
+            foreach (array_reverse($messages) as $message) {
+                if ($message['sender_type'] === 'customer' && !$lastCustomerMessageTime) {
+                    $lastCustomerMessageTime = $message['created_at'];
+                }
+                if ($message['sender_type'] === 'agent' && !$lastAgentMessageTime) {
+                    $lastAgentMessageTime = $message['created_at'];
+                }
+                // Break if we found both
+                if ($lastCustomerMessageTime && $lastAgentMessageTime) {
+                    break;
+                }
+            }
+            
+            $session['last_customer_message_time'] = $lastCustomerMessageTime;
+            $session['last_agent_message_time'] = $lastAgentMessageTime;
         }
         
         // Create pagination data
@@ -422,7 +432,7 @@ class ClientController extends General
         $clientId = $this->getClientId();
         $apiKeyModel = new \App\Models\ApiKeyModel();
         $chatModel = new \App\Models\ChatModel();
-        $messageModel = new \App\Models\MessageModel();
+        $mongoModel = new \App\Models\MongoMessageModel();
         
         // All authenticated users (clients and agents) can see ALL sessions for their client_id
         $sessions = $chatModel->where('client_id', $clientId)
@@ -435,23 +445,27 @@ class ClientController extends General
             
             // Process each session to add latest customer message and sender info
             foreach ($sessions as $session) {
-                // Get the latest message for this session using database session ID
-                $latestMessage = $messageModel->select('messages.*, COALESCE(users.username, "Anonymous") as sender_name')
-                                             ->join('users', 'users.id = messages.sender_id', 'left')
-                                             ->where('session_id', $session['id'])
-                                             ->orderBy('created_at', 'DESC')
-                                             ->first();
+                // Get last message info from MongoDB using session_id string
+                $lastMessageInfo = $mongoModel->getLastMessageInfo($session['session_id']);
                 
-                // Get the latest customer message specifically
-                $latestCustomerMessage = $messageModel->where('session_id', $session['id'])
-                                                     ->where('sender_type', 'customer')
-                                                     ->orderBy('created_at', 'DESC')
-                                                     ->first();
+                // Get all messages for this session to find last message details
+                $messages = $mongoModel->getSessionMessages($session['session_id']);
+                
+                $latestMessage = !empty($messages) ? $messages[count($messages) - 1] : null;
+                $latestCustomerMessage = null;
+                
+                // Find the latest customer message
+                for ($i = count($messages) - 1; $i >= 0; $i--) {
+                    if ($messages[$i]['sender_type'] === 'customer') {
+                        $latestCustomerMessage = $messages[$i];
+                        break;
+                    }
+                }
                 
                 // Add latest customer message info
                 $session['last_customer_message'] = $latestCustomerMessage ? $latestCustomerMessage['message'] : null;
                 
-                // Add last message sender info
+                // Add last message sender info from MongoDB
                 if ($latestMessage) {
                     $session['last_message_sender'] = $latestMessage['sender_type'];
                     $session['last_message_sender_name'] = $latestMessage['sender_name'] ?? null;
@@ -465,6 +479,9 @@ class ClientController extends General
                 // Process customer name consistently
                 $session['customer_name'] = $this->processCustomerName($session);
                 
+                // Add the MongoDB last message info for frontend use
+                $session['last_message_info'] = $lastMessageInfo;
+                
                 $allSessions[] = $session;
             }
         }
@@ -477,6 +494,84 @@ class ClientController extends General
             'sessions' => $allSessions,
             'archivedChats' => $archivedChats
         ]);
+    }
+    
+    /**
+     * Debug method to check MongoDB message data
+     */
+    public function debugSessionMessages()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        $sessionId = $this->request->getVar('session_id');
+        
+        if ($sessionId) {
+            // Debug single session
+            $mongoModel = new \App\Models\MongoMessageModel();
+            
+            // Get session data first
+            $db = \Config\Database::connect();
+            $query = $db->query('SELECT * FROM chat_sessions WHERE session_id = ?', [$sessionId]);
+            $sessionData = $query->getRowArray();
+            
+            if (!$sessionData) {
+                return $this->jsonResponse(['error' => 'Session not found'], 404);
+            }
+            
+            // Get messages using the same method as getSessionsData
+            $messages = $mongoModel->getSessionMessages($sessionId);
+            
+            // Get collection name being used
+            $collectionName = $mongoModel->getCollectionNameForSession($sessionId, $sessionData);
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'session_id' => $sessionId,
+                'collection_name' => $collectionName,
+                'session_data' => $sessionData,
+                'messages_count' => count($messages),
+                'messages' => $messages,
+                'last_message' => !empty($messages) ? $messages[count($messages) - 1] : null,
+                'last_3_messages' => array_slice($messages, -3)
+            ]);
+        } else {
+            // Debug all sessions - compare with actual getSessionsData output
+            $currentUser = $this->getCurrentClientUser();
+            $clientId = $this->getClientId();
+            $chatModel = new \App\Models\ChatModel();
+            $mongoModel = new \App\Models\MongoMessageModel();
+            
+            $sessions = $chatModel->where('client_id', $clientId)
+                                 ->orderBy('created_at', 'DESC')
+                                 ->findAll();
+            
+            $debugSessions = [];
+            
+            foreach ($sessions as $session) {
+                $messages = $mongoModel->getSessionMessages($session['session_id']);
+                $latestMessage = !empty($messages) ? $messages[count($messages) - 1] : null;
+                
+                $debugSessions[] = [
+                    'session_id' => $session['session_id'],
+                    'customer_name' => $session['customer_name'],
+                    'status' => $session['status'],
+                    'collection_name' => $mongoModel->getCollectionNameForSession($session['session_id'], $session),
+                    'messages_count' => count($messages),
+                    'last_message_sender' => $latestMessage ? $latestMessage['sender_type'] : null,
+                    'last_message_text' => $latestMessage ? substr($latestMessage['message'], 0, 50) : null,
+                    'last_message_time' => $latestMessage ? $latestMessage['created_at'] : null,
+                ];
+            }
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'debug_type' => 'all_sessions',
+                'total_sessions' => count($sessions),
+                'sessions_debug' => $debugSessions
+            ]);
+        }
     }
     
     /**
@@ -547,6 +642,57 @@ class ClientController extends General
         }
         
         return $processedArchived;
+    }
+    
+    /**
+     * Debug MongoDB collections and sessions - temporary
+     */
+    public function debugMongoDB()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        try {
+            $mongoModel = new \App\Models\MongoMessageModel();
+            $clientId = $this->getClientId();
+            
+            // Get some recent sessions for this client
+            $sessions = $this->chatModel->where('client_id', $clientId)
+                                       ->orderBy('created_at', 'DESC')
+                                       ->limit(5)
+                                       ->findAll();
+            
+            $debugInfo = [
+                'client_id' => $clientId,
+                'sessions_count' => count($sessions),
+                'recent_sessions' => []
+            ];
+            
+            foreach ($sessions as $session) {
+                $messages = $mongoModel->getSessionMessages($session['session_id']);
+                $debugInfo['recent_sessions'][] = [
+                    'session_id' => $session['session_id'],
+                    'customer_name' => $session['customer_name'],
+                    'api_key' => $session['api_key'],
+                    'status' => $session['status'],
+                    'created_at' => $session['created_at'],
+                    'message_count' => count($messages)
+                ];
+            }
+            
+            return $this->jsonResponse([
+                'success' => true,
+                'debug' => $debugInfo
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->jsonResponse([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
     
     /**
@@ -861,6 +1007,11 @@ class ClientController extends General
             return $this->jsonResponse(['error' => 'Session ID is required'], 400);
         }
         
+        // Validate session ID format (should be alphanumeric with underscores, no 't' in numeric suffix)
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $sessionId) || strpos($sessionId, 't') !== false) {
+            return $this->jsonResponse(['error' => 'Invalid session ID format', 'session_id' => $sessionId], 400);
+        }
+        
         $clientId = $this->getClientId();
         
         try {
@@ -900,61 +1051,18 @@ class ClientController extends General
                 $session['customer_email'] = '';
             }
             
-            // Get the latest message for this session to determine last reply info
-            $messageModel = new \App\Models\MessageModel();
-            $latestMessage = $messageModel->select('messages.*, 
-                                                   CASE 
-                                                       WHEN messages.sender_type = "customer" THEN "Customer"
-                                                       WHEN messages.sender_type = "agent" AND messages.sender_id IS NOT NULL THEN 
-                                                           CASE
-                                                               WHEN messages.sender_user_type = "client" THEN COALESCE(clients.username, "Agent")
-                                                               WHEN messages.sender_user_type = "agent" THEN COALESCE(agents.username, "Agent")
-                                                               WHEN messages.sender_user_type = "admin" THEN COALESCE(users.username, "Agent")
-                                                               WHEN messages.sender_user_type IS NULL THEN COALESCE(clients_all.username, agents_all.username, users_all.username, "Agent")
-                                                               ELSE "Agent"
-                                                           END
-                                                       ELSE "Agent"
-                                                   END as sender_name')
-                                   ->join('clients', 'clients.id = messages.sender_id AND messages.sender_user_type = "client"', 'left')
-                                   ->join('agents', 'agents.id = messages.sender_id AND messages.sender_user_type = "agent"', 'left')
-                                   ->join('users', 'users.id = messages.sender_id AND messages.sender_user_type = "admin"', 'left')
-                                   ->join('clients as clients_all', 'clients_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
-                                   ->join('agents as agents_all', 'agents_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
-                                   ->join('users as users_all', 'users_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
-                                   ->where('session_id', $session['id'])
-                                   ->orderBy('created_at', 'DESC')
-                                   ->first();
+            // Get messages from MongoDB using session_id string
+            $mongoModel = new \App\Models\MongoMessageModel();
+            $messages = $mongoModel->getSessionMessages($session['session_id']);
             
-            // Get all unique agents involved in this session
-            $agentsInvolved = $messageModel->select('DISTINCT 
-                                                    CASE 
-                                                        WHEN messages.sender_type = "agent" AND messages.sender_id IS NOT NULL THEN 
-                                                            CASE
-                                                                WHEN messages.sender_user_type = "client" THEN COALESCE(clients.username, "Agent")
-                                                                WHEN messages.sender_user_type = "agent" THEN COALESCE(agents.username, "Agent")
-                                                                WHEN messages.sender_user_type = "admin" THEN COALESCE(users.username, "Agent")
-                                                                WHEN messages.sender_user_type IS NULL THEN COALESCE(clients_all.username, agents_all.username, users_all.username, "Agent")
-                                                                ELSE "Agent"
-                                                            END
-                                                        ELSE NULL
-                                                    END as agent_name')
-                                           ->join('clients', 'clients.id = messages.sender_id AND messages.sender_user_type = "client"', 'left')
-                                           ->join('agents', 'agents.id = messages.sender_id AND messages.sender_user_type = "agent"', 'left')
-                                           ->join('users', 'users.id = messages.sender_id AND messages.sender_user_type = "admin"', 'left')
-                                           ->join('clients as clients_all', 'clients_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
-                                           ->join('agents as agents_all', 'agents_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
-                                           ->join('users as users_all', 'users_all.id = messages.sender_id AND messages.sender_user_type IS NULL', 'left')
-                                           ->where('session_id', $session['id'])
-                                           ->where('sender_type', 'agent')
-                                           ->having('agent_name IS NOT NULL')
-                                           ->having('agent_name !=', 'Agent')
-                                           ->findAll();
+            // Find the latest message and agents involved from MongoDB results
+            $latestMessage = !empty($messages) ? $messages[count($messages) - 1] : null; // Last message in chronological order
             
-            // Extract agent names and remove duplicates
+            // Extract unique agent names from messages
             $agentNames = [];
-            foreach ($agentsInvolved as $agent) {
-                if (!empty($agent['agent_name']) && $agent['agent_name'] !== 'Agent') {
-                    $agentNames[] = $agent['agent_name'];
+            foreach ($messages as $message) {
+                if ($message['sender_type'] === 'agent' && !empty($message['sender_name']) && $message['sender_name'] !== 'Agent') {
+                    $agentNames[] = $message['sender_name'];
                 }
             }
             $agentNames = array_unique($agentNames);
@@ -983,8 +1091,6 @@ class ClientController extends General
                 $session['updated_at_formatted'] = date('M d, Y h:i A', strtotime($session['updated_at']));
             }
             
-            // Debug: Log session data to see what fields are available
-            log_message('debug', 'ClientController::getSessionDetails - Session data: ' . json_encode($session));
             
             return $this->jsonResponse([
                 'success' => true,
@@ -993,9 +1099,11 @@ class ClientController extends General
             
         } catch (\Exception $e) {
             error_log('ERROR - ClientController::getSessionDetails failed: ' . $e->getMessage());
+            error_log('ERROR - Stack trace: ' . $e->getTraceAsString());
             return $this->jsonResponse([
                 'error' => 'Failed to fetch session details',
-                'debug' => 'Database error occurred'
+                'debug' => 'Database error occurred: ' . $e->getMessage(),
+                'session_id' => $sessionId
             ], 500);
         }
     }
@@ -1025,27 +1133,12 @@ class ClientController extends General
                 return redirect()->to('/client/chat-history')->with('error', 'Session not found or access denied');
             }
             
-            // Get messages for this session with proper joins for clients/agents
-            $messageModel = new \App\Models\MessageModel();
-            $messages = $messageModel->select('messages.*, 
-                                              CASE 
-                                                  WHEN messages.sender_type = "customer" THEN "Customer"
-                                                  WHEN messages.sender_type = "agent" AND messages.sender_id IS NOT NULL THEN 
-                                                      COALESCE(
-                                                          clients.username,
-                                                          agents.username,
-                                                          users.username,
-                                                          "Agent"
-                                                      )
-                                                  ELSE "Agent"
-                                              END as sender_name,
-                                              messages.message_type')
-                                    ->join('clients', 'clients.id = messages.sender_id AND messages.sender_type = "agent"', 'left')
-                                    ->join('agents', 'agents.id = messages.sender_id AND messages.sender_type = "agent"', 'left')
-                                    ->join('users', 'users.id = messages.sender_id AND messages.sender_type = "agent"', 'left')
-                                    ->where('session_id', $session['id'])
-                                    ->orderBy('created_at', 'ASC')
-                                    ->findAll();
+            // Get messages from MongoDB using session_id string
+            $mongoModel = new \App\Models\MongoMessageModel();
+            $messages = $mongoModel->getSessionMessages($session['session_id']);
+            
+            // Reverse the order to show chronological order (oldest first)
+            $messages = array_reverse($messages);
             
             // Process customer name
             $session['customer_name'] = $this->processCustomerName($session);

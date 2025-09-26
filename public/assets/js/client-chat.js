@@ -148,6 +148,10 @@ let refreshInterval = null;
 let sessionDetailsRefreshTimer = null;
 let lastSessionDetailsRefresh = 0;
 
+// Real-time tracking variables
+let realtimeLastReplyBy = new Map(); // Track last reply by for each session in real-time
+let realtimeLastReplyTimestamp = new Map(); // Track when the real-time update occurred
+
 // Typing indicator variables
 let clientIsTyping = false;
 let clientTypingTimer = null;
@@ -287,18 +291,31 @@ function createSessionItem(session, status) {
         messageText = `Waiting ${formatTimeAgo(session.created_at)}`;
         statusIcon = '<i class="fas fa-clock text-warning"></i>';
     } else if (status === 'active') {
-        // Show latest customer message or waiting status
-        if (session.last_message_sender === 'agent' || session.last_message_sender === 'client') {
-            messageText = '<em>Waiting for reply</em>';
-        } else if (session.last_customer_message) {
-            // Truncate message if too long
-            const maxLength = 40;
-            const message = session.last_customer_message.length > maxLength 
-                ? session.last_customer_message.substring(0, maxLength) + '...' 
-                : session.last_customer_message;
-            messageText = message;
+        // Use MongoDB last message info if available
+        if (session.last_message_info && session.last_message_info.display_text) {
+            if (session.last_message_info.is_waiting) {
+                messageText = '<em>' + session.last_message_info.display_text + '</em>';
+            } else {
+                // Truncate message if too long
+                const maxLength = 40;
+                const message = session.last_message_info.display_text.length > maxLength 
+                    ? session.last_message_info.display_text.substring(0, maxLength) + '...' 
+                    : session.last_message_info.display_text;
+                messageText = message;
+            }
         } else {
-            messageText = 'No messages yet';
+            // Fallback to old logic if MongoDB info is not available
+            if (session.last_message_sender === 'agent' || session.last_message_sender === 'client') {
+                messageText = '<em>Waiting for reply</em>';
+            } else if (session.last_customer_message) {
+                const maxLength = 40;
+                const message = session.last_customer_message.length > maxLength 
+                    ? session.last_customer_message.substring(0, maxLength) + '...' 
+                    : session.last_customer_message;
+                messageText = message;
+            } else {
+                messageText = 'No messages yet';
+            }
         }
         statusIcon = '<i class="fas fa-comments text-success"></i>';
     } else {
@@ -477,7 +494,7 @@ function loadChatHistoryForArchivedSession(sessionId) {
     // Load messages with history enabled (30-day history for logged users)
     const messagesUrl = window.clientConfig ? 
         window.clientConfig.messagesUrl.replace(':sessionId', sessionId) + '?backend=1&include_history=1' :
-        `/chat/getMessages/${sessionId}?backend=1&include_history=1`;
+        `/client/chat-messages/${sessionId}?backend=1&include_history=1`;
     
     fetch(messagesUrl)
         .then(response => response.json())
@@ -652,12 +669,15 @@ function openChat(sessionId) {
     
     // Load session details for customer info panel
     loadSessionDetails(sessionId);
+    
+    // Initialize real-time last reply tracking for this session
+    initializeRealtimeTracking(sessionId);
 }
 
 function loadChatHistoryForSession(sessionId) {
     const messagesUrl = window.clientConfig ? 
         window.clientConfig.messagesUrl.replace(':sessionId', sessionId) + '?backend=1' :
-        `/chat/getMessages/${sessionId}?backend=1`;
+        `/client/chat-messages/${sessionId}?backend=1`;
     
     fetch(messagesUrl)
         .then(response => response.json())
@@ -714,6 +734,38 @@ function loadChatHistoryForSession(sessionId) {
             finalizeChatInitialization();
         });
 }
+
+/**
+ * Initialize real-time tracking for a session by getting the current last reply state
+ * from the backend and setting it as the baseline
+ */
+function initializeRealtimeTracking(sessionId) {
+    if (!sessionId) return;
+    
+    // We'll get the initial state when loadSessionDetails completes
+    // For now, just ensure the session is in our tracking maps
+    if (!realtimeLastReplyBy.has(sessionId)) {
+        // Will be set by updateSessionDetailsUI when session details load
+    }
+}
+
+/**
+ * Clean up old real-time tracking data to prevent memory leaks
+ * Should be called periodically or when sessions are closed
+ */
+function cleanupRealtimeTracking() {
+    const now = Date.now();
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    
+    // Clean up entries older than 24 hours
+    for (const [sessionId, timestamp] of realtimeLastReplyTimestamp.entries()) {
+        if (now - timestamp > maxAge) {
+            realtimeLastReplyBy.delete(sessionId);
+            realtimeLastReplyTimestamp.delete(sessionId);
+        }
+    }
+}
+
 
 function hideChat() {
     currentSessionId = null;
@@ -871,7 +923,11 @@ function generateAvatarInitials(senderName, senderType) {
 }
 
 function formatMessageTime(timestamp) {
-    return new Date(timestamp).toLocaleTimeString([], {
+    // The timestamp comes from backend already in Malaysia time (GMT+8)
+    // Parse it and display it directly as it's already in the correct timezone
+    const date = new Date(timestamp + ' GMT+0800'); // Treat as Malaysia time
+    
+    return date.toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit'
     });
@@ -1375,7 +1431,12 @@ function updateSidePanelLastReply(messageData) {
         lastReplyBy = senderName;
     }
     
-    if (lastReplyBy) {
+    if (lastReplyBy && messageData.session_id) {
+        // Store real-time last reply info
+        realtimeLastReplyBy.set(messageData.session_id, lastReplyBy);
+        realtimeLastReplyTimestamp.set(messageData.session_id, Date.now());
+        
+        // Update UI immediately
         updateDetailElement('last-reply-by-detail', lastReplyBy);
         updateModalElement('last-reply-by-detail-modal', lastReplyBy);
     }
@@ -1390,7 +1451,7 @@ window.refreshMessagesForSession = async function(sessionId) {
     try {
         const messagesUrl = window.clientConfig ? 
             window.clientConfig.messagesUrl.replace(':sessionId', sessionId) + '?backend=1' :
-            `/chat/getMessages/${sessionId}?backend=1`;
+            `/client/chat-messages/${sessionId}?backend=1`;
             
         const response = await fetch(messagesUrl);
         const data = await response.json();
@@ -1443,6 +1504,11 @@ function toggleCustomerInfo() {
 
 function loadSessionDetails(sessionId) {
     if (!sessionId) {
+        return;
+    }
+    
+    // Validate session ID format before making request
+    if (!/^[a-zA-Z0-9_]+$/.test(sessionId) || sessionId.includes('t')) {
         return;
     }
     
@@ -1565,7 +1631,37 @@ function updateSessionDetailsUI(session) {
     updateDetailElement('chat-started-detail', formatDateTime(session.created_at));
     updateDetailElement('chat-accepted-detail', session.accepted_at ? formatDateTime(session.accepted_at) : '-');
     updateDetailElement('chat-accepted-by-detail', session.accepted_by || session.agent_name || '-');
-    updateDetailElement('last-reply-by-detail', getLastReplyBy(session));
+    
+    // Always prioritize fresh backend data over stale real-time data
+    // Real-time data should only be used if it's more recent than the backend data
+    const sessionId = session.session_id || currentSessionId;
+    
+    // Session details processing
+    
+    const backendLastReply = getLastReplyBy(session);
+    const realtimeReply = sessionId ? realtimeLastReplyBy.get(sessionId) : null;
+    const realtimeTimestamp = sessionId ? realtimeLastReplyTimestamp.get(sessionId) : null;
+    
+    // Computed values for last reply logic
+    
+    // Get backend data timestamp (use last_message_time or current time as fallback)
+    const backendTimestamp = session.last_message_time ? new Date(session.last_message_time).getTime() : Date.now();
+    
+    // Use real-time data only if it exists and is more recent than backend data
+    if (realtimeReply && realtimeTimestamp && realtimeTimestamp > backendTimestamp) {
+        // Use real-time data from WebSocket (it's more recent)
+        updateDetailElement('last-reply-by-detail', realtimeReply);
+    } else {
+        // Use fresh backend data and update real-time tracking
+        updateDetailElement('last-reply-by-detail', backendLastReply);
+        
+        // Update real-time tracking with fresh backend data
+        if (sessionId && backendLastReply !== '-') {
+            realtimeLastReplyBy.set(sessionId, backendLastReply);
+            realtimeLastReplyTimestamp.set(sessionId, backendTimestamp);
+        }
+    }
+    
     updateDetailElement('agents-involved-detail', getAgentsInvolved(session));
     updateStatusBadge('chat-status-detail', session.status);
     
@@ -1576,7 +1672,14 @@ function updateSessionDetailsUI(session) {
     updateModalElement('chat-started-detail-modal', formatDateTime(session.created_at));
     updateModalElement('chat-accepted-detail-modal', session.accepted_at ? formatDateTime(session.accepted_at) : '-');
     updateModalElement('chat-accepted-by-detail-modal', session.accepted_by || session.agent_name || '-');
-    updateModalElement('last-reply-by-detail-modal', getLastReplyBy(session));
+    
+    // Use real-time last reply data for modal as well (same logic as above)
+    if (realtimeReply && realtimeTimestamp && realtimeTimestamp > backendTimestamp) {
+        updateModalElement('last-reply-by-detail-modal', realtimeReply);
+    } else {
+        updateModalElement('last-reply-by-detail-modal', backendLastReply);
+    }
+    
     updateModalElement('agents-involved-detail-modal', getAgentsInvolved(session));
     updateStatusBadge('chat-status-detail-modal', session.status);
     
@@ -2062,11 +2165,19 @@ function sendCannedMessage(message) {
 // ============================================================================
 
 function startAutoRefresh() {
+    let refreshCount = 0;
     refreshInterval = setInterval(() => {
         loadSessions();
         // Also refresh session details if a chat is currently open
         if (currentSessionId) {
             refreshCurrentSessionDetails();
+        }
+        
+        // Clean up old real-time tracking data every 100 refreshes (5 minutes)
+        refreshCount++;
+        if (refreshCount >= 100) {
+            cleanupRealtimeTracking();
+            refreshCount = 0;
         }
     }, 3000);
 }
@@ -2182,6 +2293,10 @@ function initializeClientChat(config) {
     if (config.actualUserType) actualUserType = config.actualUserType;
     if (config.clientApiKeys) clientApiKeys = config.clientApiKeys;
     if (config.clientName) clientName = config.clientName;
+    
+    // Clear any stale real-time tracking data from previous sessions
+    realtimeLastReplyBy.clear();
+    realtimeLastReplyTimestamp.clear();
     
     // Initialize chat panel to hidden state
     document.getElementById('chat-panel').style.display = 'none';

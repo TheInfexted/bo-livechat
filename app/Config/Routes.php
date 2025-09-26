@@ -76,6 +76,15 @@ $routes->group('client', ['filter' => ['client_domain', 'clientfilter']], functi
     $routes->get('session-details/(:segment)', 'ClientController::getSessionDetails/$1');
     $routes->get('chat-history/view/(:segment)', 'ClientController::viewChatHistory/$1');
     
+    // Debug route for testing MongoDB messages (temporary)
+    $routes->get('debug-messages', 'ClientController::debugSessionMessages');
+    
+    // Client-specific chat endpoints (using clientfilter instead of authfilter)
+    $routes->get('chat-messages/(:segment)', 'ChatController::getMessages/$1');
+    $routes->post('send-message', 'ChatController::sendMessage');
+    $routes->post('accept-session', 'ChatController::acceptSession');
+    $routes->post('close-session', 'ChatController::closeSession');
+    
     // Keyword Responses routes (clients only)
     $routes->get('keyword-responses', 'ClientController::keywordResponses');
     $routes->get('get-keyword-response/(:segment)', 'ClientController::getKeywordResponse/$1');

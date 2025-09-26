@@ -190,6 +190,23 @@ class Database extends Config
         ],
     ];
 
+    /**
+     * MongoDB connection configuration
+     *
+     * @var array<string, mixed>
+     */
+    public array $mongodb = [
+        'hostname' => '127.0.0.1',
+        'port'     => 27017,
+        'username' => 'livechat_messages',
+        'password' => 'Y845akkHeYzFC8y5',
+        'database' => 'livechat_messages',
+        'options'  => [
+            'connectTimeoutMS' => 5000,
+            'socketTimeoutMS'  => 10000,
+        ]
+    ];
+
     public function __construct()
     {
         parent::__construct();
@@ -200,5 +217,13 @@ class Database extends Config
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+    }
+
+    /**
+     * Get MongoDB connection configuration
+     */
+    public function getMongoDB(): array
+    {
+        return $this->mongodb;
     }
 }

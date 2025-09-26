@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 use CodeIgniter\Model;
+use App\Models\MongoMessageModel;
 
 class ChatModel extends Model
 {
@@ -11,6 +12,14 @@ class ChatModel extends Model
         'user_role', 'external_username', 'external_fullname', 'external_system_id', 
         'agent_id', 'status', 'closed_at', 'api_key', 'accepted_at', 'accepted_by'
     ];
+    
+    protected MongoMessageModel $mongoModel;
+    
+    public function __construct()
+    {
+        parent::__construct();
+        $this->mongoModel = new MongoMessageModel();
+    }
     
     public function getActiveSessions()
     {
@@ -23,7 +32,7 @@ class ChatModel extends Model
         // Process customer names and last messages
         foreach ($sessions as &$session) {
             $session['customer_name'] = $this->getCustomerDisplayName($session);
-            $session['last_message_info'] = $this->getLastMessageInfo($session['id']);
+            $session['last_message_info'] = $this->getLastMessageInfo($session['session_id']);
         }
         
         return $sessions;
@@ -80,47 +89,10 @@ class ChatModel extends Model
         return 'Anonymous';
     }
     
-    private function getLastMessageInfo($chatSessionId)
+    private function getLastMessageInfo($sessionId)
     {
-        $db = \Config\Database::connect();
-        
-        // Get the last message for this chat session
-        $query = $db->query("
-            SELECT m.message, m.sender_type, m.created_at, u.username as sender_name
-            FROM messages m
-            LEFT JOIN users u ON u.id = m.sender_id
-            WHERE m.session_id = ?
-            ORDER BY m.created_at DESC
-            LIMIT 1
-        ", [$chatSessionId]);
-        
-        $lastMessage = $query->getRow();
-        
-        if (!$lastMessage) {
-            return [
-                'display_text' => 'No messages yet',
-                'is_waiting' => false
-            ];
-        }
-        
-        // Determine what to display based on sender type
-        if ($lastMessage->sender_type === 'customer') {
-            // Show the customer's message (truncated if too long)
-            $message = $lastMessage->message;
-            if (strlen($message) > 50) {
-                $message = substr($message, 0, 47) . '...';
-            }
-            return [
-                'display_text' => $message,
-                'is_waiting' => false
-            ];
-        } else {
-            // Last message was from agent/admin, show "Waiting for reply"
-            return [
-                'display_text' => 'Waiting for reply',
-                'is_waiting' => true
-            ];
-        }
+        // Route to MongoDB using session_id string
+        return $this->mongoModel->getLastMessageInfo($sessionId);
     }
     
     
@@ -145,7 +117,7 @@ class ChatModel extends Model
         // Process customer names and last messages
         foreach ($sessions as &$session) {
             $session['customer_name'] = $this->getCustomerDisplayName($session);
-            $session['last_message_info'] = $this->getLastMessageInfo($session['id']);
+            $session['last_message_info'] = $this->getLastMessageInfo($session['session_id']);
         }
         
         return $sessions;
@@ -211,7 +183,7 @@ class ChatModel extends Model
         foreach ($sessions as &$session) {
             $session['customer_name'] = $this->getCustomerDisplayName($session);
             if ($status !== 'waiting') {
-                $session['last_message_info'] = $this->getLastMessageInfo($session['id']);
+                $session['last_message_info'] = $this->getLastMessageInfo($session['session_id']);
             }
         }
         

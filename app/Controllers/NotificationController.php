@@ -55,19 +55,21 @@ class NotificationController extends BaseController
         if ($sessionId) {
             $session = $this->chatModel->getSessionBySessionId($sessionId);
             if ($session) {
-                // Check for new agent messages
-                $newMessages = $this->messageModel->where('session_id', $session['id'])
-                                                 ->where('sender_type', 'agent')
-                                                 ->where('created_at >', date('Y-m-d H:i:s', $lastCheck))
-                                                 ->findAll();
+                // Check for new agent messages from MongoDB
+                $mongoModel = new \App\Models\MongoMessageModel();
+                $messages = $mongoModel->getSessionMessages($session['session_id']);
                 
-                foreach ($newMessages as $message) {
-                    $notifications[] = [
-                        'type' => 'new_message',
-                        'message' => 'New message from agent',
-                        'content' => $message['message'],
-                        'timestamp' => strtotime($message['created_at'])
-                    ];
+                // Filter messages by timestamp and sender type
+                foreach ($messages as $message) {
+                    $messageTime = strtotime($message['created_at']);
+                    if ($message['sender_type'] === 'agent' && $messageTime > $lastCheck) {
+                        $notifications[] = [
+                            'type' => 'new_message',
+                            'message' => 'New message from agent',
+                            'content' => $message['message'],
+                            'timestamp' => $messageTime
+                        ];
+                    }
                 }
             }
         }

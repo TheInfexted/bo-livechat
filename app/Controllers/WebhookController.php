@@ -38,15 +38,21 @@ class WebhookController extends BaseController
             
             $chatId = $this->chatModel->insert($chatData);
             
-            // Add initial message
+            // Add initial message to MongoDB using session_id string
+            $mongoModel = new \App\Models\MongoMessageModel();
             $messageData = [
-                'session_id' => $chatId,
+                'session_id' => $sessionId, // Use session_id string for MongoDB
                 'sender_type' => 'customer',
+                'sender_id' => null,
+                'sender_name' => $customerName,
+                'sender_user_type' => null,
                 'message' => $message,
-                'message_type' => 'text'
+                'message_type' => 'text',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
             ];
             
-            $this->messageModel->insert($messageData);
+            $mongoModel->insertMessage($messageData);
             
             return $this->jsonResponse(['success' => true, 'session_id' => $sessionId]);
         }
@@ -69,12 +75,20 @@ class WebhookController extends BaseController
             if ($message) {
                 $session = $this->chatModel->getSessionBySessionId($sessionId);
                 if ($session) {
-                    $this->messageModel->insert([
-                        'session_id' => $session['id'],
+                    // Use MongoDB for message storage with session_id string
+                    $mongoModel = new \App\Models\MongoMessageModel();
+                    $messageData = [
+                        'session_id' => $session['session_id'], // Use session_id string for MongoDB
                         'sender_type' => 'agent',
+                        'sender_id' => null,
+                        'sender_name' => 'System',
+                        'sender_user_type' => null,
                         'message' => $message,
-                        'message_type' => 'system'
-                    ]);
+                        'message_type' => 'system',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ];
+                    $mongoModel->insertMessage($messageData);
                 }
             }
         }

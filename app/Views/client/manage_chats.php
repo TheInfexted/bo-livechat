@@ -367,10 +367,10 @@
                 
                 // API endpoint URLs
                 sessionsUrl: '<?= base_url('client/sessions-data') ?>',
-                messagesUrl: '<?= base_url('chat/getMessages') ?>/:sessionId',
-                sendMessageUrl: '<?= base_url('chat/sendMessage') ?>',
-                acceptSessionUrl: '<?= base_url('chat/acceptSession') ?>',
-                closeSessionUrl: '<?= base_url('chat/closeSession') ?>',
+                messagesUrl: '<?= base_url('client/chat-messages') ?>/:sessionId',
+                sendMessageUrl: '<?= base_url('client/send-message') ?>',
+                acceptSessionUrl: '<?= base_url('client/accept-session') ?>',
+                closeSessionUrl: '<?= base_url('client/close-session') ?>',
                 sessionDetailsUrl: '<?= base_url('client/session-details') ?>/:sessionId',
                 cannedResponsesUrl: '<?= base_url('client/canned-responses-for-api-key') ?>',
                 getCannedResponseUrl: '<?= base_url('client/get-canned-response') ?>/:responseId'

@@ -30,7 +30,24 @@ class ClientDomainFilter implements FilterInterface
         
         // Check if current domain is client domain
         if (!isClientDomain()) {
-            // Option B: Redirect to correct domain with logout
+            // Check if this is an AJAX request or API call
+            if ($request->isAJAX() || 
+                strpos($request->getHeaderLine('Accept'), 'application/json') !== false ||
+                strpos($request->getPath(), '/api/') === 0) {
+                
+                // Return JSON error response for AJAX/API requests
+                $response = service('response');
+                $response->setStatusCode(403);
+                $response->setJSON([
+                    'error' => 'Domain access denied',
+                    'message' => 'Please access this service from the correct domain',
+                    'current_domain' => getCurrentDomain(),
+                    'expected_domain' => 'kiosk-chat.kopisugar.cc'
+                ]);
+                return $response;
+            }
+            
+            // Regular redirect for non-AJAX requests
             return redirectToDomain('client', 'login');
         }
     }
