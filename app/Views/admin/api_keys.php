@@ -38,7 +38,6 @@
                     <th>Client Name</th>
                     <th>API Key</th>
                     <th>Status</th>
-                    <th>Domain</th>
                     <th>Created</th>
                     <th>Actions</th>
                 </tr>
@@ -46,7 +45,7 @@
             <tbody>
                 <?php if (empty($api_keys)): ?>
                     <tr>
-                        <td colspan="6" class="no-data">
+                        <td colspan="5" class="no-data">
                             No API keys found. Create your first API key to get started!
                         </td>
                     </tr>
@@ -73,18 +72,11 @@
                                 </span>
                             </td>
                             <td>
-                                <?php if ($key['client_domain']): ?>
-                                    <span><?= esc($key['client_domain']) ?></span>
-                                <?php else: ?>
-                                    <span class="no-data">All domains</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
                                 <span class="date-time"><?= date('M j, Y', strtotime($key['created_at'])) ?></span>
                             </td>
                             <td class="actions">
                                 <button class="btn btn-sm btn-info" 
-                                        onclick="openViewModal('<?= esc($key['api_key']) ?>', '<?= esc($key['client_name']) ?>', '<?= esc($key['client_email']) ?>', '<?= esc($key['status']) ?>', '<?= esc($key['client_domain']) ?>', '<?= esc($key['created_at']) ?>')" 
+                                        onclick="openViewModal('<?= esc($key['api_key']) ?>', '<?= esc($key['client_name']) ?>', '<?= esc($key['client_email']) ?>', '<?= esc($key['status']) ?>', '<?= esc($key['created_at']) ?>')" 
                                         title="View & Get Integration Code">
                                     <i class="bi bi-eye"></i>
                                 </button>
@@ -140,10 +132,6 @@
                     <div class="info-item">
                         <label>Status</label>
                         <div class="value" id="viewStatus"></div>
-                    </div>
-                    <div class="info-item">
-                        <label>Allowed Domains</label>
-                        <div class="value" id="viewDomain"></div>
                     </div>
                     <div class="info-item">
                         <label>Created Date</label>
@@ -232,13 +220,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="mb-3">
-                    <label for="client_domain" class="form-label">Allowed Domains (Optional)</label>
-                    <input type="text" id="client_domain" name="client_domain" class="form-control"
-                           placeholder="example.com, *.example.com, localhost">
-                    <div class="form-text">Leave blank to allow all domains. Use comma to separate multiple domains.</div>
-                </div>
             </div>
             
             <!-- No Clients Available State -->
@@ -283,12 +264,6 @@
             <div class="mb-3">
                 <label for="edit_client_email" class="form-label">Client Email *</label>
                 <input type="email" id="edit_client_email" name="client_email" class="form-control" required>
-            </div>
-            <div class="mb-3">
-                <label for="edit_client_domain" class="form-label">Allowed Domains (Optional)</label>
-                <input type="text" id="edit_client_domain" name="client_domain" class="form-control"
-                       placeholder="example.com, *.example.com, localhost">
-                <div class="form-text">Leave blank to allow all domains. Use comma to separate multiple domains.</div>
             </div>
             <div class="mb-3">
                 <label for="edit_status" class="form-label">Status</label>
@@ -423,14 +398,13 @@ var helperTemplate = [
     '<\/script>'
 ];
 
-function openViewModal(apiKey, clientName, clientEmail, status, domain, createdAt) {
+function openViewModal(apiKey, clientName, clientEmail, status, createdAt) {
     globalApiKey = apiKey;
     
     document.getElementById('viewClientName').textContent = clientName;
     document.getElementById('viewClientEmail').textContent = clientEmail;
     document.getElementById('viewApiKey').textContent = apiKey;
     document.getElementById('viewStatus').textContent = status.charAt(0).toUpperCase() + status.slice(1);
-    document.getElementById('viewDomain').textContent = domain || 'All domains allowed';
     
     var date = new Date(createdAt);
     document.getElementById('viewCreated').textContent = date.toLocaleDateString();
@@ -605,7 +579,6 @@ function editApiKey(keyId) {
             document.getElementById('edit_key_id').value = apiKey.id;
             document.getElementById('edit_client_name').value = apiKey.client_name;
             document.getElementById('edit_client_email').value = apiKey.client_email;
-            document.getElementById('edit_client_domain').value = apiKey.client_domain || '';
             document.getElementById('edit_status').value = apiKey.status;
             
             document.getElementById('editApiKeyModal').style.display = 'block';

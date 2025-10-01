@@ -1683,8 +1683,6 @@ class ClientController extends General
         
         $apiKey = $this->request->getPost('api_key');
         $baseUrl = $this->request->getPost('base_url');
-        $authType = $this->request->getPost('auth_type');
-        $authValue = $this->request->getPost('auth_value');
         $configName = $this->request->getPost('config_name');
         $customerIdField = $this->request->getPost('customer_id_field');
         // If not provided at all (null), default to 'customer_id'
@@ -1693,9 +1691,9 @@ class ClientController extends General
             $customerIdField = 'customer_id';
         }
         
-        // Validation
-        if (!$apiKey || !$baseUrl || !$authType) {
-            return $this->jsonResponse(['error' => 'API key, base URL, and authentication type are required'], 400);
+        // Validation - authentication is disabled
+        if (!$apiKey || !$baseUrl) {
+            return $this->jsonResponse(['error' => 'API key and base URL are required'], 400);
         }
         
         // Verify the API key belongs to current client
@@ -1708,10 +1706,7 @@ class ClientController extends General
             return $this->jsonResponse(['error' => 'Please enter a valid URL'], 400);
         }
         
-        // Validate auth value if auth type is not 'none'
-        if ($authType !== 'none' && empty($authValue)) {
-            return $this->jsonResponse(['error' => 'Authentication value is required for the selected auth type'], 400);
-        }
+        // Authentication is disabled - no validation needed
         
         try {
         // Auto-generate config name if not provided
@@ -1721,16 +1716,12 @@ class ClientController extends General
             $configName = ($apiKeyData['client_name'] ?? 'Client') . ' API';
         }
             
-            // Additional validation for basic auth
-            if ($authType === 'basic' && !empty($authValue) && strpos($authValue, ':') === false) {
-                return $this->jsonResponse(['error' => 'Basic authentication must be in format "username:password"'], 400);
-            }
-            
+            // Authentication is always disabled
             $data = [
                 'config_name' => $configName,
                 'base_url' => rtrim($baseUrl, '/'),
-                'auth_type' => $authType,
-                'auth_value' => $authType === 'none' ? null : $authValue,
+                'auth_type' => 'none',
+                'auth_value' => null,
                 'customer_id_field' => $customerIdField,
                 'is_active' => 1
             ];
@@ -1790,13 +1781,14 @@ class ClientController extends General
         }
         
         $baseUrl = $input['base_url'] ?? '';
-        $authType = $input['auth_type'] ?? 'none';
-        $authValue = $input['auth_value'] ?? '';
         $customerIdField = $input['customer_id_field'] ?? '';
         // If truly empty, use a default for testing purposes only
         if (empty($customerIdField)) {
             $customerIdField = 'customer_id'; // Just for testing
         }
+        // Authentication is disabled - always use 'none'
+        $authType = 'none';
+        $authValue = '';
         
         if (!$baseUrl) {
             return $this->jsonResponse(['error' => 'Base URL is required'], 400);
@@ -1812,20 +1804,9 @@ class ClientController extends General
                 'action' => 'check_balance'
             ];
             
-            // Build headers
+            // Build headers - no authentication
             $headers = ['Content-Type' => 'application/json'];
-            
-            switch ($authType) {
-                case 'bearer_token':
-                    $headers['Authorization'] = 'Bearer ' . $authValue;
-                    break;
-                case 'api_key':
-                    $headers['X-API-Key'] = $authValue;
-                    break;
-                case 'basic':
-                    $headers['Authorization'] = 'Basic ' . base64_encode($authValue);
-                    break;
-            }
+            // Authentication is disabled - no auth headers added
             
             // Make test request
             $client = \Config\Services::curlrequest();

@@ -151,7 +151,6 @@ class Auth extends BaseController
                 'api_key' => $apiKeyModel->generateApiKey(),
                 'client_name' => $username,
                 'client_email' => $email,
-                'client_domain' => '', // No domain restrictions
                 'status' => 'active'
             ];
             

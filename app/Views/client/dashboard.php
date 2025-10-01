@@ -200,7 +200,6 @@
                     <tr>
                         <th>API Key</th>
                         <th>Client Name</th>
-                        <th>Domain</th>
                         <th>Status</th>
                         <th>Created</th>
                     </tr>
@@ -218,16 +217,6 @@
                                 <i class="bi bi-building me-2" style="color: var(--text-secondary);"></i>
                                 <?= esc($key['client_name']) ?>
                             </div>
-                        </td>
-                        <td>
-                            <?php if (!empty($key['client_domain'])): ?>
-                                <span>
-                                    <i class="bi bi-globe me-1" style="color: var(--text-secondary);"></i>
-                                    <?= esc($key['client_domain']) ?>
-                                </span>
-                            <?php else: ?>
-                                <span style="color: var(--text-secondary); font-style: italic;">Not set</span>
-                            <?php endif; ?>
                         </td>
                         <td>
                             <?php

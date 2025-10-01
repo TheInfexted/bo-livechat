@@ -255,7 +255,6 @@ class AdminController extends General
         $apiKeyModel = new \App\Models\ApiKeyModel();
         
         $clientId = $this->request->getPost('client_id');
-        $clientDomain = $this->request->getPost('client_domain');
         
         if (!$clientId) {
             return $this->jsonResponse(['error' => 'Client selection is required'], 400);
@@ -283,8 +282,7 @@ class AdminController extends General
             'key_id' => $apiKeyModel->generateKeyId(),
             'api_key' => $apiKeyModel->generateApiKey(),
             'client_name' => $clientName,
-            'client_email' => $clientEmail,
-            'client_domain' => $clientDomain
+            'client_email' => $clientEmail
         ];
         
         $keyId = $apiKeyModel->insert($data);
@@ -317,7 +315,6 @@ class AdminController extends General
         $keyId = $this->request->getPost('key_id');
         $clientName = $this->request->getPost('client_name');
         $clientEmail = $this->request->getPost('client_email');
-        $clientDomain = $this->request->getPost('client_domain');
         $status = $this->request->getPost('status');
         
         if (!$keyId || !$clientName || !$clientEmail) {
@@ -327,7 +324,6 @@ class AdminController extends General
         $data = [
             'client_name' => $clientName,
             'client_email' => $clientEmail,
-            'client_domain' => $clientDomain,
             'status' => $status
         ];
         

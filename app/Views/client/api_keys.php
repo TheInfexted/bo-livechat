@@ -97,7 +97,6 @@
                     <tr>
                         <th>API Key</th>
                         <th>Client Name</th>
-                        <th>Domain</th>
                         <th>Status</th>
                         <th>Usage</th>
                         <th>Created</th>
@@ -127,18 +126,6 @@
                                     <?php endif; ?>
                                 </div>
                             </div>
-                        </td>
-                        <td>
-                            <?php if (!empty($key['client_domain'])): ?>
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-globe me-1" style="color: var(--text-secondary);"></i>
-                                    <a href="<?= esc($key['client_domain']) ?>" target="_blank" class="text-decoration-none">
-                                        <?= esc($key['client_domain']) ?>
-                                    </a>
-                                </div>
-                            <?php else: ?>
-                                <span style="color: var(--text-secondary); font-style: italic;">Not set</span>
-                            <?php endif; ?>
                         </td>
                         <td>
                             <?php
@@ -285,33 +272,9 @@
                         </div>
                     </div>
 
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <label for="authType" class="form-label">
-                                <i class="bi bi-shield-lock me-1"></i>
-                                Authentication <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select" id="authType" name="auth_type" required>
-                                <option value="none">None (No Authentication)</option>
-                                <option value="bearer_token">Bearer Token</option>
-                                <option value="api_key">API Key</option>
-                                <option value="basic">Basic Auth (Username:Password)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Auth Value Field (shows based on auth type) -->
-                    <div class="row mb-4" id="authValueGroup" style="display: none;">
-                        <div class="col-12">
-                            <label for="authValue" class="form-label">
-                                <i class="bi bi-key me-1"></i>
-                                <span id="authValueLabel">Authentication Value</span>
-                            </label>
-                            <input type="password" class="form-control" id="authValue" name="auth_value" 
-                                   placeholder="Enter your token/key/credentials">
-                            <div class="form-text" id="authValueHelp">Your authentication credentials</div>
-                        </div>
-                    </div>
+                    <!-- Authentication hidden field - always set to none -->
+                    <input type="hidden" id="authType" name="auth_type" value="none">
+                    <input type="hidden" id="authValue" name="auth_value" value="">
 
                     <!-- Advanced Settings (Collapsible) -->
                     <div class="card">
@@ -412,10 +375,6 @@
                     <div class="detail-item">
                         <label>API KEY</label>
                         <code id="viewApiKey">-</code>
-                    </div>
-                    <div class="detail-item">
-                        <label>ALLOWED DOMAINS</label>
-                        <span id="viewDomain">-</span>
                     </div>
                     <div class="detail-item">
                         <label>CREATED DATE</label>
@@ -687,7 +646,6 @@ function showKeyDetails(keyId) {
     document.getElementById('viewClientEmail').textContent = key.client_email;
     document.getElementById('viewApiKey').textContent = key.api_key;
     document.getElementById('viewStatus').textContent = key.status.charAt(0).toUpperCase() + key.status.slice(1);
-    document.getElementById('viewDomain').textContent = key.client_domain || 'All domains allowed';
     
     var date = new Date(key.created_at);
     document.getElementById('viewCreated').textContent = date.toLocaleDateString();
@@ -787,8 +745,7 @@ function openApiSettings(apiKey, clientName) {
     // Don't auto-generate config name - let user choose
     document.getElementById('configName').value = '';
     
-    // Hide auth value field initially
-    document.getElementById('authValueGroup').style.display = 'none';
+    // Authentication is disabled - no auth fields to handle
     
     // Clear test results
     document.getElementById('testResult').innerHTML = '';
@@ -808,12 +765,9 @@ function loadExistingConfig(apiKey) {
             if (data.success && data.config) {
                 const config = data.config;
                 document.getElementById('baseUrl').value = config.base_url || '';
-                document.getElementById('authType').value = config.auth_type || 'none';
                 document.getElementById('configName').value = config.config_name || '';
                 document.getElementById('customerIdField').value = config.customer_id_field || '';
-                
-                // Handle auth value (don't populate for security)
-                updateAuthFields();
+                // Authentication is always 'none' - no auth handling needed
             }
         })
         .catch(error => {
@@ -821,10 +775,8 @@ function loadExistingConfig(apiKey) {
         });
 }
 
-// Handle auth type change
+// Initialize API Settings Modal
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('authType').addEventListener('change', updateAuthFields);
-    
     // Handle advanced settings collapse
     document.getElementById('advancedSettings').addEventListener('show.bs.collapse', function() {
         document.getElementById('advancedChevron').className = 'bi bi-chevron-down me-2';
@@ -841,46 +793,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Update auth fields based on selected auth type
-function updateAuthFields() {
-    const authType = document.getElementById('authType').value;
-    const authValueGroup = document.getElementById('authValueGroup');
-    const authValueLabel = document.getElementById('authValueLabel');
-    const authValueHelp = document.getElementById('authValueHelp');
-    const authValueInput = document.getElementById('authValue');
-    
-    if (authType === 'none') {
-        authValueGroup.style.display = 'none';
-        authValueInput.required = false;
-    } else {
-        authValueGroup.style.display = 'block';
-        authValueInput.required = true;
-        
-        switch (authType) {
-            case 'bearer_token':
-                authValueLabel.textContent = 'Bearer Token';
-                authValueHelp.textContent = 'Your API bearer token (e.g., abc123xyz...)';
-                authValueInput.placeholder = 'Enter your bearer token';
-                break;
-            case 'api_key':
-                authValueLabel.textContent = 'API Key';
-                authValueHelp.textContent = 'Your API key for authentication';
-                authValueInput.placeholder = 'Enter your API key';
-                break;
-            case 'basic':
-                authValueLabel.textContent = 'Username:Password';
-                authValueHelp.textContent = 'Format: username:password (e.g., user:pass123)';
-                authValueInput.placeholder = 'username:password';
-                break;
-        }
-    }
-}
-
 // Test API connection
 function testApiConnection() {
     const baseUrl = document.getElementById('baseUrl').value;
-    const authType = document.getElementById('authType').value;
-    const authValue = document.getElementById('authValue').value;
     const customerIdField = document.getElementById('customerIdField').value || 'customer_id';
     
     if (!baseUrl) {
@@ -893,11 +808,11 @@ function testApiConnection() {
     testBtn.innerHTML = '<i class="bi bi-arrow-repeat spin me-2"></i>Testing...';
     testBtn.disabled = true;
     
-    // Test data
+    // Test data - no authentication
     const testData = {
         base_url: baseUrl,
-        auth_type: authType,
-        auth_value: authValue,
+        auth_type: 'none',
+        auth_value: '',
         customer_id_field: customerIdField
     };
     

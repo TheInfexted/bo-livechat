@@ -14,7 +14,7 @@ class ApiKeyModel extends Model
     protected $protectFields = true;
     
     protected $allowedFields = [
-        'client_id', 'key_id', 'api_key', 'client_name', 'client_email', 'client_domain',
+        'client_id', 'key_id', 'api_key', 'client_name', 'client_email',
         'status', 'last_used_at'
     ];
     
@@ -26,7 +26,6 @@ class ApiKeyModel extends Model
         'client_id' => 'permit_empty|integer',
         'client_name' => 'required|max_length[255]',
         'client_email' => 'required|valid_email|max_length[255]',
-        'client_domain' => 'permit_empty|max_length[500]',
         'status' => 'permit_empty|in_list[active,suspended,revoked]'
     ];
     
@@ -39,9 +38,6 @@ class ApiKeyModel extends Model
             'required' => 'Client email is required',
             'valid_email' => 'Please enter a valid email address',
             'max_length' => 'Client email cannot exceed 255 characters'
-        ],
-        'client_domain' => [
-            'max_length' => 'Client domain cannot exceed 500 characters'
         ],
         'status' => [
             'in_list' => 'Status must be active, suspended, or revoked'
@@ -58,7 +54,7 @@ class ApiKeyModel extends Model
         return 'key_' . bin2hex(random_bytes(16));
     }
     
-    public function validateApiKey($apiKey, $domain = null)
+    public function validateApiKey($apiKey)
     {
         $key = $this->where('api_key', $apiKey)
                    ->where('status', 'active')
@@ -68,13 +64,6 @@ class ApiKeyModel extends Model
             return ['valid' => false, 'error' => 'Invalid or inactive API key'];
         }
         
-        // Check domain restriction if set
-        if ($key['client_domain'] && $domain) {
-            if (!$this->isDomainAllowed($key['client_domain'], $domain)) {
-                return ['valid' => false, 'error' => 'Domain not authorized for this API key'];
-            }
-        }
-        
         // Update last used timestamp
         $this->update($key['id'], ['last_used_at' => date('Y-m-d H:i:s')]);
         
@@ -82,26 +71,6 @@ class ApiKeyModel extends Model
     }
     
     // Usage tracking methods removed - no longer using plan limits
-    
-    public function isDomainAllowed($allowedDomains, $requestDomain)
-    {
-        $domains = array_map('trim', explode(',', $allowedDomains));
-        
-        foreach ($domains as $domain) {
-            // Exact match
-            if ($domain === $requestDomain) return true;
-            
-            // Wildcard subdomain match (*.example.com)
-            if (str_starts_with($domain, '*.')) {
-                $baseDomain = substr($domain, 2);
-                if (str_ends_with($requestDomain, '.' . $baseDomain) || $requestDomain === $baseDomain) {
-                    return true;
-                }
-            }
-        }
-        
-        return false;
-    }
     
     public function getApiKeyStats()
     {
