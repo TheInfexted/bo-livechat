@@ -278,6 +278,93 @@
         </div>
         <?php endif; ?>
 </div>
+
+<!-- Mandatory Agent Creation Modal -->
+<?php if (isset($showAgentModal) && $showAgentModal): ?>
+<div class="modal fade" id="mandatoryAgentModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h4 class="modal-title w-100 text-center">
+                    Welcome! Let's Create Your First Support Agent
+                </h4>
+                <!-- No close button - this is mandatory -->
+            </div>
+            <div class="modal-body p-3">
+                <div class="welcome-section text-center mb-3">
+                    <h5 class="text-primary mb-2">Almost Ready!</h5>
+                    <p class="text-muted mb-0">
+                        Create your first support agent to start managing customer chats.
+                    </p>
+                </div>
+                
+                <form id="firstAgentForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="firstAgentUsername" class="form-label">
+                                    <i class="bi bi-person"></i> Agent Username *
+                                </label>
+                                <input type="text" class="form-control" id="firstAgentUsername" name="username" required>
+                                <div class="form-text">This will be the agent's login username</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="firstAgentEmail" class="form-label">
+                                    <i class="bi bi-envelope"></i> Email Address
+                                </label>
+                                <input type="email" class="form-control" id="firstAgentEmail" name="email">
+                                <div class="form-text">Optional: Agent's email address</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="firstAgentPassword" class="form-label">
+                            <i class="bi bi-lock"></i> Password *
+                        </label>
+                        <input type="password" class="form-control" id="firstAgentPassword" name="password" required>
+                        <div class="password-requirements mt-2">
+                            <small class="text-muted">
+                                <strong>Password Requirements:</strong>
+                                <ul class="requirements-list">
+                                    <li>6 characters minimum</li>
+                                    <li>One number</li>
+                                    <li>Upper and lowercase letters</li>
+                                </ul>
+                            </small>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="setup-progress mt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Setup Progress:</span>
+                        <span class="badge bg-success">Step 2 of 2</span>
+                    </div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-success"><i class="bi bi-check"></i> Account Created</small>
+                        <small class="text-muted"><i class="bi bi-person-plus"></i> Create Agent</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex flex-column align-items-center text-center p-3">
+                <button type="button" class="btn btn-primary btn-lg px-4 mb-3" onclick="submitFirstAgent()">
+                    Create Agent & Continue
+                </button>
+                <div class="text-muted">
+                    <small><i class="bi bi-shield-check"></i> This step is required to access your dashboard</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -420,6 +507,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start real-time updates when page loads
     startRealtimeUpdates();
     
+    // Show mandatory agent modal if needed
+    <?php if (isset($showAgentModal) && $showAgentModal): ?>
+    const mandatoryModal = new bootstrap.Modal(document.getElementById('mandatoryAgentModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+    mandatoryModal.show();
+    <?php endif; ?>
+    
     // Expose functions globally for debugging (remove in production)
     window.dashboardStats = {
         start: startRealtimeUpdates,
@@ -427,5 +523,172 @@ document.addEventListener('DOMContentLoaded', function() {
         update: updateDashboardStats
     };
 });
+
+// First Agent Creation Functions
+function submitFirstAgent() {
+    const form = document.getElementById('firstAgentForm');
+    const formData = new FormData(form);
+    const button = document.querySelector('.btn[onclick="submitFirstAgent()"]');
+    
+    // Get form values
+    const username = formData.get('username')?.trim();
+    const email = formData.get('email')?.trim();
+    const password = formData.get('password')?.trim();
+    
+    // Client-side validation
+    if (!username) {
+        showModalAlert('Username is required', 'danger');
+        return;
+    }
+    
+    if (!password) {
+        showModalAlert('Password is required', 'danger');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showModalAlert('Password must be at least 6 characters long', 'danger');
+        return;
+    }
+    
+    // Password strength validation
+    if (!validatePasswordStrength(password)) {
+        showModalAlert('Password must contain at least one number, one uppercase and one lowercase letter', 'danger');
+        return;
+    }
+    
+    // Show loading state
+    button.disabled = true;
+    const originalButtonContent = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating Agent...';
+    
+    // Submit the form
+    fetch('<?= base_url('client/agents/add-first') ?>', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showModalAlert(data.message, 'success');
+            
+            // Update button to show success
+            button.innerHTML = '<i class="bi bi-check-circle"></i> Agent Created!';
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-success');
+            
+            // Hide modal after delay and refresh page
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('mandatoryAgentModal'));
+                modal.hide();
+                
+                // Refresh page to show updated dashboard
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }, 2000);
+            
+        } else {
+            // Show error message
+            showModalAlert(data.error || 'Failed to create agent', 'danger');
+            
+            // Reset button
+            button.disabled = false;
+            button.innerHTML = originalButtonContent;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showModalAlert('An error occurred while creating the agent. Please try again.', 'danger');
+        
+        // Reset button
+        button.disabled = false;
+        button.innerHTML = originalButtonContent;
+    });
+}
+
+// Password strength validation
+function validatePasswordStrength(password) {
+    // At least 6 characters
+    if (password.length < 6) {
+        return false;
+    }
+    
+    // Contains at least one number
+    if (!/[0-9]/.test(password)) {
+        return false;
+    }
+    
+    // Contains at least one uppercase letter
+    if (!/[A-Z]/.test(password)) {
+        return false;
+    }
+    
+    // Contains at least one lowercase letter
+    if (!/[a-z]/.test(password)) {
+        return false;
+    }
+    
+    return true;
+}
+
+// Show alert message within the modal
+function showModalAlert(message, type) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('#mandatoryAgentModal .alert-dynamic');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    // Create new alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dynamic`;
+    alertDiv.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+        ${message}
+    `;
+    
+    // Insert alert at the top of modal body
+    const modalBody = document.querySelector('#mandatoryAgentModal .modal-body');
+    modalBody.insertBefore(alertDiv, modalBody.firstChild);
+    
+    // Auto-remove after 5 seconds for success messages
+    if (type === 'success') {
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+}
+
+// Show alert message in main dashboard
+function showAlert(message, type) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.alert-dynamic');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    // Create new alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dynamic`;
+    alertDiv.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'}"></i>
+        ${message}
+    `;
+    
+    // Insert alert at the top of container
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }
+    }, 5000);
+}
 </script>
 <?= $this->endSection() ?>

@@ -294,7 +294,7 @@ function submitAddAgent() {
         return;
     }
     
-    fetch('<?= base_url('client/add-agent') ?>', {
+    fetch('<?= base_url('client/agents/add') ?>', {
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
@@ -341,7 +341,7 @@ function submitEditAgent() {
         return;
     }
     
-    fetch('<?= base_url('client/edit-agent') ?>', {
+    fetch('<?= base_url('client/agents/edit') ?>', {
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
@@ -377,7 +377,7 @@ function confirmDeleteAgent() {
     const formData = new FormData();
     formData.append('agent_id', agentId);
     
-    fetch('<?= base_url('client/delete-agent') ?>', {
+    fetch('<?= base_url('client/agents/delete') ?>', {
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'

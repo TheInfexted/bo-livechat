@@ -1128,6 +1128,186 @@ body {
     position: relative;
 }
 
+/* Mandatory Agent Modal Styles */
+#mandatoryAgentModal .modal-content {
+    border: none;
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+#mandatoryAgentModal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 1.5rem;
+    position: relative;
+}
+
+#mandatoryAgentModal .modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="rgba(255,255,255,0.1)"><polygon points="0,0 1000,0 1000,80 0,100" /></svg>') no-repeat bottom;
+    background-size: cover;
+    pointer-events: none;
+}
+
+#mandatoryAgentModal .modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+#mandatoryAgentModal .welcome-section {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.02) 0%, rgba(118, 75, 162, 0.02) 100%);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+#mandatoryAgentModal .welcome-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    margin: 0 auto;
+}
+
+#mandatoryAgentModal .setup-progress {
+    background: var(--light-bg);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+}
+
+#mandatoryAgentModal .progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+#mandatoryAgentModal .progress-bar {
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+#mandatoryAgentModal .modal-footer {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.02) 0%, rgba(118, 75, 162, 0.02) 100%);
+    border: none;
+}
+
+#mandatoryAgentModal .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+#mandatoryAgentModal .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+#mandatoryAgentModal .btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+#mandatoryAgentModal .form-control {
+    border: 2px solid #e5e7eb;
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+#mandatoryAgentModal .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+}
+
+#mandatoryAgentModal .form-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#mandatoryAgentModal .form-text {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+#mandatoryAgentModal .alert {
+    border: none;
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+}
+
+#mandatoryAgentModal .alert-info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%);
+    color: #1e40af;
+    border-left: 4px solid #3b82f6;
+}
+
+#mandatoryAgentModal .alert-dynamic {
+    animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal backdrop styling */
+.modal-backdrop.show {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+}
+
+/* Password requirements styling */
+.password-requirements {
+    background: rgba(79, 70, 229, 0.02);
+    border: 1px solid rgba(79, 70, 229, 0.1);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+}
+
+.requirements-list {
+    margin: 0.25rem 0 0 0;
+    padding-left: 1.5rem;
+    font-size: 0.85rem;
+}
+
+.requirements-list li {
+    margin-bottom: 0.25rem;
+    color: #6b7280;
+}
+
+/* Gradient background for modal header */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
 .api-credentials-section::before {
     content: '';
     position: absolute;
