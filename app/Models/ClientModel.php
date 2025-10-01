@@ -18,7 +18,7 @@ class ClientModel extends Model
     protected $validationRules = [
         'username' => 'required|min_length[3]|max_length[50]|is_unique[clients.username,id,{id}]',
         'email' => 'permit_empty|valid_email|is_unique[clients.email,id,{id}]',
-        'password' => 'required|min_length[6]'
+        'password' => 'required|min_length[6]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/]'
     ];
 
     protected $validationMessages = [
@@ -33,7 +33,8 @@ class ClientModel extends Model
         ],
         'password' => [
             'required' => 'Password is required',
-            'min_length' => 'Password must be at least 6 characters long'
+            'min_length' => 'Password must be at least 6 characters long',
+            'regex_match' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
         ]
     ];
 

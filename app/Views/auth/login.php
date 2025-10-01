@@ -54,6 +54,13 @@
                 <i class="bi bi-box-arrow-in-right"></i> Login to Client Dashboard
             </button>
         </form>
+        
+        <!-- Already have account link -->
+        <div class="auth-footer mt-3 text-center">
+            <small class="text-muted">
+                New to our platform? <a href="<?= base_url('register') ?>" class="text-decoration-none">Create your account here</a>
+            </small>
+        </div>
     </div>
 </div>
 <?= $this->endSection() ?>

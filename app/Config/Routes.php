@@ -108,6 +108,7 @@ $routes->group('client', ['filter' => ['client_domain', 'clientfilter']], functi
     // Agent Management routes (clients only)
     $routes->get('manage-agents', 'ClientController::manageAgents');
     $routes->post('agents/add', 'ClientController::addAgent');
+    $routes->post('agents/add-first', 'ClientController::addFirstAgent');
     $routes->post('agents/edit', 'ClientController::editAgent');
     $routes->post('agents/delete', 'ClientController::deleteAgent');
 });
@@ -159,6 +160,10 @@ $routes->group('webhook', function($routes) {
 $routes->get('login', 'DomainAwareAuth::login');
 $routes->post('login', 'DomainAwareAuth::attemptLogin');
 $routes->get('logout', 'DomainAwareAuth::logout');
+
+// Client registration routes - Only available on client domain
+$routes->get('register', 'Auth::register');
+$routes->post('register', 'Auth::attemptRegister');
 
 // Legacy admin routes (keeping for backwards compatibility)
 $routes->get('/admin/login', 'AdminAuth::login');

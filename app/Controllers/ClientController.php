@@ -41,8 +41,10 @@ class ClientController extends General
         
         // Get agents count (only for clients, not agents)
         $agentsCount = 0;
+        $hasAgents = false;
         if ($this->isClientUser()) {
             $agentsCount = $this->agentModel->where('client_id', $clientId)->countAllResults();
+            $hasAgents = $agentsCount > 0;
         }
         
         $data = [
@@ -55,7 +57,9 @@ class ClientController extends General
             'waitingSessions' => $waitingSessions,
             'closedSessions' => $closedSessions,
             'agentsCount' => $agentsCount,
-            'api_keys' => $apiKeys
+            'api_keys' => $apiKeys,
+            'hasAgents' => $hasAgents,
+            'showAgentModal' => $this->isClientUser() && !$hasAgents
         ];
         
         return view('client/dashboard', $data);
@@ -846,6 +850,100 @@ class ClientController extends General
         }
         
         return $this->jsonResponse(['error' => 'Failed to add agent'], 500);
+    }
+    
+    /**
+     * Add first agent (for mandatory agent creation after registration)
+     */
+    public function addFirstAgent()
+    {
+        if (!$this->isClientAuthenticated()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+        
+        // Only clients can add agents
+        if (!$this->isClientUser()) {
+            return $this->jsonResponse(['error' => 'Access denied. Only clients can add agents.'], 403);
+        }
+        
+        $clientId = $this->getClientId();
+        
+        // Check if client already has agents - prevent bypass attempts
+        $existingAgents = $this->agentModel->where('client_id', $clientId)->countAllResults();
+        if ($existingAgents > 0) {
+            return $this->jsonResponse(['error' => 'You already have agents. Use the regular agent management instead.'], 400);
+        }
+        
+        $username = $this->request->getPost('username');
+        $email = $this->request->getPost('email');
+        $password = $this->request->getPost('password');
+        
+        if (!$username || !$password) {
+            return $this->jsonResponse(['error' => 'Username and password are required'], 400);
+        }
+        
+        // Validate password strength (same as registration)
+        if (!$this->validatePasswordStrength($password)) {
+            return $this->jsonResponse(['error' => 'Password must be at least 6 characters with one number, one uppercase and one lowercase letter'], 400);
+        }
+        
+        // Check username uniqueness across clients and agents
+        if (!$this->agentModel->isUsernameUnique($username)) {
+            return $this->jsonResponse(['error' => 'Username already exists'], 400);
+        }
+        
+        // Check email uniqueness if provided
+        if (!empty($email)) {
+            $existingClient = $this->clientModel->getByEmail($email);
+            $existingAgent = $this->agentModel->where('email', $email)->first();
+            if ($existingClient || $existingAgent) {
+                return $this->jsonResponse(['error' => 'Email already exists'], 400);
+            }
+        }
+        
+        $data = [
+            'client_id' => $clientId,
+            'username' => $username,
+            'email' => $email,
+            'password' => password_hash($password, PASSWORD_DEFAULT),
+            'status' => 'active'
+        ];
+        
+        $agentId = $this->agentModel->insert($data);
+        
+        if ($agentId) {
+            return $this->jsonResponse(['success' => true, 'message' => 'Welcome! Your first support agent has been created successfully.']);
+        }
+        
+        return $this->jsonResponse(['error' => 'Failed to create agent. Please try again.'], 500);
+    }
+    
+    /**
+     * Password strength validation (from Auth controller)
+     */
+    private function validatePasswordStrength($password)
+    {
+        // At least 6 characters
+        if (strlen($password) < 6) {
+            return false;
+        }
+        
+        // Contains at least one number
+        if (!preg_match('/[0-9]/', $password)) {
+            return false;
+        }
+        
+        // Contains at least one uppercase letter
+        if (!preg_match('/[A-Z]/', $password)) {
+            return false;
+        }
+        
+        // Contains at least one lowercase letter
+        if (!preg_match('/[a-z]/', $password)) {
+            return false;
+        }
+        
+        return true;
     }
     
     /**

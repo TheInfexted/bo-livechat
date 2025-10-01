@@ -1047,7 +1047,7 @@ function initializeMessageForm() {
                         message: message,
                         sender_type: 'agent', // Client acts as agent
                         sender_id: getUserId(),
-                        user_type: actualUserType
+                        user_type: actualUserType 
                     };
                     
                     ws.send(JSON.stringify(messageData));
@@ -2151,7 +2151,8 @@ function sendCannedMessage(message) {
             session_id: currentSessionId,
             message: message,
             sender_type: 'agent',
-            sender_id: getUserId()
+            sender_id: getUserId(),
+            user_type: actualUserType
         };
         
         ws.send(JSON.stringify(messageData));

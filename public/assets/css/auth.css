@@ -167,6 +167,60 @@ body.unified-auth {
     text-decoration: underline;
 }
 
+/* Registration specific styles */
+.password-requirements {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.requirements-list {
+    margin: 0.25rem 0 0 0;
+    padding-left: 1.5rem;
+    font-size: 0.85rem;
+}
+
+.requirements-list li {
+    margin-bottom: 0.25rem;
+    color: #6c757d;
+}
+
+/* Auth footer styles */
+.auth-footer {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.auth-footer a {
+    color: #667eea;
+    font-weight: 500;
+}
+
+.auth-footer a:hover {
+    color: #5a6fd8;
+    text-decoration: underline;
+}
+
+/* Auth secondary button */
+.auth-secondary .btn-outline-primary {
+    border-color: #667eea;
+    color: #667eea;
+    border-radius: 10px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.auth-secondary .btn-outline-primary:hover {
+    background-color: #667eea;
+    border-color: #667eea;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .login-container {
