@@ -65,21 +65,7 @@ class ChatHistoryController extends General
         
         // Get all messages for this session from MongoDB
         $mongoMessageModel = new \App\Models\MongoMessageModel();
-        
-        // Debug: log what we're looking for
-        log_message('debug', 'ChatHistory: Looking for messages with session_id: ' . $chatSession['session_id']);
-        log_message('debug', 'ChatHistory: Session data: ' . json_encode([
-            'session_id' => $chatSession['session_id'],
-            'api_key' => $chatSession['api_key'] ?? 'missing',
-            'customer_name' => $chatSession['customer_name'] ?? 'missing'
-        ]));
-        
         $messages = $mongoMessageModel->getSessionMessages($chatSession['session_id']);
-        
-        log_message('debug', 'ChatHistory: Retrieved ' . count($messages) . ' messages');
-        if (count($messages) > 0) {
-            log_message('debug', 'ChatHistory: First message sample: ' . json_encode($messages[0]));
-        }
         
         // Add sender names for agents
         foreach ($messages as &$message) {

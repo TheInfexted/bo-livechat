@@ -881,12 +881,31 @@ function displayClientMessage(message) {
         
         const avatar = generateAvatarInitials(senderName, message.sender_type);
         
+        // Check if message has file data
+        let messageContent = '';
+        if (message.file_data && typeof message.file_data === 'object') {
+            // Message has file attachment
+            const fileMessage = renderClientFileMessage(message.file_data, message.id);
+            messageContent = fileMessage;
+            
+            // If there's also text content separate from default file message, add it
+            if (message.message && 
+                message.message.trim() !== '' && 
+                !message.message.includes('sent a file:') && 
+                !message.message.includes('uploaded a file')) {
+                messageContent += `<div class="text-message">${makeLinksClickable(message.message)}</div>`;
+            }
+        } else {
+            // Regular text message
+            messageContent = makeLinksClickable(message.message);
+        }
+        
         messageDiv.innerHTML = `
             <div class="avatar ${message.sender_type}">
                 ${avatar}
             </div>
             <div class="message-content">
-                ${makeLinksClickable(message.message)}
+                ${messageContent}
                 <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
             </div>
         `;
@@ -1030,34 +1049,46 @@ function getDateType(dateString) {
 // MESSAGE FORM HANDLING
 // ============================================================================
 
+// Global sendMessage function for form submission
+function sendMessage(event) {
+    if (event) event.preventDefault();
+    
+    // Check if we have a file to upload
+    if (selectedFile) {
+        return uploadFile();
+    }
+    
+    // Regular text message
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    
+    if (message && currentSessionId) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            const messageData = {
+                type: 'message',
+                session_id: currentSessionId,
+                message: message,
+                sender_type: 'agent',
+                sender_id: getUserId(),
+                user_type: actualUserType
+            };
+            
+            ws.send(JSON.stringify(messageData));
+            messageInput.value = '';
+        } else {
+            sendMessageDirect(message);
+        }
+    }
+    
+    return false;
+}
+
 function initializeMessageForm() {
     const form = document.getElementById('send-message-form');
     const input = document.getElementById('message-input');
     
     if (form && input) {
-        form.onsubmit = function(e) {
-            e.preventDefault();
-            const message = input.value.trim();
-            
-            if (message && currentSessionId) {
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    const messageData = {
-                        type: 'message',
-                        session_id: currentSessionId,
-                        message: message,
-                        sender_type: 'agent', // Client acts as agent
-                        sender_id: getUserId(),
-                        user_type: actualUserType 
-                    };
-                    
-                    ws.send(JSON.stringify(messageData));
-                    input.value = '';
-                } else {
-                    sendMessageDirect(message);
-                }
-            }
-            return false;
-        };
+        form.onsubmit = sendMessage;
     }
 }
 
@@ -1507,6 +1538,13 @@ function loadSessionDetails(sessionId) {
         return;
     }
     
+    // Skip session details for virtual archived session IDs
+    if (sessionId.startsWith('archived_')) {
+        // For archived sessions, set basic UI elements without API call
+        updateArchivedSessionUI(sessionId);
+        return;
+    }
+    
     // Validate session ID format before making request
     if (!/^[a-zA-Z0-9_]+$/.test(sessionId) || sessionId.includes('t')) {
         return;
@@ -1567,6 +1605,11 @@ function refreshCurrentSessionDetailsNow() {
         return;
     }
     
+    // Skip session details requests for virtual archived session IDs
+    if (currentSessionId.startsWith('archived_')) {
+        return;
+    }
+    
     lastSessionDetailsRefresh = Date.now();
     
     const sessionDetailsUrl = window.clientConfig ? 
@@ -1594,6 +1637,51 @@ function refreshCurrentSessionDetailsNow() {
  * Update the session details UI elements
  * Shared function for both initial load and refresh
  */
+/**
+ * Update UI for archived sessions without API call
+ */
+function updateArchivedSessionUI(sessionId) {
+    // Extract external username and system ID from archived session ID
+    const parts = sessionId.replace('archived_', '').split('_');
+    const externalUsername = parts[0] || 'Unknown';
+    const externalSystemId = parts[1] || '';
+    
+    // Update chat header
+    document.getElementById('chat-header-title').textContent = `Archived Chat - ${externalUsername}`;
+    
+    // Update customer info panel
+    const nameElement = document.getElementById('customer-name-large');
+    if (nameElement) {
+        nameElement.textContent = externalUsername;
+    }
+    
+    // Update avatar
+    const avatarElement = document.getElementById('customer-avatar-large');
+    if (avatarElement) {
+        const initials = externalUsername.length >= 2 ? 
+            externalUsername.substring(0, 2).toUpperCase() : 'AR';
+        avatarElement.textContent = initials;
+    }
+    
+    // Update details with archived info
+    updateDetailElement('customer-username-detail', externalUsername);
+    updateDetailElement('customer-phone-detail', '-');
+    updateDetailElement('customer-email-detail', '-');
+    updateDetailElement('chat-started-detail', 'Archived');
+    updateDetailElement('chat-accepted-detail', '-');
+    updateDetailElement('chat-accepted-by-detail', '-');
+    updateDetailElement('last-reply-by-detail', 'Archived');
+    
+    // Add read-only indicator
+    const chatHeader = document.querySelector('.chat-header');
+    if (chatHeader && !chatHeader.querySelector('.readonly-badge')) {
+        const readonlyBadge = document.createElement('span');
+        readonlyBadge.className = 'readonly-badge';
+        readonlyBadge.innerHTML = '<i class="fas fa-eye"></i> Read Only';
+        chatHeader.appendChild(readonlyBadge);
+    }
+}
+
 function updateSessionDetailsUI(session) {
     // Update chat header with topic
     const chatTopic = session.chat_topic || 'No topic specified';
@@ -1799,6 +1887,12 @@ function loadCannedResponses() {
         return;
     }
     
+    // Skip canned responses for archived sessions
+    if (currentSessionId.startsWith('archived_')) {
+        displayArchivedResponses();
+        return;
+    }
+    
     const sessionDetailsUrl = window.clientConfig ? 
         window.clientConfig.sessionDetailsUrl.replace(':sessionId', currentSessionId) :
         `/client/session-details/${currentSessionId}`;
@@ -1898,6 +1992,12 @@ function displayQuickResponses(responses) {
     }
     
     list.innerHTML = html;
+}
+
+function displayArchivedResponses() {
+    const list = document.getElementById('quick-responses-list');
+    list.innerHTML = '<div class="no-responses"><p class="text-muted small"><i class="fas fa-archive"></i> Archived chats are read-only</p></div>';
+    quickResponsesLoaded = true;
 }
 
 function displayFallbackResponses() {
@@ -2280,6 +2380,518 @@ function initMobileResponsive() {
 }
 
 // ============================================================================
+// FILE MESSAGE RENDERING
+// ============================================================================
+
+// File message rendering function
+function renderClientFileMessage(fileData, messageId) {
+    const fileContainer = document.createElement('div');
+    fileContainer.className = `message-file file-type-${fileData.file_type || 'other'}`;
+    
+    // File icon
+    const fileIcon = document.createElement('i');
+    fileIcon.className = getFileIconClass(fileData.file_type, fileData.mime_type);
+    
+    // File details container
+    const fileDetails = document.createElement('div');
+    fileDetails.className = 'file-details';
+    
+    // File name
+    const fileName = document.createElement('div');
+    fileName.className = 'file-name';
+    fileName.textContent = fileData.original_name || 'Unknown File';
+    fileName.title = fileData.original_name || 'Unknown File';
+    
+    // File metadata
+    const fileMeta = document.createElement('div');
+    fileMeta.className = 'file-meta';
+    
+    const fileSize = document.createElement('span');
+    fileSize.textContent = formatFileSize(fileData.compressed_size || fileData.file_size);
+    fileMeta.appendChild(fileSize);
+    
+    // Show compression info if file was compressed
+    if (fileData.compression_status === 'compressed' && fileData.file_size !== fileData.compressed_size) {
+        const compressionInfo = document.createElement('span');
+        compressionInfo.className = 'compression-info compression-saved';
+        const savedSize = fileData.file_size - fileData.compressed_size;
+        const compressionRatio = ((savedSize / fileData.file_size) * 100).toFixed(1);
+        compressionInfo.innerHTML = `<i class="fas fa-compress-arrows-alt"></i> Compressed ${compressionRatio}%`;
+        fileMeta.appendChild(compressionInfo);
+    }
+    
+    fileDetails.appendChild(fileName);
+    fileDetails.appendChild(fileMeta);
+    
+    // File actions
+    const fileActions = document.createElement('div');
+    fileActions.className = 'file-actions';
+    
+    // Download button
+    const downloadBtn = document.createElement('a');
+    downloadBtn.className = 'file-download-btn';
+    downloadBtn.href = `/client/download-file/${messageId}`;
+    downloadBtn.download = fileData.original_name;
+    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+    downloadBtn.target = '_blank';
+    fileActions.appendChild(downloadBtn);
+    
+    // View button for images
+    if (fileData.file_type === 'image' && fileData.thumbnail_path) {
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'file-view-btn';
+        viewBtn.innerHTML = '<i class="fas fa-eye"></i> View';
+        viewBtn.setAttribute('type', 'button');
+        viewBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showImagePreview(fileData, messageId);
+        });
+        fileActions.appendChild(viewBtn);
+    }
+    
+    // Thumbnail for images
+    let thumbnail = null;
+    if (fileData.file_type === 'image') {
+        thumbnail = document.createElement('div');
+        thumbnail.className = 'file-thumbnail';
+        
+        if (fileData.thumbnail_path) {
+            const img = document.createElement('img');
+            img.src = `/client/thumbnail/${messageId}`;
+            img.alt = fileData.original_name;
+            img.onclick = () => showImagePreview(fileData, messageId);
+            thumbnail.appendChild(img);
+        } else {
+            // Fallback icon for images without thumbnails
+            const fallbackIcon = document.createElement('i');
+            fallbackIcon.className = 'fas fa-image text-primary';
+            thumbnail.appendChild(fallbackIcon);
+        }
+    }
+    
+    // Assemble the file message
+    const tempContainer = document.createElement('div');
+    if (thumbnail) {
+        tempContainer.appendChild(thumbnail);
+    }
+    tempContainer.appendChild(fileIcon);
+    tempContainer.appendChild(fileDetails);
+    tempContainer.appendChild(fileActions);
+    
+    // Return the HTML string instead of DOM element for consistency
+    return tempContainer.innerHTML;
+}
+
+// Helper function to get file icon class
+function getFileIconClass(fileType, mimeType) {
+    switch (fileType) {
+        case 'image':
+            return 'fas fa-image text-primary';
+        case 'video':
+            return 'fas fa-video text-danger';
+        case 'document':
+            if (mimeType && mimeType.includes('pdf')) {
+                return 'fas fa-file-pdf text-danger';
+            }
+            return 'fas fa-file-alt text-info';
+        case 'archive':
+            return 'fas fa-file-archive text-warning';
+        case 'other':
+            if (mimeType) {
+                if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+                    return 'fas fa-file-excel text-success';
+                }
+                if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) {
+                    return 'fas fa-file-powerpoint text-warning';
+                }
+            }
+            return 'fas fa-file text-secondary';
+        default:
+            return 'fas fa-file text-secondary';
+    }
+}
+
+// Helper function to format file size
+function formatFileSize(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    
+    return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Image preview function
+function showImagePreview(fileData, messageId) {
+    const modal = document.createElement('div');
+    modal.className = 'image-preview-modal';
+    modal.innerHTML = `
+        <div class="modal-backdrop" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>${fileData.original_name}</h4>
+                <button class="close-modal" onclick="this.closest('.image-preview-modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <img src="/client/download-file/${messageId}" alt="${fileData.original_name}" class="preview-image">
+            </div>
+            <div class="modal-footer">
+                <a href="/client/download-file/${messageId}" download="${fileData.original_name}" class="btn btn-primary">
+                    <i class="fas fa-download"></i> Download
+                </a>
+            </div>
+        </div>
+    `;
+    
+    // Add modal styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .image-preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .image-preview-modal .modal-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+        }
+        
+        .image-preview-modal .modal-content {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .image-preview-modal .modal-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .image-preview-modal .modal-header h4 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 400px;
+        }
+        
+        .image-preview-modal .close-modal {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .image-preview-modal .close-modal:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .image-preview-modal .modal-body {
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-height: 70vh;
+            overflow: hidden;
+        }
+        
+        .image-preview-modal .preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .image-preview-modal .modal-footer {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+        }
+        
+        .image-preview-modal .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .image-preview-modal .btn:hover {
+            background: #5a67d8;
+            color: white;
+            text-decoration: none;
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+
+    // Close modal on escape key
+    const closeOnEscape = (e) => {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', closeOnEscape);
+        }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+}
+
+// ============================================================================
+// FILE UPLOAD FUNCTIONALITY
+// ============================================================================
+
+let selectedFile = null;
+let isUploadingFile = false;
+
+// File upload trigger
+function triggerFileUpload() {
+    document.getElementById('file-input').click();
+}
+
+// Handle file selection
+function handleFileSelection(event) {
+    const files = event.target.files;
+    if (files.length > 0) {
+        selectedFile = files[0];
+        showFilePreview(selectedFile);
+    }
+}
+
+// Show file preview
+function showFilePreview(file) {
+    const preview = document.getElementById('file-preview');
+    const icon = document.getElementById('preview-file-icon');
+    const name = document.getElementById('preview-file-name');
+    const size = document.getElementById('preview-file-size');
+    
+    // Set file icon based on type
+    icon.className = getClientFileIconClass(file.type);
+    name.textContent = file.name;
+    size.textContent = formatClientFileSize(file.size);
+    
+    preview.style.display = 'block';
+    
+    // Focus on message input
+    document.getElementById('message-input').focus();
+}
+
+// Remove selected file
+function removeSelectedFile() {
+    selectedFile = null;
+    document.getElementById('file-preview').style.display = 'none';
+    document.getElementById('file-input').value = '';
+}
+
+// Get file icon class
+function getClientFileIconClass(mimeType) {
+    if (mimeType.startsWith('image/')) {
+        return 'fas fa-image text-primary';
+    } else if (mimeType.startsWith('video/')) {
+        return 'fas fa-video text-danger';
+    } else if (mimeType.includes('pdf')) {
+        return 'fas fa-file-pdf text-danger';
+    } else if (mimeType.includes('word') || mimeType.includes('document')) {
+        return 'fas fa-file-word text-info';
+    } else if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+        return 'fas fa-file-excel text-success';
+    } else if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) {
+        return 'fas fa-file-powerpoint text-warning';
+    } else if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('archive')) {
+        return 'fas fa-file-archive text-warning';
+    } else {
+        return 'fas fa-file text-secondary';
+    }
+}
+
+// Format file size
+function formatClientFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Upload file
+function uploadFile() {
+    if (!selectedFile || !currentSessionId || isUploadingFile) {
+        return Promise.reject(new Error('No file selected or upload in progress'));
+    }
+    
+    isUploadingFile = true;
+    
+    // Show progress
+    const progressDiv = document.getElementById('file-upload-progress');
+    const progressFill = document.getElementById('upload-progress-fill');
+    const progressText = document.getElementById('upload-progress-text');
+    
+    progressDiv.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressText.textContent = 'Uploading file...';
+    
+    // Disable form
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    messageInput.disabled = true;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('session_id', currentSessionId);
+    formData.append('sender_type', 'agent');
+    formData.append('sender_name', clientName);
+    
+    console.log('Upload debug:', {
+        selectedFile: selectedFile,
+        currentSessionId: currentSessionId,
+        clientName: clientName,
+        fileSize: selectedFile ? selectedFile.size : 'N/A',
+        fileName: selectedFile ? selectedFile.name : 'N/A'
+    });
+    
+    const uploadUrl = window.clientConfig ? window.clientConfig.uploadFileUrl || '/client/upload-file' : '/client/upload-file';
+    console.log('Upload URL:', uploadUrl);
+    
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        // Progress handler
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                progressFill.style.width = percentComplete + '%';
+                progressText.textContent = `Uploading ${Math.round(percentComplete)}%...`;
+            }
+        });
+        
+        // Load handler
+        xhr.addEventListener('load', () => {
+            console.log('Upload response status:', xhr.status);
+            console.log('Upload response text:', xhr.responseText);
+            
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    console.log('Upload response parsed:', response);
+                    if (response.success) {
+                        progressText.textContent = 'Upload complete!';
+                        progressFill.style.width = '100%';
+                        
+                        // Send WebSocket notification for real-time updates
+                        if (ws && ws.readyState === WebSocket.OPEN && response.file_data) {
+                            const fileMessage = {
+                                type: 'file_message',
+                                id: response.message_id,
+                                session_id: currentSessionId,
+                                sender_type: 'agent',
+                                sender_id: getUserId(),
+                                sender_name: clientName || 'Agent',
+                                message: response.file_data.original_name ? `sent a file: ${response.file_data.original_name}` : 'sent a file',
+                                message_type: response.file_data.file_type || 'file',
+                                file_data: response.file_data,
+                                timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                                user_type: actualUserType
+                            };
+                            
+                            ws.send(JSON.stringify(fileMessage));
+                        }
+                        
+                        // Clean up
+                        setTimeout(() => {
+                            removeSelectedFile();
+                            progressDiv.style.display = 'none';
+                            messageInput.disabled = false;
+                            sendBtn.disabled = false;
+                            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+                            isUploadingFile = false;
+                        }, 1000);
+                        
+                        resolve(response);
+                    } else {
+                        throw new Error(response.error || 'Upload failed');
+                    }
+                } catch (e) {
+                    reject(new Error('Invalid server response'));
+                }
+            } else {
+                console.error('Upload failed with status:', xhr.status);
+                console.error('Error response:', xhr.responseText);
+                reject(new Error(`Upload failed with status: ${xhr.status}`));
+            }
+        });
+        
+        // Error handler
+        xhr.addEventListener('error', () => {
+            reject(new Error('Network error during upload'));
+        });
+        
+        // Timeout handler
+        xhr.addEventListener('timeout', () => {
+            reject(new Error('Upload timed out'));
+        });
+        
+        xhr.timeout = 60000; // 60 second timeout
+        xhr.open('POST', uploadUrl);
+        xhr.send(formData);
+    }).catch(error => {
+        // Clean up on error
+        progressDiv.style.display = 'none';
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+        isUploadingFile = false;
+        
+        showError('File upload failed: ' + error.message);
+        throw error;
+    });
+}
+
+// Show error message
+function showError(message) {
+    // You can implement a toast notification or alert here
+    console.error(message);
+    alert(message);
+}
+
+// ============================================================================
 // INITIALIZATION
 // ============================================================================
 
@@ -2325,3 +2937,7 @@ window.hideQuickResponses = hideQuickResponses;
 window.useCannedResponse = useCannedResponse;
 window.useFallbackResponse = useFallbackResponse;
 window.initializeClientChat = initializeClientChat;
+window.sendMessage = sendMessage;
+window.triggerFileUpload = triggerFileUpload;
+window.handleFileSelection = handleFileSelection;
+window.removeSelectedFile = removeSelectedFile;

@@ -31,8 +31,7 @@ class ChatController extends General
         // Validate API key for iframe integrations
         if ($isIframe && $apiKey) {
             $apiKeyModel = new \App\Models\ApiKeyModel();
-            $domain = $this->request->getServer('HTTP_REFERER') ? parse_url($this->request->getServer('HTTP_REFERER'), PHP_URL_HOST) : null;
-            $validation = $apiKeyModel->validateApiKey($apiKey, $domain);
+            $validation = $apiKeyModel->validateApiKey($apiKey);
             
             if (!$validation['valid']) {
                 // Show error page for invalid API key
@@ -80,13 +79,7 @@ class ChatController extends General
         // Validate API key if provided
         if ($apiKey) {
             $apiKeyModel = new \App\Models\ApiKeyModel();
-            $domain = $this->request->getServer('HTTP_ORIGIN') ?: $this->request->getServer('HTTP_REFERER');
-            if ($domain) {
-                $parsedUrl = parse_url($domain);
-                $domain = $parsedUrl['host'] ?? $domain;
-            }
-            
-            $validation = $apiKeyModel->validateApiKey($apiKey, $domain);
+            $validation = $apiKeyModel->validateApiKey($apiKey);
             
             if (!$validation['valid']) {
                 return $this->jsonResponse(['error' => 'Invalid API key: ' . $validation['error']], 403);
@@ -1101,6 +1094,208 @@ class ChatController extends General
                 'error' => 'Failed to fetch session details',
                 'debug' => 'Database error occurred'
             ], 500);
+        }
+    }
+    
+    /**
+     * Upload file and send as message
+     */
+    public function uploadFile()
+    {
+        $sessionId = $this->request->getPost('session_id');
+        $uploadedFile = $this->request->getFile('file');
+        $senderType = $this->request->getPost('sender_type') ?: 'agent';
+        $senderName = $this->sanitizeInput($this->request->getPost('sender_name'));
+        
+        if (!$sessionId || !$uploadedFile || !$uploadedFile->isValid()) {
+            $debug = [
+                'sessionId' => $sessionId ? 'provided' : 'missing',
+                'uploadedFile' => $uploadedFile ? 'provided' : 'missing',
+                'fileValid' => $uploadedFile ? $uploadedFile->isValid() : 'N/A',
+                'fileError' => $uploadedFile ? $uploadedFile->getErrorString() : 'N/A'
+            ];
+            return $this->jsonResponse(['error' => 'Session ID and valid file are required', 'debug' => $debug], 400);
+        }
+        
+        // Get the chat session
+        $chatSession = $this->chatModel->getSessionBySessionId($sessionId);
+        if (!$chatSession) {
+            return $this->jsonResponse(['error' => 'Chat session not found'], 404);
+        }
+        
+        // Check if session is active or waiting
+        if (!in_array($chatSession['status'], ['active', 'waiting'])) {
+            return $this->jsonResponse(['error' => 'Cannot send file to closed session'], 400);
+        }
+        
+        try {
+            // Use FileCompressionService to handle file upload and compression
+            $compressionService = new \App\Services\FileCompressionService();
+            $processResult = $compressionService->processFile($uploadedFile, $sessionId);
+            
+            if (!$processResult['success']) {
+                return $this->jsonResponse([
+                    'error' => $processResult['error'],
+                    'debug' => 'FileCompressionService failed',
+                    'processResult' => $processResult
+                ], 400);
+            }
+            
+            $fileData = $processResult['file_data'];
+            
+            // Determine sender_id and sender_user_type based on authentication type
+            $senderId = null;
+            $senderUserType = null;
+            if ($senderType === 'agent') {
+                if ($this->session->has('user_id')) {
+                    // Admin user
+                    $senderId = $this->session->get('user_id');
+                    $senderUserType = 'admin';
+                } elseif ($this->session->has('client_user_id')) {
+                    // Client user acting as agent
+                    $senderId = $this->session->get('client_user_id');
+                    $senderUserType = 'client';
+                } elseif ($this->session->has('agent_user_id')) {
+                    // Agent user
+                    $senderId = $this->session->get('agent_user_id');
+                    $senderUserType = 'agent';
+                }
+            }
+            
+            // Create message text
+            $messageText = "sent a file: " . $fileData['original_name'];
+            
+            // Store message in MongoDB with file data
+            $mongoModel = new \App\Models\MongoMessageModel();
+            $messageData = [
+                'session_id' => $chatSession['session_id'],
+                'sender_type' => $senderType,
+                'sender_id' => $senderId,
+                'sender_name' => $senderName ?: ($senderType === 'customer' ? 'Customer' : 'Agent'),
+                'sender_user_type' => $senderUserType,
+                'message' => $messageText,
+                'message_type' => $fileData['file_type'], // Use actual file type from compression service
+                'file_data' => $fileData,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+            
+            $messageId = $mongoModel->insertMessage($messageData);
+            
+            if ($messageId) {
+                // Update session timestamp
+                try {
+                    $this->chatModel->update($chatSession['id'], ['updated_at' => date('Y-m-d H:i:s')]);
+                } catch (\Exception $e) {
+                    // Ignore timestamp update errors
+                }
+                
+                return $this->jsonResponse([
+                    'success' => true,
+                    'message_id' => $messageId,
+                    'session_id' => $sessionId,
+                    'file_data' => $fileData,
+                    'message' => 'File uploaded successfully'
+                ]);
+            }
+            
+            return $this->jsonResponse(['error' => 'Failed to send file message'], 500);
+            
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'File upload failed: ' . $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * Download file by message ID - Direct access from shared-uploads
+     */
+    public function downloadFile($messageId)
+    {
+        if (!$messageId) {
+            error_log("Download failed: No message ID provided");
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        
+        try {
+            error_log("Attempting to download file for message ID: {$messageId}");
+            
+            // Get message from MongoDB
+            $mongoModel = new \App\Models\MongoMessageModel();
+            $message = $mongoModel->getMessageById($messageId);
+            
+            if (!$message) {
+                error_log("Download failed: Message not found in MongoDB for ID: {$messageId}");
+                throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            }
+            
+            if (!isset($message['file_data'])) {
+                error_log("Download failed: No file_data in message for ID: {$messageId}");
+                error_log("Message structure: " . json_encode($message));
+                throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            }
+            
+            $fileData = $message['file_data'];
+            $filePath = '/www/wwwroot/files/livechat/default/chat/' . $fileData['file_path'];
+            
+            error_log("Looking for file at path: {$filePath}");
+            
+            if (!file_exists($filePath)) {
+                error_log("Download failed: File does not exist at path: {$filePath}");
+                error_log("File data: " . json_encode($fileData));
+                throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            }
+            
+            error_log("File found, serving download: {$fileData['original_name']}");
+            
+            // Force download
+            $this->response->setHeader('Content-Type', $fileData['mime_type'])
+                          ->setHeader('Content-Disposition', 'attachment; filename="' . $fileData['original_name'] . '"')
+                          ->setHeader('Content-Length', (string) filesize($filePath))
+                          ->setBody(file_get_contents($filePath));
+            
+            return $this->response;
+            
+        } catch (\Exception $e) {
+            error_log("Download exception for message ID {$messageId}: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+    }
+    
+    /**
+     * Get file thumbnail by message ID - Direct access from shared-uploads
+     */
+    public function getThumbnail($messageId)
+    {
+        if (!$messageId) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        
+        try {
+            // Get message from MongoDB
+            $mongoModel = new \App\Models\MongoMessageModel();
+            $message = $mongoModel->getMessageById($messageId);
+            
+            if (!$message || !isset($message['file_data']) || !$message['file_data']['thumbnail_path']) {
+                throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            }
+            
+            $fileData = $message['file_data'];
+            $thumbnailPath = '/www/wwwroot/files/livechat/default/thumbs/' . $fileData['thumbnail_path'];
+            
+            if (!file_exists($thumbnailPath)) {
+                throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            }
+            
+            // Serve thumbnail
+            $this->response->setHeader('Content-Type', 'image/jpeg')
+                          ->setHeader('Content-Length', (string) filesize($thumbnailPath))
+                          ->setBody(file_get_contents($thumbnailPath));
+            
+            return $this->response;
+            
+        } catch (\Exception $e) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
     }
 }

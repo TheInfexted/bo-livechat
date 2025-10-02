@@ -9,6 +9,7 @@
     <link href="<?= base_url('assets/css/client-chat.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/client-responsive.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/date.css') ?>?v=<?= time() ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/css/file-upload.css') ?>?v=<?= time() ?>" rel="stylesheet">
 </head>
 <body class="client-chat-dashboard">
     <!-- Header -->
@@ -152,6 +153,29 @@
 
                             <!-- Chat Input (only show for active sessions) -->
                             <div class="chat-input-area" id="chat-input-area" style="display: none;">
+                                <!-- File Preview Area -->
+                                <div class="file-preview" id="file-preview" style="display: none;">
+                                    <div class="preview-content">
+                                        <div class="file-info">
+                                            <i class="file-icon fas fa-file" id="preview-file-icon"></i>
+                                            <div class="file-details">
+                                                <div class="file-name" id="preview-file-name">No file selected</div>
+                                                <div class="file-size" id="preview-file-size">0 KB</div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn-remove-file" onclick="removeSelectedFile()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- File Upload Progress -->
+                                <div class="file-upload-progress" id="file-upload-progress" style="display: none;">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" id="upload-progress-fill"></div>
+                                    </div>
+                                    <div class="progress-text" id="upload-progress-text">Uploading file...</div>
+                                </div>
                                 <!-- Canned Responses Quick Actions -->
                                 <div class="quick-responses-area" id="quick-responses-area" style="display: none;">
                                     <div class="quick-responses-header">
@@ -165,16 +189,22 @@
                                     </div>
                                 </div>
                                 
-                                <form id="send-message-form" onsubmit="return sendMessage(event)">
-                                    <div class="input-with-actions">
-                                        <input type="text" id="message-input" placeholder="Type your message..." maxlength="1000" required>
-                                        <button type="button" class="btn-quick-responses" id="quick-responses-btn" onclick="toggleQuickResponses()" title="Quick Responses">
-                                            <i class="fas fa-bolt"></i>
+                                <form id="send-message-form" onsubmit="return sendMessage(event)" enctype="multipart/form-data">
+                                    <div class="input-group">
+                                        <input type="file" id="file-input" class="file-input-hidden" onchange="handleFileSelection(event)" multiple accept="*/*">
+                                        <button type="button" class="file-upload-btn" onclick="triggerFileUpload()" title="Upload File">
+                                            <i class="fas fa-paperclip"></i>
                                         </button>
-                                        <button type="submit" class="btn-send" id="send-btn">
-                                            <i class="fas fa-paper-plane"></i>
-                                            Send
-                                        </button>
+                                        <input type="text" id="message-input" class="form-control" placeholder="Type your message..." maxlength="1000">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-secondary btn-quick-responses" id="quick-responses-btn" onclick="toggleQuickResponses()" title="Quick Responses">
+                                                <i class="fas fa-bolt"></i>
+                                            </button>
+                                            <button type="submit" class="btn btn-send" id="send-btn">
+                                                <i class="fas fa-paper-plane"></i>
+                                                Send
+                                            </button>
+                                        </div>
                                     </div>
                                 </form>
                             </div>

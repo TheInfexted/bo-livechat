@@ -1113,15 +1113,37 @@ class ClientController extends General
         $clientId = $this->getClientId();
         
         try {
-            // All authenticated users (clients and agents) can access all sessions for their client_id
+            // First try to find session with client_id restriction
             $session = $this->chatModel->select('chat_sessions.*, users.username as agent_name')
                                        ->join('users', 'users.id = chat_sessions.agent_id', 'left')
                                        ->where('chat_sessions.session_id', $sessionId)
                                        ->where('chat_sessions.client_id', $clientId)
                                        ->first();
             
+            // If not found, try without client_id restriction for debugging
             if (!$session) {
-                return $this->jsonResponse(['error' => 'Session not found or access denied', 'session_id' => $sessionId], 404);
+                $anySession = $this->chatModel->select('chat_sessions.*, users.username as agent_name')
+                                               ->join('users', 'users.id = chat_sessions.agent_id', 'left')
+                                               ->where('chat_sessions.session_id', $sessionId)
+                                               ->first();
+                
+                if ($anySession) {
+                    // Session exists but belongs to different client
+                    error_log('Session found but belongs to client_id: ' . $anySession['client_id'] . ', current user client_id: ' . $clientId);
+                    return $this->jsonResponse([
+                        'error' => 'Session not found or access denied', 
+                        'session_id' => $sessionId,
+                        'debug' => 'Session belongs to different client'
+                    ], 404);
+                } else {
+                    // Session doesn't exist at all
+                    error_log('Session not found in database: ' . $sessionId);
+                    return $this->jsonResponse([
+                        'error' => 'Session not found', 
+                        'session_id' => $sessionId,
+                        'debug' => 'Session does not exist in database'
+                    ], 404);
+                }
             }
             
             // Process customer name using comprehensive logic (same as ChatController)
@@ -1878,8 +1900,6 @@ class ClientController extends General
             '{api_key}' => $session['api_key'] ?? ''
         ];
         
-        // Debug: Log the variables for troubleshooting
-        log_message('debug', 'Variable replacement for session ' . $sessionId . ': ' . json_encode($variables));
         
         // Replace variables in content
         $content = $response['content'];

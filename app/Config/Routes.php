@@ -85,6 +85,11 @@ $routes->group('client', ['filter' => ['client_domain', 'clientfilter']], functi
     $routes->post('accept-session', 'ChatController::acceptSession');
     $routes->post('close-session', 'ChatController::closeSession');
     
+    // File upload endpoints
+    $routes->post('upload-file', 'ChatController::uploadFile');
+    $routes->get('download-file/(:segment)', 'ChatController::downloadFile/$1');
+    $routes->get('thumbnail/(:segment)', 'ChatController::getThumbnail/$1');
+    
     // Keyword Responses routes (clients only)
     $routes->get('keyword-responses', 'ClientController::keywordResponses');
     $routes->get('get-keyword-response/(:segment)', 'ClientController::getKeywordResponse/$1');
