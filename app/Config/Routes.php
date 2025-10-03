@@ -44,6 +44,10 @@ $routes->get('/api/chat/check-session-status/(:segment)', 'ChatController::check
 $routes->post('/api/chat/canned-response', 'ChatController::sendCannedResponse');
 $routes->get('/api/agent/workload', 'ChatController::getAgentWorkload');
 $routes->post('/api/admin/close-inactive', 'ChatController::closeInactiveSessions');
+// File handling routes
+$routes->post('/api/chat/upload-file', 'ChatController::uploadFile');
+$routes->get('/api/chat/download-file/(:segment)', 'ChatController::downloadFile/$1');
+$routes->get('/api/chat/thumbnail/(:segment)', 'ChatController::getThumbnail/$1');
 
 // Frontend integration route for getting chatroom links
 $routes->match(['GET', 'POST'], '/api/getChatroomLink', 'ChatController::getChatroomLink');

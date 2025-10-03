@@ -395,6 +395,9 @@
                 clientApiKeys: <?= json_encode($api_keys ?? []) ?>,
                 clientName: <?= json_encode($client_name ?? 'Client User') ?>,
                 
+                // Base URL for dynamic URL construction
+                baseUrl: '<?= base_url() ?>',
+                
                 // API endpoint URLs
                 sessionsUrl: '<?= base_url('client/sessions-data') ?>',
                 messagesUrl: '<?= base_url('client/chat-messages') ?>/:sessionId',

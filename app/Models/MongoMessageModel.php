@@ -306,9 +306,16 @@ class MongoMessageModel
                 // Add sender name logic (similar to original MessageModel)
                 $message['sender_name'] = $this->getSenderName($message);
                 
-                // Include file data if present
-                if (isset($message['file_data'])) {
-                    // File data is already in the message array
+                // Include file data if present and convert relative paths to full URLs
+                if (isset($message['file_data']) && is_array($message['file_data'])) {
+                    // Convert relative paths to full file server URLs for frontend consumption
+                    if (isset($message['file_data']['file_path'])) {
+                        $message['file_data']['file_url'] = 'https://files.kopisugar.cc/livechat/default/chat/' . $message['file_data']['file_path'];
+                    }
+                    
+                    if (isset($message['file_data']['thumbnail_path'])) {
+                        $message['file_data']['thumbnail_url'] = 'https://files.kopisugar.cc/livechat/default/thumbs/' . $message['file_data']['thumbnail_path'];
+                    }
                 }
                 
                 $messages[] = $message;
@@ -370,6 +377,19 @@ class MongoMessageModel
                 }
                 
                 $message['sender_name'] = $this->getSenderName($message);
+                
+                // Include file data if present and convert relative paths to full URLs
+                if (isset($message['file_data']) && is_array($message['file_data'])) {
+                    // Convert relative paths to full file server URLs for frontend consumption
+                    if (isset($message['file_data']['file_path'])) {
+                        $message['file_data']['file_url'] = 'https://files.kopisugar.cc/livechat/default/chat/' . $message['file_data']['file_path'];
+                    }
+                    
+                    if (isset($message['file_data']['thumbnail_path'])) {
+                        $message['file_data']['thumbnail_url'] = 'https://files.kopisugar.cc/livechat/default/thumbs/' . $message['file_data']['thumbnail_path'];
+                    }
+                }
+                
                 $messages[] = $message;
             }
             
@@ -699,6 +719,18 @@ class MongoMessageModel
                                 $messageArray['created_at'] = $messageArray['timestamp'];
                             }
                             
+                            // Convert relative paths to full URLs for file_data
+                            $fileData = $messageArray['file_data'] ?? null;
+                            if ($fileData && is_array($fileData)) {
+                                if (isset($fileData['file_path'])) {
+                                    $fileData['file_url'] = 'https://files.kopisugar.cc/livechat/default/chat/' . $fileData['file_path'];
+                                }
+                                
+                                if (isset($fileData['thumbnail_path'])) {
+                                    $fileData['thumbnail_url'] = 'https://files.kopisugar.cc/livechat/default/thumbs/' . $fileData['thumbnail_path'];
+                                }
+                            }
+                            
                             return [
                                 'id' => (string)$messageArray['_id'],
                                 'session_id' => $messageArray['session_id'],
@@ -709,7 +741,7 @@ class MongoMessageModel
                                 'message_type' => $messageArray['message_type'] ?? 'text',
                                 'is_read' => $messageArray['is_read'] ?? false,
                                 'created_at' => $messageArray['created_at'],
-                                'file_data' => $messageArray['file_data'] ?? null
+                                'file_data' => $fileData
                             ];
                         }
                     } catch (\Exception $e) {

@@ -13,6 +13,7 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?= base_url('assets/css/chat.css?v=' . time()) ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/file-attachments.css?v=' . time()) ?>">
     <?= $this->renderSection('styles') ?>
 </head>
 <body>

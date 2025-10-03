@@ -181,6 +181,27 @@ function setupEventListeners() {
             }, 100);
         });
     });
+    
+    // Event delegation for View buttons and thumbnail images (handles dynamically added content)
+    document.addEventListener('click', function(e) {
+        if (e.target && (e.target.classList.contains('file-view-btn') || e.target.classList.contains('file-thumbnail-image'))) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const messageId = e.target.getAttribute('data-message-id');
+            const fileName = e.target.getAttribute('data-file-name');
+            
+            if (messageId && fileName) {
+                // Create fileData object from attributes
+                const fileData = {
+                    original_name: fileName,
+                    file_type: 'image' // We know it's an image since View button/thumbnail only shows for images
+                };
+                
+                showImagePreview(fileData, messageId);
+            }
+        }
+    });
 }
 
 function loadSessions() {
@@ -2430,7 +2451,15 @@ function renderClientFileMessage(fileData, messageId) {
     // Download button
     const downloadBtn = document.createElement('a');
     downloadBtn.className = 'file-download-btn';
-    downloadBtn.href = `/client/download-file/${messageId}`;
+    
+    // Use full file server URL if available, otherwise fallback to local route
+    if (fileData.file_url) {
+        downloadBtn.href = fileData.file_url;
+    } else {
+        const downloadBaseUrl = typeof baseUrl !== 'undefined' ? baseUrl : (typeof window.location !== 'undefined' ? window.location.origin + '/' : '/');
+        downloadBtn.href = `${downloadBaseUrl}client/download-file/${messageId}`;
+    }
+    
     downloadBtn.download = fileData.original_name;
     downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
     downloadBtn.target = '_blank';
@@ -2442,11 +2471,8 @@ function renderClientFileMessage(fileData, messageId) {
         viewBtn.className = 'file-view-btn';
         viewBtn.innerHTML = '<i class="fas fa-eye"></i> View';
         viewBtn.setAttribute('type', 'button');
-        viewBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            showImagePreview(fileData, messageId);
-        });
+        viewBtn.setAttribute('data-message-id', messageId);
+        viewBtn.setAttribute('data-file-name', fileData.original_name || 'Unknown File');
         fileActions.appendChild(viewBtn);
     }
     
@@ -2458,9 +2484,19 @@ function renderClientFileMessage(fileData, messageId) {
         
         if (fileData.thumbnail_path) {
             const img = document.createElement('img');
-            img.src = `/client/thumbnail/${messageId}`;
+            
+            // Use full file server thumbnail URL if available, otherwise fallback to local route
+            if (fileData.thumbnail_url) {
+                img.src = fileData.thumbnail_url;
+            } else {
+                const thumbnailBaseUrl = typeof baseUrl !== 'undefined' ? baseUrl : (typeof window.location !== 'undefined' ? window.location.origin + '/' : '/');
+                img.src = `${thumbnailBaseUrl}client/thumbnail/${messageId}`;
+            }
+            
             img.alt = fileData.original_name;
-            img.onclick = () => showImagePreview(fileData, messageId);
+            img.setAttribute('data-message-id', messageId);
+            img.setAttribute('data-file-name', fileData.original_name || 'Unknown File');
+            img.className = 'file-thumbnail-image';
             thumbnail.appendChild(img);
         } else {
             // Fallback icon for images without thumbnails
@@ -2536,10 +2572,10 @@ function showImagePreview(fileData, messageId) {
                 </button>
             </div>
             <div class="modal-body">
-                <img src="/client/download-file/${messageId}" alt="${fileData.original_name}" class="preview-image">
+                <img src="${fileData.file_url || (typeof baseUrl !== 'undefined' ? baseUrl : (typeof window.location !== 'undefined' ? window.location.origin + '/' : '/')) + 'client/download-file/' + messageId}" alt="${fileData.original_name}" class="preview-image">
             </div>
             <div class="modal-footer">
-                <a href="/client/download-file/${messageId}" download="${fileData.original_name}" class="btn btn-primary">
+                <a href="${fileData.file_url || (typeof baseUrl !== 'undefined' ? baseUrl : (typeof window.location !== 'undefined' ? window.location.origin + '/' : '/')) + 'client/download-file/' + messageId}" download="${fileData.original_name}" class="btn btn-primary">
                     <i class="fas fa-download"></i> Download
                 </a>
             </div>
@@ -2567,7 +2603,7 @@ function showImagePreview(fileData, messageId) {
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0);
             cursor: pointer;
         }
         
@@ -2898,6 +2934,11 @@ function showError(message) {
 function initializeClientChat(config) {
     // Set configuration from PHP
     window.clientConfig = config || {};
+    
+    // Set global baseUrl for dynamic URL construction
+    if (config.baseUrl) {
+        window.baseUrl = config.baseUrl;
+    }
     
     // Set client-specific globals
     if (config.userType) userType = config.userType;

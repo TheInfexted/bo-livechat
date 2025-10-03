@@ -1085,10 +1085,22 @@ function displayMessage(data) {
         // Create message content
         const messageContentDiv = document.createElement('div');
         messageContentDiv.className = 'message-content';
-        messageContentDiv.innerHTML = `
-            <div class="message-text">${makeLinksClickable(data.message)}</div>
-            <div class="message-time">${formatTime(data.timestamp || data.created_at)}</div>
-        `;
+        
+        // Check if this is a file message
+        if (data.file_data && (data.message_type === 'image' || data.message_type === 'document' || data.message_type === 'archive' || data.message_type === 'video' || data.message_type === 'other')) {
+            // Handle file messages
+            const fileMessageContent = createFileMessageContent(data.file_data, data.id || messageId);
+            messageContentDiv.innerHTML = `
+                <div class="message-text">${fileMessageContent}</div>
+                <div class="message-time">${formatTime(data.timestamp || data.created_at)}</div>
+            `;
+        } else {
+            // Handle regular text messages
+            messageContentDiv.innerHTML = `
+                <div class="message-text">${makeLinksClickable(data.message)}</div>
+                <div class="message-time">${formatTime(data.timestamp || data.created_at)}</div>
+            `;
+        }
         
         // Add avatar and content to message
         messageDiv.appendChild(avatar);
@@ -1288,6 +1300,278 @@ function getSenderName(data) {
         return data.sender_name || data.agent_name || currentUsername || 'Agent';
     }
     return 'Unknown';
+}
+
+// Helper function to create file message content
+function createFileMessageContent(fileData, messageId) {
+    if (!fileData) {
+        return 'File attachment (data not available)';
+    }
+    
+    const fileName = fileData.original_name || 'Unknown File';
+    const fileSize = fileData.file_size || 0;
+    const fileType = fileData.file_type || 'other';
+    const mimeType = fileData.mime_type || '';
+    
+    // Format file size
+    const formatFileSize = (bytes) => {
+        if (!bytes || bytes === 0) return '0 B';
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+    
+    // Get file icon class
+    const getFileIconClass = (type, mime) => {
+        switch (type) {
+            case 'image': return 'fas fa-image text-primary';
+            case 'video': return 'fas fa-video text-danger';
+            case 'document': return mime && mime.includes('pdf') ? 'fas fa-file-pdf text-danger' : 'fas fa-file-alt text-info';
+            case 'archive': return 'fas fa-file-archive text-warning';
+            case 'other': return 'fas fa-file text-secondary';
+            default: return 'fas fa-file text-secondary';
+        }
+    };
+    
+    // Create file display HTML
+    let fileHtml = `
+        <div class="file-attachment">
+            <div class="file-info">
+                <div class="file-icon">
+                    <i class="${getFileIconClass(fileType, mimeType)}"></i>
+                </div>
+                <div class="file-details">
+                    <div class="file-name" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</div>
+                    <div class="file-size">${formatFileSize(fileSize)}</div>
+                </div>
+            </div>
+            <div class="file-actions">
+                <a href="/api/chat/download-file/${messageId}" class="file-download-btn" download="${escapeHtml(fileName)}" target="_blank">
+                    <i class="fas fa-download"></i> Download
+                </a>
+    `;
+    
+    // Add view button and thumbnail for images
+    if (fileType === 'image' && fileData.thumbnail_path) {
+        fileHtml += `
+                <button class="file-view-btn" type="button" onclick="showImagePreview('${escapeHtml(fileName)}', '${messageId}')">
+                    <i class="fas fa-eye"></i> View
+                </button>
+            </div>
+            <div class="file-thumbnail">
+                <img src="/api/chat/thumbnail/${messageId}" alt="${escapeHtml(fileName)}" class="file-thumbnail-image" onclick="showImagePreview('${escapeHtml(fileName)}', '${messageId}')">
+            </div>
+        </div>
+        `;
+    } else {
+        fileHtml += `
+            </div>
+        </div>
+        `;
+    }
+    
+    return fileHtml;
+}
+
+// Image preview function
+function showImagePreview(fileName, messageId) {
+    const modal = document.createElement('div');
+    modal.className = 'image-preview-modal';
+    modal.innerHTML = `
+        <div class="modal-backdrop" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>${escapeHtml(fileName)}</h4>
+                <button class="close-modal" onclick="this.closest('.image-preview-modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <img src="/api/chat/download-file/${messageId}" alt="${escapeHtml(fileName)}" class="preview-image">
+            </div>
+            <div class="modal-footer">
+                <a href="/api/chat/download-file/${messageId}" download="${escapeHtml(fileName)}" class="btn btn-primary">
+                    <i class="fas fa-download"></i> Download
+                </a>
+            </div>
+        </div>
+    `;
+    
+    // Add modal styles if not already added
+    if (!document.getElementById('image-preview-styles')) {
+        const style = document.createElement('style');
+        style.id = 'image-preview-styles';
+        style.textContent = `
+            .image-preview-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .image-preview-modal .modal-backdrop {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                cursor: pointer;
+            }
+            
+            .image-preview-modal .modal-content {
+                position: relative;
+                background: white;
+                border-radius: 12px;
+                max-width: 90vw;
+                max-height: 90vh;
+                overflow: hidden;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            }
+            
+            .image-preview-modal .modal-header {
+                padding: 15px 20px;
+                background: #f8f9fa;
+                border-bottom: 1px solid #e9ecef;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .image-preview-modal .modal-header h4 {
+                margin: 0;
+                font-size: 16px;
+                color: #333;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 400px;
+            }
+            
+            .image-preview-modal .close-modal {
+                background: none;
+                border: none;
+                font-size: 18px;
+                cursor: pointer;
+                color: #666;
+                padding: 4px 8px;
+                border-radius: 4px;
+                transition: all 0.2s ease;
+            }
+            
+            .image-preview-modal .close-modal:hover {
+                background: #e9ecef;
+                color: #333;
+            }
+            
+            .image-preview-modal .modal-body {
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                max-height: 70vh;
+                overflow: hidden;
+            }
+            
+            .image-preview-modal .preview-image {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+            
+            .image-preview-modal .modal-footer {
+                padding: 15px 20px;
+                background: #f8f9fa;
+                border-top: 1px solid #e9ecef;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .file-attachment {
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                padding: 12px;
+                margin: 8px 0;
+                background: #f8f9fa;
+            }
+            
+            .file-info {
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+            }
+            
+            .file-icon {
+                margin-right: 12px;
+                font-size: 24px;
+            }
+            
+            .file-details {
+                flex: 1;
+            }
+            
+            .file-name {
+                font-weight: 600;
+                color: #333;
+                margin-bottom: 4px;
+                word-break: break-all;
+            }
+            
+            .file-size {
+                font-size: 12px;
+                color: #666;
+            }
+            
+            .file-actions {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .file-download-btn, .file-view-btn {
+                padding: 6px 12px;
+                border: 1px solid #007bff;
+                background: #007bff;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            
+            .file-download-btn:hover, .file-view-btn:hover {
+                background: #0056b3;
+                border-color: #0056b3;
+                color: white;
+                text-decoration: none;
+            }
+            
+            .file-thumbnail {
+                text-align: center;
+            }
+            
+            .file-thumbnail-image {
+                max-width: 200px;
+                max-height: 150px;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: transform 0.2s ease;
+            }
+            
+            .file-thumbnail-image:hover {
+                transform: scale(1.05);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(modal);
 }
 
 // Helper function to create message avatar
