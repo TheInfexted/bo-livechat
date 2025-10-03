@@ -19,8 +19,21 @@
     
     <div class="chat-input-area">
         <form id="messageForm">
-            <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" required>
-            <button type="submit" class="btn btn-send">Send</button>
+            <div class="input-group">
+                <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" required>
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-outline-secondary btn-emoji" id="emoji-btn" onclick="toggleEmojiPicker()" title="Add Emoji">
+                        <i class="fas fa-smile"></i>
+                    </button>
+                    <button type="submit" class="btn btn-send">Send</button>
+                </div>
+            </div>
+            <!-- Emoji Picker Container -->
+            <div class="emoji-picker-container" id="emoji-picker-container" style="display: none;">
+                <div class="emoji-picker-wrapper">
+                    <div id="emoji-picker"></div>
+                </div>
+            </div>
         </form>
     </div>
 </div>

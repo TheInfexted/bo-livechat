@@ -18,7 +18,7 @@
     --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-    --border-radius: 0.5rem;
+    --border-radius: 1rem;
     --border-radius-sm: 0.25rem;
     --border-radius-lg: 1rem;
 }
@@ -628,15 +628,15 @@
 }
 
 .message.customer .message-content {
-    background: var(--light-bg);
+    background: #e8ecef;
     color: var(--text-primary);
-    border-bottom-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.1rem;
 }
 
 .message.agent .message-content {
     background: var(--primary-color);
     color: white;
-    border-bottom-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.1rem;
 }
 
 .message-time {
@@ -645,8 +645,15 @@
     margin-top: 0.25rem;
 }
 
+/* Customer message timestamp - left aligned */
+.message.customer .message-time {
+    text-align: left;
+}
+
+/* Agent message timestamp - right aligned */
 .message.agent .message-time {
     color: rgba(255, 255, 255, 0.8);
+    text-align: right;
 }
 
 /* Chat Input */
@@ -1329,5 +1336,253 @@
     .category-header {
         font-size: 0.7rem;
         padding: 0.25rem;
+    }
+}
+
+/* ============================================================================
+   IMAGE MESSAGE STYLES
+   ============================================================================ */
+
+/* Image message container - clean display without background */
+.message-image-container {
+    margin: 8px 0;
+    /* Remove background styling for clean image display */
+}
+
+/* Image message content - no chat bubble styling */
+.message-image-content {
+    /* No background, padding, or border-radius - just clean image display */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 100%;
+}
+
+.message.agent .message-image-content {
+    align-items: flex-end;
+}
+
+/* Clickable image in chat - clean display */
+.message-image {
+    width: 100%;
+    height: auto;
+    max-width: 400px;
+    max-height: 300px;
+    object-fit: cover;
+    cursor: pointer;
+    /* Remove border-radius and background for clean display */
+    transition: all 0.3s ease;
+}
+
+.message-image:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+/* Image fallback */
+.image-fallback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: var(--light-bg);
+    border-radius: 12px;
+    border: 2px dashed var(--border-color);
+    color: var(--text-secondary);
+}
+
+/* Image preview modal styles */
+.image-preview-modal .modal-dialog {
+    max-width: 90vw;
+}
+
+.image-preview-modal .modal-content {
+    border: none;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+}
+
+.image-preview-modal .modal-header {
+    background: var(--light-bg);
+    border-radius: 16px 16px 0 0;
+}
+
+.image-preview-modal .modal-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.image-preview-modal .modal-body {
+    padding: 0;
+}
+
+.image-preview-modal .modal-image {
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.image-preview-modal .image-info {
+    border-top: 1px solid var(--border-color);
+}
+
+.image-preview-modal .modal-footer {
+    background: var(--light-bg);
+    border-radius: 0 0 16px 16px;
+}
+
+/* Modern download button styling */
+.image-preview-modal .btn-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.image-preview-modal .btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary-color) 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.image-preview-modal .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .message-image {
+        max-width: 280px;
+        max-height: 200px;
+    }
+    
+    .image-preview-modal .modal-dialog {
+        max-width: 95vw;
+        margin: 10px;
+    }
+    
+    .image-preview-modal .modal-image {
+        max-height: 60vh !important;
+    }
+    
+    .image-preview-modal .btn-primary {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+}
+
+/* ============================================================================
+   FILE DOWNLOAD BUTTON STYLES (Modern Bootstrap 5)
+   ============================================================================ */
+
+/* Modern file download button styling - More specific selectors to avoid conflicts */
+.message-file .file-download-btn,
+.file-attachment .file-download-btn {
+    background: linear-gradient(135deg, var(--success-color) 0%, var(--success-hover) 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 10px 16px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    text-decoration: none !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: var(--shadow-sm) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.message-file .file-download-btn:hover,
+.file-attachment .file-download-btn:hover {
+    background: linear-gradient(135deg, var(--success-hover) 0%, var(--success-color) 100%) !important;
+    color: white !important;
+    text-decoration: none !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow) !important;
+}
+
+.message-file .file-download-btn:active,
+.file-attachment .file-download-btn:active {
+    transform: translateY(0) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.message-file .file-download-btn i,
+.file-attachment .file-download-btn i {
+    font-size: 12px !important;
+}
+
+/* File view button styling - More specific selectors */
+.message-file .file-view-btn,
+.file-attachment .file-view-btn {
+    background: linear-gradient(135deg, var(--info-color) 0%, var(--info-hover) 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 10px 16px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: var(--shadow-sm) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+}
+
+.message-file .file-view-btn:hover,
+.file-attachment .file-view-btn:hover {
+    background: linear-gradient(135deg, var(--info-hover) 0%, var(--info-color) 100%) !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow) !important;
+}
+
+.message-file .file-view-btn:active,
+.file-attachment .file-view-btn:active {
+    transform: translateY(0) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.message-file .file-view-btn i,
+.file-attachment .file-view-btn i {
+    font-size: 12px !important;
+}
+
+/* File actions container */
+.file-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 12px;
+}
+
+/* Responsive adjustments for file buttons - More specific selectors */
+@media (max-width: 768px) {
+    .message-file .file-download-btn,
+    .file-attachment .file-download-btn,
+    .message-file .file-view-btn,
+    .file-attachment .file-view-btn {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        gap: 6px !important;
+    }
+    
+    .message-file .file-actions,
+    .file-attachment .file-actions {
+        gap: 8px;
+        margin-top: 8px;
     }
 }

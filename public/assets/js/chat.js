@@ -915,6 +915,9 @@ function initializeMessageForm() {
         freshMessageForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // Close emoji picker if open
+            closeEmojiPickerOnSubmit();
+            
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
             
@@ -1656,10 +1659,8 @@ function updateWaitingSessions(sessions) {
 function makeLinksClickable(text) {
     if (!text) return text;
     
-    // First escape HTML to prevent XSS attacks
-    const div = document.createElement('div');
-    div.textContent = text;
-    const escapedText = div.innerHTML;
+    // First escape HTML to prevent XSS attacks while preserving emojis
+    const escapedText = escapeHtmlPreserveEmojis(text);
     
     // Enhanced URL regex pattern to catch various URL formats
     const urlPattern = /(https?:\/\/(?:[-\w.])+(?:\.[a-zA-Z]{2,})+(?:[\/#?][-\w._~:/#[\]@!$&'()*+,;=?%]*)?|www\.(?:[-\w.])+(?:\.[a-zA-Z]{2,})+(?:[\/#?][-\w._~:/#[\]@!$&'()*+,;=?%]*)?|(?:(?:[a-zA-Z0-9][-\w]*[a-zA-Z0-9]*\.)+[a-zA-Z]{2,})(?:[\/#?][-\w._~:/#[\]@!$&'()*+,;=?%]*)?)/gi;
@@ -1714,6 +1715,22 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Escape HTML while preserving emojis
+function escapeHtmlPreserveEmojis(text) {
+    if (!text) return text;
+    
+    // Create a temporary element
+    const div = document.createElement('div');
+    div.textContent = text;
+    
+    // Get the escaped HTML
+    let escaped = div.innerHTML;
+    
+    // Emojis are already properly encoded by textContent, so we don't need to do anything special
+    // The browser will handle emoji display correctly
+    return escaped;
 }
 
 function playNotificationSound() {
@@ -2042,3 +2059,165 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 });
+
+// ============================================================================
+// EMOJI PICKER FUNCTIONALITY
+// ============================================================================
+
+let emojiPicker = null;
+let isEmojiPickerOpen = false;
+
+// Toggle emoji picker visibility
+function toggleEmojiPicker() {
+    const container = document.getElementById('emoji-picker-container');
+    const button = document.getElementById('emoji-btn');
+    
+    if (!container || !button) return;
+    
+    if (isEmojiPickerOpen) {
+        closeEmojiPicker();
+    } else {
+        openEmojiPicker();
+    }
+}
+
+// Open emoji picker
+function openEmojiPicker() {
+    const container = document.getElementById('emoji-picker-container');
+    const button = document.getElementById('emoji-btn');
+    
+    if (!container || !button) return;
+    
+    // Show container
+    container.style.display = 'block';
+    isEmojiPickerOpen = true;
+    button.classList.add('active');
+    
+    // Initialize emoji picker if not already done
+    if (!emojiPicker) {
+        initializeEmojiPicker();
+    }
+    
+    // Position the picker
+    positionEmojiPicker();
+    
+    // Add click outside listener
+    setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+    }, 100);
+}
+
+// Close emoji picker
+function closeEmojiPicker() {
+    const container = document.getElementById('emoji-picker-container');
+    const button = document.getElementById('emoji-btn');
+    
+    if (!container || !button) return;
+    
+    container.style.display = 'none';
+    isEmojiPickerOpen = false;
+    button.classList.remove('active');
+    
+    // Remove click outside listener
+    document.removeEventListener('click', handleClickOutside);
+}
+
+// Initialize emoji picker
+function initializeEmojiPicker() {
+    const pickerElement = document.getElementById('emoji-picker');
+    if (!pickerElement) return;
+    
+    try {
+        emojiPicker = new EmojiMart.Picker({
+            data: EmojiMart.data,
+            onEmojiSelect: handleEmojiSelect,
+            previewPosition: 'none',
+            searchPosition: 'top',
+            navPosition: 'bottom',
+            set: 'apple', // Use Apple emoji set
+            theme: 'light',
+            perLine: 8,
+            maxFrequentRows: 2,
+            skinTonePosition: 'search',
+            previewPosition: 'none',
+            searchPosition: 'top',
+            navPosition: 'bottom',
+            noResultsText: 'No emojis found',
+            categories: [
+                'frequent',
+                'people',
+                'nature',
+                'foods',
+                'activity',
+                'places',
+                'objects',
+                'symbols',
+                'flags'
+            ]
+        });
+        
+        pickerElement.appendChild(emojiPicker);
+    } catch (error) {
+        console.error('Failed to initialize emoji picker:', error);
+    }
+}
+
+// Handle emoji selection
+function handleEmojiSelect(emoji) {
+    const messageInput = document.getElementById('messageInput');
+    if (!messageInput) return;
+    
+    // Insert emoji at cursor position
+    const cursorPos = messageInput.selectionStart;
+    const textBefore = messageInput.value.substring(0, cursorPos);
+    const textAfter = messageInput.value.substring(messageInput.selectionEnd);
+    
+    messageInput.value = textBefore + emoji.native + textAfter;
+    
+    // Set cursor position after the emoji
+    const newCursorPos = cursorPos + emoji.native.length;
+    messageInput.setSelectionRange(newCursorPos, newCursorPos);
+    
+    // Focus back to input
+    messageInput.focus();
+    
+    // Close picker
+    closeEmojiPicker();
+}
+
+// Position emoji picker
+function positionEmojiPicker() {
+    const container = document.getElementById('emoji-picker-container');
+    const inputArea = document.querySelector('.chat-input-area');
+    
+    if (!container || !inputArea) return;
+    
+    const inputRect = inputArea.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    
+    // Position above the input area
+    container.style.position = 'absolute';
+    container.style.bottom = '100%';
+    container.style.left = '0';
+    container.style.right = '0';
+    container.style.marginBottom = '8px';
+}
+
+// Handle clicks outside emoji picker
+function handleClickOutside(event) {
+    const container = document.getElementById('emoji-picker-container');
+    const button = document.getElementById('emoji-btn');
+    
+    if (!container || !button) return;
+    
+    if (!container.contains(event.target) && !button.contains(event.target)) {
+        closeEmojiPicker();
+    }
+}
+
+// Close emoji picker when form is submitted
+function closeEmojiPickerOnSubmit() {
+    if (isEmojiPickerOpen) {
+        closeEmojiPicker();
+    }
+}

@@ -10,6 +10,10 @@
     <link href="<?= base_url('assets/css/client-responsive.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/date.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/file-upload.css') ?>?v=<?= time() ?>" rel="stylesheet">
+    <!-- EmojiMart CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/@emoji-mart/css@latest/emoji-mart.css" rel="stylesheet">
+    <!-- Custom Emoji Picker CSS -->
+    <link href="<?= base_url('assets/css/emoji-picker.css') ?>?v=<?= time() ?>" rel="stylesheet">
 </head>
 <body class="client-chat-dashboard">
     <!-- Header -->
@@ -197,6 +201,9 @@
                                         </button>
                                         <input type="text" id="message-input" class="form-control" placeholder="Type your message..." maxlength="1000">
                                         <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-secondary btn-emoji" id="emoji-btn" onclick="toggleEmojiPicker()" title="Add Emoji">
+                                                <i class="fas fa-smile"></i>
+                                            </button>
                                             <button type="button" class="btn btn-outline-secondary btn-quick-responses" id="quick-responses-btn" onclick="toggleQuickResponses()" title="Quick Responses">
                                                 <i class="fas fa-bolt"></i>
                                             </button>
@@ -204,6 +211,12 @@
                                                 <i class="fas fa-paper-plane"></i>
                                                 Send
                                             </button>
+                                        </div>
+                                    </div>
+                                    <!-- Emoji Picker Container -->
+                                    <div class="emoji-picker-container" id="emoji-picker-container" style="display: none;">
+                                        <div class="emoji-picker-wrapper">
+                                            <div id="emoji-picker"></div>
                                         </div>
                                     </div>
                                 </form>
@@ -378,6 +391,9 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- EmojiMart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emoji-mart/js@latest/dist/emoji-mart.js"></script>
     
     <!-- Client Chat Management JS -->
     <script src="<?= base_url('assets/js/client-chat.js?v=' . time()) ?>"></script>

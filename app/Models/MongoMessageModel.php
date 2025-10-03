@@ -306,9 +306,26 @@ class MongoMessageModel
                 // Add sender name logic (similar to original MessageModel)
                 $message['sender_name'] = $this->getSenderName($message);
                 
+                // Ensure both _id and id fields are available for JavaScript compatibility
+                if (isset($message['_id'])) {
+                    $originalId = $message['_id'];
+                    
+                    // Handle different ObjectId types more robustly
+                    if ($originalId instanceof \MongoDB\BSON\ObjectId) {
+                        $message['_id'] = (string)$originalId;
+                    } elseif (is_object($originalId) && method_exists($originalId, '__toString')) {
+                        $message['_id'] = $originalId->__toString();
+                    } else {
+                        $message['_id'] = (string)$originalId;
+                    }
+                    
+                    $message['id'] = $message['_id']; // Set id to the string version
+                    
+                }
+                
                 // Include file data if present and convert relative paths to full URLs
                 if (isset($message['file_data']) && is_array($message['file_data'])) {
-                    // Convert relative paths to full file server URLs for frontend consumption
+                    // Use external file server URLs since files are stored in centralized storage
                     if (isset($message['file_data']['file_path'])) {
                         $message['file_data']['file_url'] = 'https://files.kopisugar.cc/livechat/default/chat/' . $message['file_data']['file_path'];
                     }
@@ -378,9 +395,26 @@ class MongoMessageModel
                 
                 $message['sender_name'] = $this->getSenderName($message);
                 
+                // Ensure both _id and id fields are available for JavaScript compatibility
+                if (isset($message['_id'])) {
+                    $originalId = $message['_id'];
+                    
+                    // Handle different ObjectId types more robustly
+                    if ($originalId instanceof \MongoDB\BSON\ObjectId) {
+                        $message['_id'] = (string)$originalId;
+                    } elseif (is_object($originalId) && method_exists($originalId, '__toString')) {
+                        $message['_id'] = $originalId->__toString();
+                    } else {
+                        $message['_id'] = (string)$originalId;
+                    }
+                    
+                    $message['id'] = $message['_id']; // Set id to the string version
+                    
+                }
+                
                 // Include file data if present and convert relative paths to full URLs
                 if (isset($message['file_data']) && is_array($message['file_data'])) {
-                    // Convert relative paths to full file server URLs for frontend consumption
+                    // Use external file server URLs since files are stored in centralized storage
                     if (isset($message['file_data']['file_path'])) {
                         $message['file_data']['file_url'] = 'https://files.kopisugar.cc/livechat/default/chat/' . $message['file_data']['file_path'];
                     }
@@ -719,20 +753,32 @@ class MongoMessageModel
                                 $messageArray['created_at'] = $messageArray['timestamp'];
                             }
                             
+                            // Convert ObjectId to string properly
+                            $messageId = $messageArray['_id'];
+                            if ($messageId instanceof \MongoDB\BSON\ObjectId) {
+                                $messageId = (string)$messageId;
+                            } elseif (is_object($messageId) && method_exists($messageId, '__toString')) {
+                                $messageId = $messageId->__toString();
+                            } else {
+                                $messageId = (string)$messageId;
+                            }
+                            
                             // Convert relative paths to full URLs for file_data
                             $fileData = $messageArray['file_data'] ?? null;
                             if ($fileData && is_array($fileData)) {
+                                $baseUrl = base_url();
+                                
                                 if (isset($fileData['file_path'])) {
-                                    $fileData['file_url'] = 'https://files.kopisugar.cc/livechat/default/chat/' . $fileData['file_path'];
+                                    $fileData['file_url'] = $baseUrl . 'client/download-file/' . $messageId;
                                 }
                                 
                                 if (isset($fileData['thumbnail_path'])) {
-                                    $fileData['thumbnail_url'] = 'https://files.kopisugar.cc/livechat/default/thumbs/' . $fileData['thumbnail_path'];
+                                    $fileData['thumbnail_url'] = $baseUrl . 'client/thumbnail/' . $messageId;
                                 }
                             }
                             
                             return [
-                                'id' => (string)$messageArray['_id'],
+                                'id' => $messageId,
                                 'session_id' => $messageArray['session_id'],
                                 'sender_type' => $messageArray['sender_type'],
                                 'sender_id' => $messageArray['sender_id'] ?? null,

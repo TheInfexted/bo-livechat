@@ -93,6 +93,8 @@ $routes->group('client', ['filter' => ['client_domain', 'clientfilter']], functi
     $routes->post('upload-file', 'ChatController::uploadFile');
     $routes->get('download-file/(:segment)', 'ChatController::downloadFile/$1');
     $routes->get('thumbnail/(:segment)', 'ChatController::getThumbnail/$1');
+    $routes->get('debug-file-storage/(:segment)', 'ChatController::debugFileStorage/$1');
+    $routes->get('test-message-data/(:segment)', 'ChatController::testMessageData/$1');
     
     // Keyword Responses routes (clients only)
     $routes->get('keyword-responses', 'ClientController::keywordResponses');

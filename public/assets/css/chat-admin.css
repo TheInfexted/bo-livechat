@@ -1220,16 +1220,18 @@ html, body {
     font-size: 10px;
     color: rgba(0, 0, 0, 0.5);
     margin-top: 4px;
-    text-align: right;
 }
 
+/* Customer message timestamp - left aligned */
+.message.customer .message-time {
+    text-align: left;
+    color: rgba(15, 14, 14, 0.8);
+}
+
+/* Agent message timestamp - right aligned */
 .message.agent .message-time {
     color: rgba(255, 255, 255, 0.7);
-}
-
-.message.customer .message-time {
     text-align: right;
-    color: rgba(15, 14, 14, 0.8);
 }
 
 /* Update messages container for better spacing */

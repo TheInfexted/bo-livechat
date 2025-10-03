@@ -192,11 +192,53 @@ function setupEventListeners() {
             const fileName = e.target.getAttribute('data-file-name');
             
             if (messageId && fileName) {
-                // Create fileData object from attributes
-                const fileData = {
-                    original_name: fileName,
-                    file_type: 'image' // We know it's an image since View button/thumbnail only shows for images
-                };
+                // Try to get the full fileData from the message element
+                const messageElement = e.target.closest('.message');
+                let fileData = null;
+                
+                if (messageElement) {
+                    // First try to get stored file data from data attribute
+                    const storedFileData = messageElement.getAttribute('data-file-data');
+                    if (storedFileData) {
+                        try {
+                            fileData = JSON.parse(storedFileData);
+                        } catch (e) {
+                            console.warn('Failed to parse stored file data:', e);
+                        }
+                    }
+                    
+                    // Fallback: extract from rendered HTML
+                    if (!fileData) {
+                        const fileContainer = messageElement.querySelector('.message-file');
+                        if (fileContainer) {
+                            const downloadBtn = fileContainer.querySelector('.file-download-btn');
+                            const thumbnailImg = fileContainer.querySelector('.file-thumbnail-image');
+                            
+                            if (downloadBtn && thumbnailImg) {
+                                fileData = {
+                                    original_name: fileName,
+                                    file_type: 'image',
+                                    file_url: downloadBtn.href,
+                                    thumbnail_url: thumbnailImg.src,
+                                    thumbnail_path: thumbnailImg.src.includes('thumbnail/') ? 'extracted_from_url' : null
+                                };
+                            }
+                        }
+                    }
+                }
+                
+                // Final fallback: create minimal fileData object
+                if (!fileData) {
+                    fileData = {
+                        original_name: fileName,
+                        file_type: 'image'
+                    };
+                }
+                
+                // Debug logging for troubleshooting
+                if (window.location.hostname === 'localhost' || window.location.hostname.includes('test')) {
+                    console.log('Opening image preview with fileData:', fileData);
+                }
                 
                 showImagePreview(fileData, messageId);
             }
@@ -721,6 +763,7 @@ function loadChatHistoryForSession(sessionId) {
                         message.timestamp = message.created_at;
                     }
                     
+                    
                     // Check if we need to add a date separator
                     const messageDate = new Date(message.created_at || message.timestamp).toDateString();
                     if (previousDate !== messageDate) {
@@ -906,8 +949,23 @@ function displayClientMessage(message) {
         let messageContent = '';
         if (message.file_data && typeof message.file_data === 'object') {
             // Message has file attachment
-            const fileMessage = renderClientFileMessage(message.file_data, message.id);
+            // Use _id from MongoDB or fallback to id, ensure it's a string
+            let messageId = message._id || message.id;
+            
+            // More robust ObjectId handling
+            if (messageId && typeof messageId === 'object' && messageId.toString) {
+                messageId = messageId.toString();
+            } else {
+                messageId = String(messageId);
+            }
+            
+            
+            const fileMessage = renderClientFileMessage(message.file_data, messageId);
             messageContent = fileMessage;
+            
+            // Store file data in the message element for later access
+            messageDiv.setAttribute('data-file-data', JSON.stringify(message.file_data));
+            messageDiv.setAttribute('data-message-id', messageId);
             
             // If there's also text content separate from default file message, add it
             if (message.message && 
@@ -921,15 +979,38 @@ function displayClientMessage(message) {
             messageContent = makeLinksClickable(message.message);
         }
         
-        messageDiv.innerHTML = `
-            <div class="avatar ${message.sender_type}">
-                ${avatar}
-            </div>
-            <div class="message-content">
-                ${messageContent}
-                <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
-            </div>
-        `;
+        // For image messages, render image outside of message-content bubble
+        if (message.file_data && message.file_data.file_type === 'image') {
+            messageDiv.innerHTML = `
+                <div class="avatar ${message.sender_type}">
+                    ${avatar}
+                </div>
+                <div class="message-image-content">
+                    ${messageContent}
+                    <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
+                </div>
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                <div class="avatar ${message.sender_type}">
+                    ${avatar}
+                </div>
+                <div class="message-content">
+                    ${messageContent}
+                    <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
+                </div>
+            `;
+        }
+        
+        // Attach click handlers for images after DOM is updated
+        if (message.file_data && message.file_data.file_type === 'image') {
+            const imageElement = messageDiv.querySelector('.message-image');
+            if (imageElement) {
+                imageElement.addEventListener('click', function() {
+                    openImageModal(this);
+                });
+            }
+        }
     }
     
     container.appendChild(messageDiv);
@@ -973,11 +1054,27 @@ function formatMessageTime(timestamp) {
     });
 }
 
+// Escape HTML while preserving emojis
+function escapeHtmlPreserveEmojis(text) {
+    if (!text) return text;
+    
+    // Create a temporary element
+    const div = document.createElement('div');
+    div.textContent = text;
+    
+    // Get the escaped HTML
+    let escaped = div.innerHTML;
+    
+    // Emojis are already properly encoded by textContent, so we don't need to do anything special
+    // The browser will handle emoji display correctly
+    return escaped;
+}
+
 function makeLinksClickable(text) {
     if (!text) return text;
     
-    // Escape HTML first to prevent XSS
-    const escapedText = escapeHtml(text);
+    // Escape HTML first to prevent XSS while preserving emojis
+    const escapedText = escapeHtmlPreserveEmojis(text);
     
     // URL regex pattern to match various URL formats
     const urlPattern = /(https?:\/\/[^\s<>"']+)/gi;
@@ -1073,6 +1170,9 @@ function getDateType(dateString) {
 // Global sendMessage function for form submission
 function sendMessage(event) {
     if (event) event.preventDefault();
+    
+    // Close emoji picker if open
+    closeEmojiPickerOnSubmit();
     
     // Check if we have a file to upload
     if (selectedFile) {
@@ -2404,8 +2504,118 @@ function initMobileResponsive() {
 // FILE MESSAGE RENDERING
 // ============================================================================
 
+// Render image messages directly in chat
+function renderImageMessage(fileData, messageId) {
+    const imageContainer = document.createElement('div');
+    imageContainer.className = 'message-image-container';
+    
+    // Create clickable image element
+    const img = document.createElement('img');
+    img.className = 'message-image';
+    img.alt = fileData.original_name || 'Image';
+    img.title = fileData.original_name || 'Click to view full size';
+    
+    // Set image source using local thumbnail endpoint
+    const thumbnailBaseUrl = typeof baseUrl !== 'undefined' ? baseUrl : (typeof window.location !== 'undefined' ? window.location.origin + '/' : '/');
+    img.src = `${thumbnailBaseUrl}client/thumbnail/${messageId}`;
+    
+    // Store metadata for modal
+    img.setAttribute('data-message-id', messageId);
+    img.setAttribute('data-file-name', fileData.original_name || 'Unknown File');
+    img.setAttribute('data-file-size', fileData.compressed_size || fileData.file_size);
+    img.setAttribute('data-original-url', fileData.file_url || `${thumbnailBaseUrl}client/download-file/${messageId}`);
+    
+    // Click handler will be attached after DOM insertion
+    
+    // Add error handling
+    img.onerror = function() {
+        console.warn('Image failed to load:', img.src);
+        // Replace with fallback
+        const fallbackContainer = document.createElement('div');
+        fallbackContainer.className = 'image-fallback';
+        fallbackContainer.innerHTML = `
+            <i class="fas fa-image text-muted" style="font-size: 48px;"></i>
+            <div class="text-muted mt-2">Image failed to load</div>
+        `;
+        imageContainer.innerHTML = '';
+        imageContainer.appendChild(fallbackContainer);
+    };
+    
+    imageContainer.appendChild(img);
+    return imageContainer.outerHTML;
+}
+
+// Open image modal for full-size preview
+function openImageModal(imgElement) {
+    const messageId = imgElement.getAttribute('data-message-id');
+    const fileName = imgElement.getAttribute('data-file-name');
+    const fileSize = imgElement.getAttribute('data-file-size');
+    const originalUrl = imgElement.getAttribute('data-original-url');
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div class="modal fade image-preview-modal" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title" id="imageModalLabel">
+                            <i class="fas fa-image me-2"></i>${fileName}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center p-0">
+                        <img src="${originalUrl}" class="img-fluid modal-image" alt="${fileName}" style="max-height: 70vh; width: auto;">
+                        <div class="image-info p-3 bg-light">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                ${formatFileSize(fileSize)} • Click outside to close
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center">
+                        <a href="${originalUrl}" download="${fileName}" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>Download Image
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.querySelector('.image-preview-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Initialize and show modal
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+    
+    // Clean up modal when hidden
+    document.getElementById('imageModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
 // File message rendering function
 function renderClientFileMessage(fileData, messageId) {
+    // Ensure messageId is a string
+    if (messageId && typeof messageId === 'object' && messageId.toString) {
+        messageId = messageId.toString();
+    } else {
+        messageId = String(messageId);
+    }
+    
+    // For images, display them directly in chat
+    if (fileData.file_type === 'image') {
+        return renderImageMessage(fileData, messageId);
+    }
+    
+    // For non-image files, use the existing card format
     const fileContainer = document.createElement('div');
     fileContainer.className = `message-file file-type-${fileData.file_type || 'other'}`;
     
@@ -2485,18 +2695,36 @@ function renderClientFileMessage(fileData, messageId) {
         if (fileData.thumbnail_path) {
             const img = document.createElement('img');
             
-            // Use full file server thumbnail URL if available, otherwise fallback to local route
-            if (fileData.thumbnail_url) {
-                img.src = fileData.thumbnail_url;
-            } else {
-                const thumbnailBaseUrl = typeof baseUrl !== 'undefined' ? baseUrl : (typeof window.location !== 'undefined' ? window.location.origin + '/' : '/');
-                img.src = `${thumbnailBaseUrl}client/thumbnail/${messageId}`;
-            }
+            // Use local thumbnail endpoint as primary method for consistency
+            const thumbnailBaseUrl = typeof baseUrl !== 'undefined' ? baseUrl : (typeof window.location !== 'undefined' ? window.location.origin + '/' : '/');
+            img.src = `${thumbnailBaseUrl}client/thumbnail/${messageId}`;
             
             img.alt = fileData.original_name;
             img.setAttribute('data-message-id', messageId);
             img.setAttribute('data-file-name', fileData.original_name || 'Unknown File');
             img.className = 'file-thumbnail-image';
+            
+            // Add error handling for broken images
+            img.onerror = function() {
+                console.warn('Thumbnail failed to load:', img.src);
+                // Replace with fallback icon
+                const fallbackIcon = document.createElement('i');
+                fallbackIcon.className = 'fas fa-image text-primary';
+                fallbackIcon.style.fontSize = '24px';
+                fallbackIcon.style.color = '#007bff';
+                
+                // Clear the thumbnail container and add fallback
+                thumbnail.innerHTML = '';
+                thumbnail.appendChild(fallbackIcon);
+            };
+            
+            img.onload = function() {
+                // Debug logging for successful loads
+                if (window.location.hostname === 'localhost' || window.location.hostname.includes('test')) {
+                    console.log('Thumbnail loaded successfully:', img.src);
+                }
+            };
+            
             thumbnail.appendChild(img);
         } else {
             // Fallback icon for images without thumbnails
@@ -2925,6 +3153,171 @@ function showError(message) {
     // You can implement a toast notification or alert here
     console.error(message);
     alert(message);
+}
+
+// ============================================================================
+// EMOJI PICKER FUNCTIONALITY
+// ============================================================================
+
+let emojiPicker = null;
+let isEmojiPickerOpen = false;
+
+// Toggle emoji picker visibility
+function toggleEmojiPicker() {
+    const container = document.getElementById('emoji-picker-container');
+    const button = document.getElementById('emoji-btn');
+    
+    if (!container || !button) return;
+    
+    if (isEmojiPickerOpen) {
+        closeEmojiPicker();
+    } else {
+        openEmojiPicker();
+    }
+}
+
+// Open emoji picker
+function openEmojiPicker() {
+    const container = document.getElementById('emoji-picker-container');
+    const button = document.getElementById('emoji-btn');
+    
+    if (!container || !button) return;
+    
+    // Close other pickers first
+    closeQuickResponses();
+    
+    // Show container
+    container.style.display = 'block';
+    isEmojiPickerOpen = true;
+    button.classList.add('active');
+    
+    // Initialize emoji picker if not already done
+    if (!emojiPicker) {
+        initializeEmojiPicker();
+    }
+    
+    // Position the picker
+    positionEmojiPicker();
+    
+    // Add click outside listener
+    setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+    }, 100);
+}
+
+// Close emoji picker
+function closeEmojiPicker() {
+    const container = document.getElementById('emoji-picker-container');
+    const button = document.getElementById('emoji-btn');
+    
+    if (!container || !button) return;
+    
+    container.style.display = 'none';
+    isEmojiPickerOpen = false;
+    button.classList.remove('active');
+    
+    // Remove click outside listener
+    document.removeEventListener('click', handleClickOutside);
+}
+
+// Initialize emoji picker
+function initializeEmojiPicker() {
+    const pickerElement = document.getElementById('emoji-picker');
+    if (!pickerElement) return;
+    
+    try {
+        emojiPicker = new EmojiMart.Picker({
+            data: EmojiMart.data,
+            onEmojiSelect: handleEmojiSelect,
+            previewPosition: 'none',
+            searchPosition: 'top',
+            navPosition: 'bottom',
+            set: 'apple', // Use Apple emoji set
+            theme: 'light',
+            perLine: 8,
+            maxFrequentRows: 2,
+            skinTonePosition: 'search',
+            previewPosition: 'none',
+            searchPosition: 'top',
+            navPosition: 'bottom',
+            noResultsText: 'No emojis found',
+            categories: [
+                'frequent',
+                'people',
+                'nature',
+                'foods',
+                'activity',
+                'places',
+                'objects',
+                'symbols',
+                'flags'
+            ]
+        });
+        
+        pickerElement.appendChild(emojiPicker);
+    } catch (error) {
+        console.error('Failed to initialize emoji picker:', error);
+    }
+}
+
+// Handle emoji selection
+function handleEmojiSelect(emoji) {
+    const messageInput = document.getElementById('message-input');
+    if (!messageInput) return;
+    
+    // Insert emoji at cursor position
+    const cursorPos = messageInput.selectionStart;
+    const textBefore = messageInput.value.substring(0, cursorPos);
+    const textAfter = messageInput.value.substring(messageInput.selectionEnd);
+    
+    messageInput.value = textBefore + emoji.native + textAfter;
+    
+    // Set cursor position after the emoji
+    const newCursorPos = cursorPos + emoji.native.length;
+    messageInput.setSelectionRange(newCursorPos, newCursorPos);
+    
+    // Focus back to input
+    messageInput.focus();
+    
+    // Close picker
+    closeEmojiPicker();
+}
+
+// Position emoji picker
+function positionEmojiPicker() {
+    const container = document.getElementById('emoji-picker-container');
+    const inputArea = document.getElementById('chat-input-area');
+    
+    if (!container || !inputArea) return;
+    
+    const inputRect = inputArea.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    
+    // Position above the input area
+    container.style.position = 'absolute';
+    container.style.bottom = '100%';
+    container.style.left = '0';
+    container.style.right = '0';
+    container.style.marginBottom = '8px';
+}
+
+// Handle clicks outside emoji picker
+function handleClickOutside(event) {
+    const container = document.getElementById('emoji-picker-container');
+    const button = document.getElementById('emoji-btn');
+    
+    if (!container || !button) return;
+    
+    if (!container.contains(event.target) && !button.contains(event.target)) {
+        closeEmojiPicker();
+    }
+}
+
+// Close emoji picker when form is submitted
+function closeEmojiPickerOnSubmit() {
+    if (isEmojiPickerOpen) {
+        closeEmojiPicker();
+    }
 }
 
 // ============================================================================

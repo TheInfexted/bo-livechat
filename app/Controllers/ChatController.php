@@ -206,6 +206,15 @@ class ChatController extends General
                 $messages = $mongoModel->getSessionMessages($sessionId);
             }
             
+            // Force ObjectId conversion at the controller level as a safety measure
+            foreach ($messages as &$message) {
+                if (isset($message['_id']) && is_object($message['_id'])) {
+                    $message['_id'] = (string)$message['_id'];
+                    $message['id'] = $message['_id'];
+                }
+            }
+            unset($message); // Break the reference
+            
             return $this->jsonResponse([
                 'success' => true,
                 'messages' => $messages,
@@ -1235,15 +1244,32 @@ class ChatController extends General
             }
             
             $fileData = $message['file_data'];
-            $filePath = '/www/wwwroot/files/livechat/default/chat/' . $fileData['file_path'];
             
-            error_log("Looking for file at path: {$filePath}");
+            // Try multiple possible file paths (prioritize centralized storage since that's where files are actually stored)
+            $possiblePaths = [
+                '/www/wwwroot/files/livechat/default/chat/' . $fileData['file_path'],
+                FCPATH . 'uploads/chat/' . $fileData['file_path'],
+                FCPATH . 'public/uploads/chat/' . $fileData['file_path'],
+                WRITEPATH . 'uploads/chat/' . $fileData['file_path']
+            ];
             
-            if (!file_exists($filePath)) {
-                error_log("Download failed: File does not exist at path: {$filePath}");
-                error_log("File data: " . json_encode($fileData));
+            $filePath = null;
+            foreach ($possiblePaths as $path) {
+                if (file_exists($path)) {
+                    $filePath = $path;
+                    break;
+                }
+            }
+            
+            error_log("Looking for file at paths: " . json_encode($possiblePaths));
+            error_log("File data: " . json_encode($fileData));
+            
+            if (!$filePath) {
+                error_log("Download failed: File does not exist at any of the expected paths");
                 throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
             }
+            
+            error_log("File found at: {$filePath}");
             
             error_log("File found, serving download: {$fileData['original_name']}");
             
@@ -1281,9 +1307,30 @@ class ChatController extends General
             }
             
             $fileData = $message['file_data'];
-            $thumbnailPath = '/www/wwwroot/files/livechat/default/thumbs/' . $fileData['thumbnail_path'];
             
-            if (!file_exists($thumbnailPath)) {
+            // Try multiple possible thumbnail paths (prioritize centralized storage)
+            $possibleThumbnailPaths = [
+                '/www/wwwroot/files/livechat/default/thumbs/' . $fileData['thumbnail_path'],
+                FCPATH . 'uploads/chat/thumbs/' . $fileData['thumbnail_path'],
+                FCPATH . 'public/uploads/chat/thumbs/' . $fileData['thumbnail_path'],
+                WRITEPATH . 'uploads/chat/thumbs/' . $fileData['thumbnail_path']
+            ];
+            
+            error_log("Looking for thumbnail at paths: " . json_encode($possibleThumbnailPaths));
+            error_log("Thumbnail data: " . json_encode($fileData));
+            
+            $thumbnailPath = null;
+            foreach ($possibleThumbnailPaths as $path) {
+                error_log("Checking thumbnail path: {$path}, exists: " . (file_exists($path) ? 'YES' : 'NO'));
+                if (file_exists($path)) {
+                    $thumbnailPath = $path;
+                    error_log("Thumbnail found at: {$thumbnailPath}");
+                    break;
+                }
+            }
+            
+            if (!$thumbnailPath) {
+                error_log("Thumbnail not found at any of the expected paths: " . json_encode($possibleThumbnailPaths));
                 throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
             }
             
@@ -1296,6 +1343,89 @@ class ChatController extends General
             
         } catch (\Exception $e) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+    }
+    
+    /**
+     * Debug endpoint to check file storage locations
+     */
+    public function debugFileStorage($messageId)
+    {
+        if (!$messageId) {
+            return $this->jsonResponse(['error' => 'Message ID required'], 400);
+        }
+        
+        try {
+            // Get message from MongoDB
+            $mongoModel = new \App\Models\MongoMessageModel();
+            $message = $mongoModel->getMessageById($messageId);
+            
+            if (!$message || !isset($message['file_data'])) {
+                return $this->jsonResponse(['error' => 'Message or file data not found'], 404);
+            }
+            
+            $fileData = $message['file_data'];
+            
+            // Check various possible file locations
+            $locations = [
+                'FCPATH uploads/chat' => FCPATH . 'uploads/chat/' . $fileData['file_path'],
+                'FCPATH public/uploads/chat' => FCPATH . 'public/uploads/chat/' . $fileData['file_path'],
+                'WRITEPATH uploads/chat' => WRITEPATH . 'uploads/chat/' . $fileData['file_path'],
+                'Centralized storage' => '/www/wwwroot/files/livechat/default/chat/' . $fileData['file_path']
+            ];
+            
+            $results = [];
+            foreach ($locations as $name => $path) {
+                $results[$name] = [
+                    'path' => $path,
+                    'exists' => file_exists($path),
+                    'readable' => file_exists($path) ? is_readable($path) : false,
+                    'size' => file_exists($path) ? filesize($path) : 0
+                ];
+            }
+            
+            return $this->jsonResponse([
+                'message_id' => $messageId,
+                'file_data' => $fileData,
+                'locations' => $results,
+                'constants' => [
+                    'FCPATH' => FCPATH,
+                    'WRITEPATH' => WRITEPATH
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * Test endpoint to check raw message data
+     */
+    public function testMessageData($sessionId)
+    {
+        if (!$sessionId) {
+            return $this->jsonResponse(['error' => 'Session ID required'], 400);
+        }
+        
+        try {
+            $mongoModel = new \App\Models\MongoMessageModel();
+            $messages = $mongoModel->getSessionMessages($sessionId);
+            
+            $fileMessages = array_filter($messages, function($msg) {
+                return isset($msg['file_data']);
+            });
+            
+            return $this->jsonResponse([
+                'session_id' => $sessionId,
+                'total_messages' => count($messages),
+                'file_messages' => count($fileMessages),
+                'sample_file_message' => !empty($fileMessages) ? $fileMessages[0] : null,
+                'all_messages' => $messages
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
 }

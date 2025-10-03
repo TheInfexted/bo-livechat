@@ -188,9 +188,15 @@ body {
     margin-top: 4px;
 }
 
+/* Customer message timestamp - left aligned */
 .message.customer .message-time {
-    text-align: right;
+    text-align: left;
     color: rgba(15, 14, 14, 0.8);
+}
+
+/* Agent message timestamp - right aligned */
+.message.agent .message-time {
+    text-align: right;
 }
 
 /* Typing Indicator */

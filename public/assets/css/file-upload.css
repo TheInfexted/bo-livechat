@@ -381,13 +381,11 @@
     transform: translateY(-1px);
 }
 
-/* Image preview in messages */
+/* Image preview in messages - clean display */
 .message-image {
     max-width: 250px;
     margin: 8px 0;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 0.25rem;
 }
 
 .message-image img {
