@@ -2095,7 +2095,14 @@ function openEmojiPicker() {
     
     // Initialize emoji picker if not already done
     if (!emojiPicker) {
-        initializeEmojiPicker();
+        // Wait a bit for EmojiMart to load if it's not ready
+        if (typeof EmojiMart === 'undefined') {
+            setTimeout(() => {
+                initializeEmojiPicker();
+            }, 500);
+        } else {
+            initializeEmojiPicker();
+        }
     }
     
     // Position the picker
@@ -2127,39 +2134,60 @@ function initializeEmojiPicker() {
     const pickerElement = document.getElementById('emoji-picker');
     if (!pickerElement) return;
     
-    try {
-        emojiPicker = new EmojiMart.Picker({
-            data: EmojiMart.data,
-            onEmojiSelect: handleEmojiSelect,
-            previewPosition: 'none',
-            searchPosition: 'top',
-            navPosition: 'bottom',
-            set: 'apple', // Use Apple emoji set
-            theme: 'light',
-            perLine: 8,
-            maxFrequentRows: 2,
-            skinTonePosition: 'search',
-            previewPosition: 'none',
-            searchPosition: 'top',
-            navPosition: 'bottom',
-            noResultsText: 'No emojis found',
-            categories: [
-                'frequent',
-                'people',
-                'nature',
-                'foods',
-                'activity',
-                'places',
-                'objects',
-                'symbols',
-                'flags'
-            ]
-        });
-        
-        pickerElement.appendChild(emojiPicker);
-    } catch (error) {
-        console.error('Failed to initialize emoji picker:', error);
-    }
+    console.log('Initializing custom emoji picker...');
+    createCustomEmojiPicker(pickerElement);
+}
+
+// Create a simple emoji picker with only smiley faces
+function createCustomEmojiPicker(container) {
+    console.log('Creating simple emoji picker...');
+    
+    // Clear any existing content
+    container.innerHTML = '';
+    
+    // Simple smiley faces only
+    const smileyEmojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
+    
+    // Create the simple picker structure
+    const picker = document.createElement('div');
+    picker.className = 'simple-emoji-picker';
+    picker.innerHTML = `
+        <div class="emoji-grid">
+            ${smileyEmojis.map(emoji => 
+                `<span class="emoji-item" onclick="selectEmoji('${emoji}')" title="${emoji}">${emoji}</span>`
+            ).join('')}
+        </div>
+    `;
+    
+    container.appendChild(picker);
+    
+    // Style the container
+    container.style.display = 'block';
+    
+    console.log('Simple emoji picker created successfully');
+}
+
+// Handle emoji selection
+function selectEmoji(emoji) {
+    const messageInput = document.getElementById('messageInput');
+    if (!messageInput) return;
+    
+    // Insert emoji at cursor position
+    const cursorPos = messageInput.selectionStart;
+    const textBefore = messageInput.value.substring(0, cursorPos);
+    const textAfter = messageInput.value.substring(messageInput.selectionEnd);
+    
+    messageInput.value = textBefore + emoji + textAfter;
+    
+    // Set cursor position after the emoji
+    const newCursorPos = cursorPos + emoji.length;
+    messageInput.setSelectionRange(newCursorPos, newCursorPos);
+    
+    // Focus back to input
+    messageInput.focus();
+    
+    // Close picker
+    closeEmojiPicker();
 }
 
 // Handle emoji selection

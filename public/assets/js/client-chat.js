@@ -3178,22 +3178,36 @@ function toggleEmojiPicker() {
 
 // Open emoji picker
 function openEmojiPicker() {
+    console.log('Opening emoji picker...');
     const container = document.getElementById('emoji-picker-container');
     const button = document.getElementById('emoji-btn');
     
-    if (!container || !button) return;
+    if (!container || !button) {
+        console.error('Emoji picker container or button not found');
+        return;
+    }
     
-    // Close other pickers first
-    closeQuickResponses();
+    console.log('Container found:', container);
+    console.log('Button found:', button);
+    
+    // Close other pickers first (if they exist)
+    if (typeof closeQuickResponses === 'function') {
+        closeQuickResponses();
+    }
     
     // Show container
     container.style.display = 'block';
     isEmojiPickerOpen = true;
     button.classList.add('active');
     
+    console.log('Container display set to block, isEmojiPickerOpen:', isEmojiPickerOpen);
+    
     // Initialize emoji picker if not already done
     if (!emojiPicker) {
+        console.log('Initializing emoji picker...');
         initializeEmojiPicker();
+    } else {
+        console.log('Emoji picker already initialized');
     }
     
     // Position the picker
@@ -3225,39 +3239,75 @@ function initializeEmojiPicker() {
     const pickerElement = document.getElementById('emoji-picker');
     if (!pickerElement) return;
     
-    try {
-        emojiPicker = new EmojiMart.Picker({
-            data: EmojiMart.data,
-            onEmojiSelect: handleEmojiSelect,
-            previewPosition: 'none',
-            searchPosition: 'top',
-            navPosition: 'bottom',
-            set: 'apple', // Use Apple emoji set
-            theme: 'light',
-            perLine: 8,
-            maxFrequentRows: 2,
-            skinTonePosition: 'search',
-            previewPosition: 'none',
-            searchPosition: 'top',
-            navPosition: 'bottom',
-            noResultsText: 'No emojis found',
-            categories: [
-                'frequent',
-                'people',
-                'nature',
-                'foods',
-                'activity',
-                'places',
-                'objects',
-                'symbols',
-                'flags'
-            ]
-        });
-        
-        pickerElement.appendChild(emojiPicker);
-    } catch (error) {
-        console.error('Failed to initialize emoji picker:', error);
-    }
+    console.log('Initializing custom emoji picker...');
+    createCustomEmojiPicker(pickerElement);
+}
+
+// Create a simple emoji picker with only smiley faces
+function createCustomEmojiPicker(container) {
+    console.log('Creating simple emoji picker...');
+    
+    // Clear any existing content
+    container.innerHTML = '';
+    
+    // Simple smiley faces only
+    const smileyEmojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'];
+    
+    // Create the simple picker structure
+    const picker = document.createElement('div');
+    picker.className = 'simple-emoji-picker';
+    picker.innerHTML = `
+        <div class="emoji-grid">
+            ${smileyEmojis.map(emoji => 
+                `<span class="emoji-item" onclick="selectEmoji('${emoji}')" title="${emoji}">${emoji}</span>`
+            ).join('')}
+        </div>
+    `;
+    
+    container.appendChild(picker);
+    
+    // Style the container
+    container.style.display = 'block';
+    
+    console.log('Simple emoji picker created successfully');
+}
+
+// Handle emoji selection
+function selectEmoji(emoji) {
+    const messageInput = document.getElementById('message-input');
+    if (!messageInput) return;
+    
+    // Insert emoji at cursor position
+    const cursorPos = messageInput.selectionStart;
+    const textBefore = messageInput.value.substring(0, cursorPos);
+    const textAfter = messageInput.value.substring(messageInput.selectionEnd);
+    
+    messageInput.value = textBefore + emoji + textAfter;
+    
+    // Set cursor position after the emoji
+    const newCursorPos = cursorPos + emoji.length;
+    messageInput.setSelectionRange(newCursorPos, newCursorPos);
+    
+    // Focus back to input
+    messageInput.focus();
+    
+    // Close picker
+    closeEmojiPicker();
+}
+
+// Show emoji error message
+function showEmojiError(message) {
+    const container = document.getElementById('emoji-picker-container');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="emoji-error">
+            <div class="error-icon">😞</div>
+            <div class="error-message">${message}</div>
+            <button class="btn btn-sm btn-primary" onclick="closeEmojiPicker()">Close</button>
+        </div>
+    `;
+    container.style.display = 'block';
 }
 
 // Handle emoji selection
@@ -3290,15 +3340,14 @@ function positionEmojiPicker() {
     
     if (!container || !inputArea) return;
     
-    const inputRect = inputArea.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+    // Use fixed positioning for better visibility
+    container.style.position = 'fixed';
+    container.style.width = '300px';
+    container.style.maxWidth = '90vw';
+    container.style.zIndex = '9999';
+    container.style.marginBottom = '0';
     
-    // Position above the input area
-    container.style.position = 'absolute';
-    container.style.bottom = '100%';
-    container.style.left = '0';
-    container.style.right = '0';
-    container.style.marginBottom = '8px';
+    console.log('Emoji picker positioned with fixed positioning');
 }
 
 // Handle clicks outside emoji picker

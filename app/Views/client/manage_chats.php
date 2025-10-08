@@ -10,8 +10,6 @@
     <link href="<?= base_url('assets/css/client-responsive.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/date.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/file-upload.css') ?>?v=<?= time() ?>" rel="stylesheet">
-    <!-- EmojiMart CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/@emoji-mart/css@latest/emoji-mart.css" rel="stylesheet">
     <!-- Custom Emoji Picker CSS -->
     <link href="<?= base_url('assets/css/emoji-picker.css') ?>?v=<?= time() ?>" rel="stylesheet">
 </head>
@@ -392,8 +390,6 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- EmojiMart JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@emoji-mart/js@latest/dist/emoji-mart.js"></script>
     
     <!-- Client Chat Management JS -->
     <script src="<?= base_url('assets/js/client-chat.js?v=' . time()) ?>"></script>

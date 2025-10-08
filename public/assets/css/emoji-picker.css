@@ -13,7 +13,7 @@
     align-items: center;
     justify-content: center;
     min-width: 40px;
-    height: 38px;
+    height: 50px;
 }
 
 .btn-emoji:hover {
@@ -39,17 +39,22 @@
 
 /* Emoji Picker Container */
 .emoji-picker-container {
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    right: 0;
-    z-index: 1050;
-    margin-bottom: 8px;
+    position: fixed;
+    bottom: 150px;
+    right: 450px;
+    z-index: 9999;
     background: white;
     border: 1px solid #dee2e6;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     overflow: hidden;
+    width: 300px;
+    max-width: 90vw;
+}
+
+/* Debug: Make sure container is visible when shown */
+.emoji-picker-container[style*="display: block"] {
+    display: block !important;
 }
 
 .emoji-picker-wrapper {
@@ -195,6 +200,103 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Emoji Error Message */
+.emoji-error {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+}
+
+.emoji-error .error-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.emoji-error .error-message {
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+/* Simple Emoji Picker */
+.simple-emoji-picker {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    padding: 12px;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.emoji-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    user-select: none;
+    position: relative;
+}
+
+.emoji-item:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.05);
+    z-index: 1;
+}
+
+.emoji-item:active {
+    background-color: #e0e0e0;
+    transform: scale(0.95);
+}
+
+/* Mobile responsive - Hide emoji button on mobile */
+@media (max-width: 768px) {
+    .btn-emoji {
+        display: none !important;
+    }
+    
+    .simple-emoji-picker {
+        width: 90vw !important;
+        max-width: 280px;
+        padding: 10px;
+    }
+    
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+    }
+    
+    .emoji-item {
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .emoji-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 3px;
+    }
+    
+    .emoji-item {
+        width: 24px;
+        height: 24px;
+        font-size: 16px;
     }
 }
 
