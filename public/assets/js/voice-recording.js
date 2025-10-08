@@ -145,7 +145,6 @@ async function startVoiceRecording() {
         }
         
     } catch (error) {
-        console.error('Error accessing microphone:', error);
         
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
             // Show a more helpful message with instructions
@@ -242,7 +241,6 @@ function cancelVoiceRecording() {
             voiceBtn.title = 'Record voice message';
         }
         
-        console.log('Recording cancelled');
     }
 }
 
@@ -356,7 +354,6 @@ function removeVoicePreview() {
  */
 function sendVoiceMessage() {
     if (!recordedAudioBlob) {
-        console.error('No recorded audio');
         return;
     }
     
@@ -372,15 +369,8 @@ function sendVoiceMessage() {
         currentSessionId = getSessionId();
     }
     
-    console.log('Session ID check:', {
-        sessionId: typeof sessionId !== 'undefined' ? sessionId : 'undefined',
-        windowCurrentSessionId: typeof window.currentSessionId !== 'undefined' ? window.currentSessionId : 'undefined',
-        getSessionIdFunction: typeof getSessionId === 'function' ? 'available' : 'not available',
-        finalSessionId: currentSessionId
-    });
     
     if (!currentSessionId) {
-        console.error('No session ID found');
         alert('Cannot send voice message: No active chat session found');
         return;
     }
@@ -422,7 +412,6 @@ function sendVoiceMessage() {
         uploadUrl = baseUrl + 'api/chat/upload-file';
     }
     
-    console.log('Upload URL:', uploadUrl, 'Sender type:', senderType);
     
     // Upload using existing file upload system
     const formData = new FormData();
@@ -474,7 +463,6 @@ function sendVoiceMessage() {
                 ws.send(JSON.stringify(fileMessage));
             }
             
-            console.log('Voice message sent successfully:', data.file_data);
         } else {
             alert('Failed to send voice message: ' + (data.error || 'Unknown error'));
             removeVoicePreview();
@@ -487,7 +475,6 @@ function sendVoiceMessage() {
         } else if (typeof hideFileUploadProgress === 'function') {
             hideFileUploadProgress();
         }
-        console.error('Voice message upload error:', error);
         alert('Failed to send voice message. Please try again.');
         removeVoicePreview();
     });
@@ -497,7 +484,6 @@ function sendVoiceMessage() {
  * Create voice message player UI for displaying in chat
  */
 function createVoiceMessagePlayer(fileData, messageId) {
-    console.log('Creating voice message player:', { fileData, messageId });
     
     const player = document.createElement('div');
     player.className = 'voice-message-player';
@@ -510,12 +496,10 @@ function createVoiceMessagePlayer(fileData, messageId) {
     if (!audioUrl && fileData.file_path) {
         // For client interface, use the client download endpoint
         audioUrl = `/client/download-file/${messageId}`;
-        console.log('Constructed audio URL from file_path:', audioUrl);
     }
     
     // If still no URL, show placeholder
     if (!audioUrl) {
-        console.error('No audio URL available in fileData:', fileData);
         player.innerHTML = '<div class="voice-message-placeholder">🎤 Voice Message (URL not available)</div>';
         return player;
     }
@@ -525,7 +509,6 @@ function createVoiceMessagePlayer(fileData, messageId) {
     playBtn.className = 'voice-play-btn';
     playBtn.innerHTML = '<i class="fas fa-play"></i>';
     playBtn.onclick = () => {
-        console.log('Play button clicked for message:', messageId, 'URL:', audioUrl);
         toggleVoicePlayback(messageId, audioUrl);
     };
     
@@ -567,15 +550,12 @@ const audioPlayers = {};
  * Toggle voice message playback
  */
 function toggleVoicePlayback(messageId, audioUrl) {
-    console.log('toggleVoicePlayback called:', { messageId, audioUrl });
     
     const playBtn = document.querySelector(`[data-message-id="${messageId}"] .voice-play-btn`);
     if (!playBtn) {
-        console.error('Play button not found for messageId:', messageId);
         return;
     }
     
-    console.log('Play button found:', playBtn);
     
     // Stop other playing audio
     Object.keys(audioPlayers).forEach(id => {
@@ -588,22 +568,17 @@ function toggleVoicePlayback(messageId, audioUrl) {
     
     // Create audio element if it doesn't exist
     if (!audioPlayers[messageId]) {
-        console.log('Creating new audio element for URL:', audioUrl);
         const audio = new Audio(audioUrl);
         audioPlayers[messageId] = audio;
         
         // Add error handling
         audio.addEventListener('error', (e) => {
-            console.error('Audio load error:', e);
-            console.error('Failed to load audio URL:', audioUrl);
         });
         
         audio.addEventListener('loadstart', () => {
-            console.log('Audio loading started for:', audioUrl);
         });
         
         audio.addEventListener('canplay', () => {
-            console.log('Audio can play for:', audioUrl);
         });
         
         // Update progress during playback
