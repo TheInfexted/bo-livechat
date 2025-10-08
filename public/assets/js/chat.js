@@ -1090,13 +1090,40 @@ function displayMessage(data) {
         messageContentDiv.className = 'message-content';
         
         // Check if this is a file message
-        if (data.file_data && (data.message_type === 'image' || data.message_type === 'document' || data.message_type === 'archive' || data.message_type === 'video' || data.message_type === 'other')) {
+        if (data.file_data && (data.message_type === 'image' || data.message_type === 'document' || data.message_type === 'archive' || data.message_type === 'video' || data.message_type === 'other' || data.message_type === 'voice')) {
             // Handle file messages
             const fileMessageContent = createFileMessageContent(data.file_data, data.id || messageId);
-            messageContentDiv.innerHTML = `
-                <div class="message-text">${fileMessageContent}</div>
-                <div class="message-time">${formatTime(data.timestamp || data.created_at)}</div>
-            `;
+            
+            // Create message text container
+            const messageTextDiv = document.createElement('div');
+            messageTextDiv.className = 'message-text';
+            
+            // Check if it's a voice message (returns DOM element)
+            if (data.message_type === 'voice' || 
+                (data.file_data.file_type === 'voice' || data.file_data.file_type === 'audio' || 
+                 (data.file_data.mime_type && data.file_data.mime_type.startsWith('audio/')) ||
+                 data.file_data.original_name.match(/^voice_message_/))) {
+                
+                // For voice messages, append the DOM element directly
+                if (typeof createVoiceMessagePlayer === 'function') {
+                    const voicePlayer = createVoiceMessagePlayer(data.file_data, data.id || messageId);
+                    messageTextDiv.appendChild(voicePlayer);
+                } else {
+                    messageTextDiv.innerHTML = '<div class="voice-message-placeholder">🎤 Voice Message</div>';
+                }
+            } else {
+                // For other file types, use innerHTML
+                messageTextDiv.innerHTML = fileMessageContent;
+            }
+            
+            // Create time container
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = formatTime(data.timestamp || data.created_at);
+            
+            // Append to message content
+            messageContentDiv.appendChild(messageTextDiv);
+            messageContentDiv.appendChild(timeDiv);
         } else {
             // Handle regular text messages
             messageContentDiv.innerHTML = `

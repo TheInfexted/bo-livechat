@@ -10,6 +10,7 @@
     <link href="<?= base_url('assets/css/client-responsive.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/date.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/file-upload.css') ?>?v=<?= time() ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/css/voice-recording.css') ?>?v=<?= time() ?>" rel="stylesheet">
     <!-- Custom Emoji Picker CSS -->
     <link href="<?= base_url('assets/css/emoji-picker.css') ?>?v=<?= time() ?>" rel="stylesheet">
 </head>
@@ -178,6 +179,35 @@
                                     </div>
                                     <div class="progress-text" id="upload-progress-text">Uploading file...</div>
                                 </div>
+                                
+                                <!-- Voice Recording UI -->
+                                <div id="voice-recording-ui" class="voice-recording-ui" style="display: none;">
+                                    <div class="recording-content">
+                                        <div class="recording-indicator">
+                                            <i class="fas fa-microphone recording-icon"></i>
+                                            <span class="recording-text">Recording...</span>
+                                            <span class="recording-timer" id="recording-timer">00:00</span>
+                                        </div>
+                                        <button type="button" class="btn-cancel-recording" onclick="cancelVoiceRecording()" title="Cancel recording">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Voice Message Preview (before sending) -->
+                                <div id="voice-preview" class="voice-preview" style="display: none;">
+                                    <div class="preview-content">
+                                        <div class="voice-info">
+                                            <i class="fas fa-microphone" style="color: #667eea;"></i>
+                                            <span class="voice-duration" id="voice-duration">00:00</span>
+                                            <span class="voice-label">Voice Message</span>
+                                        </div>
+                                        <button type="button" class="btn-remove-voice" onclick="removeVoicePreview()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
                                 <!-- Canned Responses Quick Actions -->
                                 <div class="quick-responses-area" id="quick-responses-area" style="display: none;">
                                     <div class="quick-responses-header">
@@ -196,6 +226,9 @@
                                         <input type="file" id="file-input" class="file-input-hidden" onchange="handleFileSelection(event)" multiple accept="*/*">
                                         <button type="button" class="file-upload-btn" onclick="triggerFileUpload()" title="Upload File">
                                             <i class="fas fa-paperclip"></i>
+                                        </button>
+                                        <button type="button" class="voice-record-btn" id="voice-record-btn" onclick="toggleVoiceRecording()" title="Record voice message">
+                                            <i class="fas fa-microphone"></i>
                                         </button>
                                         <input type="text" id="message-input" class="form-control" placeholder="Type your message..." maxlength="1000">
                                         <div class="input-group-append">
@@ -390,6 +423,8 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Voice Recording JS -->
+    <script src="<?= base_url('assets/js/voice-recording.js?v=' . time()) ?>"></script>
     
     <!-- Client Chat Management JS -->
     <script src="<?= base_url('assets/js/client-chat.js?v=' . time()) ?>"></script>

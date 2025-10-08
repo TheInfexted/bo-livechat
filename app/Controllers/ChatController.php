@@ -1152,6 +1152,12 @@ class ChatController extends General
             
             $fileData = $processResult['file_data'];
             
+            // Check if this is a voice message
+            $isVoiceMessage = $this->request->getPost('is_voice_message') === '1';
+            if ($isVoiceMessage) {
+                $fileData['file_type'] = 'voice';
+            }
+            
             // Determine sender_id and sender_user_type based on authentication type
             $senderId = null;
             $senderUserType = null;

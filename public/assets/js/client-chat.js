@@ -947,6 +947,7 @@ function displayClientMessage(message) {
         
         // Check if message has file data
         let messageContent = '';
+        let isVoiceMessage = false;
         if (message.file_data && typeof message.file_data === 'object') {
             // Message has file attachment
             // Use _id from MongoDB or fallback to id, ensure it's a string
@@ -959,9 +960,30 @@ function displayClientMessage(message) {
                 messageId = String(messageId);
             }
             
+            // Check if it's a voice message
+            isVoiceMessage = message.message_type === 'voice' || 
+                (message.file_data.file_type === 'voice' || message.file_data.file_type === 'audio' || 
+                 (message.file_data.mime_type && message.file_data.mime_type.startsWith('audio/')) ||
+                 message.file_data.original_name.match(/^voice_message_/));
             
-            const fileMessage = renderClientFileMessage(message.file_data, messageId);
-            messageContent = fileMessage;
+            if (isVoiceMessage) {
+                // For voice messages, create a container div and append the DOM element
+                const voiceContainer = document.createElement('div');
+                voiceContainer.className = 'voice-message-container';
+                
+                if (typeof createVoiceMessagePlayer === 'function') {
+                    const voicePlayer = createVoiceMessagePlayer(message.file_data, messageId);
+                    voiceContainer.appendChild(voicePlayer);
+                } else {
+                    voiceContainer.innerHTML = '<div class="voice-message-placeholder">🎤 Voice Message</div>';
+                }
+                
+                messageContent = voiceContainer;
+            } else {
+                // For other file types, use the existing renderClientFileMessage function
+                const fileMessage = renderClientFileMessage(message.file_data, messageId);
+                messageContent = fileMessage;
+            }
             
             // Store file data in the message element for later access
             messageDiv.setAttribute('data-file-data', JSON.stringify(message.file_data));
@@ -972,7 +994,15 @@ function displayClientMessage(message) {
                 message.message.trim() !== '' && 
                 !message.message.includes('sent a file:') && 
                 !message.message.includes('uploaded a file')) {
-                messageContent += `<div class="text-message">${makeLinksClickable(message.message)}</div>`;
+                if (isVoiceMessage) {
+                    // For voice messages, append text content to the container
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'text-message';
+                    textDiv.innerHTML = makeLinksClickable(message.message);
+                    messageContent.appendChild(textDiv);
+                } else {
+                    messageContent += `<div class="text-message">${makeLinksClickable(message.message)}</div>`;
+                }
             }
         } else {
             // Regular text message
@@ -986,20 +1016,47 @@ function displayClientMessage(message) {
                     ${avatar}
                 </div>
                 <div class="message-image-content">
-                    ${messageContent}
                     <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
                 </div>
             `;
+            
+            // Append the image content to the message-image-content div
+            const imageContentDiv = messageDiv.querySelector('.message-image-content');
+            if (imageContentDiv && typeof messageContent === 'string') {
+                imageContentDiv.insertBefore(document.createRange().createContextualFragment(messageContent), imageContentDiv.firstChild);
+            } else if (imageContentDiv && messageContent instanceof HTMLElement) {
+                imageContentDiv.insertBefore(messageContent, imageContentDiv.firstChild);
+            }
         } else {
-            messageDiv.innerHTML = `
-                <div class="avatar ${message.sender_type}">
-                    ${avatar}
-                </div>
-                <div class="message-content">
-                    ${messageContent}
-                    <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
-                </div>
-            `;
+            // Check if messageContent is a DOM element (voice message) or string
+            if (messageContent instanceof HTMLElement) {
+                // For voice messages, create the structure and append the DOM element
+                messageDiv.innerHTML = `
+                    <div class="avatar ${message.sender_type}">
+                        ${avatar}
+                    </div>
+                    <div class="message-content">
+                        <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
+                    </div>
+                `;
+                
+                // Append the voice message to the message-content div
+                const messageContentDiv = messageDiv.querySelector('.message-content');
+                if (messageContentDiv) {
+                    messageContentDiv.insertBefore(messageContent, messageContentDiv.firstChild);
+                }
+            } else {
+                // For regular text messages, use innerHTML
+                messageDiv.innerHTML = `
+                    <div class="avatar ${message.sender_type}">
+                        ${avatar}
+                    </div>
+                    <div class="message-content">
+                        ${messageContent}
+                        <div class="message-time">${formatMessageTime(message.timestamp || message.created_at)}</div>
+                    </div>
+                `;
+            }
         }
         
         // Attach click handlers for images after DOM is updated
@@ -2608,6 +2665,17 @@ function renderClientFileMessage(fileData, messageId) {
         messageId = messageId.toString();
     } else {
         messageId = String(messageId);
+    }
+    
+    // For voice messages, display voice player
+    if (fileData.file_type === 'voice' || fileData.file_type === 'audio' || 
+        (fileData.mime_type && fileData.mime_type.startsWith('audio/')) ||
+        fileData.original_name.match(/^voice_message_/)) {
+        
+        // Use the createVoiceMessagePlayer function from voice-recording.js
+        if (typeof createVoiceMessagePlayer === 'function') {
+            return createVoiceMessagePlayer(fileData, messageId);
+        }
     }
     
     // For images, display them directly in chat
