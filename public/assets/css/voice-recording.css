@@ -45,6 +45,13 @@
     animation: pulse 1.5s infinite;
 }
 
+/* Cancel zone state for voice button */
+.voice-record-btn.cancel-zone {
+    background: #ffc107 !important;
+    color: #212529 !important;
+    animation: pulse 1s infinite;
+}
+
 @keyframes pulse {
     0%, 100% {
         opacity: 1;
@@ -248,6 +255,7 @@
     background: #667eea;
     border-radius: 3px;
     transition: width 0.1s linear;
+    width: 0%; /* Default to empty state */
 }
 
 .voice-time-info {

@@ -227,7 +227,7 @@
                                         <button type="button" class="file-upload-btn" onclick="triggerFileUpload()" title="Upload File">
                                             <i class="fas fa-paperclip"></i>
                                         </button>
-                                        <button type="button" class="voice-record-btn" id="voice-record-btn" onclick="toggleVoiceRecording()" title="Record voice message">
+                                        <button type="button" class="voice-record-btn" id="voice-record-btn" title="Record voice message">
                                             <i class="fas fa-microphone"></i>
                                         </button>
                                         <input type="text" id="message-input" class="form-control" placeholder="Type your message..." maxlength="1000">

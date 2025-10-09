@@ -10,7 +10,14 @@ let recordingStartTime = null;
 let recordingTimer = null;
 let recordedAudioBlob = null;
 let recordingDuration = 0;
-const MAX_RECORDING_DURATION = 30; // 30 seconds
+const MAX_RECORDING_DURATION = 60; // 60 seconds
+const MIN_RECORDING_DURATION = 1; // 1 second minimum
+
+// Hold-to-record state tracking
+let isHolding = false;
+let isInCancelZone = false;
+let currentVoiceButton = null;
+let buttonRect = null; // Store button position when recording starts
 
 /**
  * Check microphone permission status
@@ -51,30 +58,206 @@ async function initializeVoiceRecording() {
     
     if (permissionStatus === 'denied') {
         // Show that permission is needed
-        voiceBtn.title = 'Microphone access denied. Click to see how to enable it.';
+        voiceBtn.title = 'Microphone access denied. Hold to record voice message.';
         voiceBtn.style.opacity = '0.6';
     } else if (permissionStatus === 'granted') {
         // Ready to record
-        voiceBtn.title = 'Record voice message';
+        voiceBtn.title = 'Hold to record voice message';
         voiceBtn.style.opacity = '1';
     } else {
         // Will prompt when clicked
-        voiceBtn.title = 'Record voice message (click to allow microphone access)';
+        voiceBtn.title = 'Hold to record voice message (will prompt for microphone access)';
         voiceBtn.style.opacity = '1';
+    }
+    
+    // Add hold-to-record event listeners
+    addHoldToRecordListeners(voiceBtn);
+}
+
+/**
+ * Add hold-to-record event listeners to voice button
+ */
+function addHoldToRecordListeners(voiceBtn) {
+    // Mouse events for desktop
+    voiceBtn.addEventListener('mousedown', handleVoiceButtonDown);
+    voiceBtn.addEventListener('mouseup', handleVoiceButtonUp);
+    
+    // Add mouse leave event specifically for cancellation
+    voiceBtn.addEventListener('mouseleave', handleVoiceButtonLeave);
+    
+    // Touch events for mobile
+    voiceBtn.addEventListener('touchstart', handleVoiceButtonDown, { passive: false });
+    voiceBtn.addEventListener('touchend', handleVoiceButtonUp, { passive: false });
+    
+    // Add global movement listeners to document for cancel detection (only once)
+    if (!window.voiceRecordingGlobalListenersAdded) {
+        document.addEventListener('mousemove', handleVoiceButtonMove);
+        document.addEventListener('touchmove', handleVoiceButtonMove, { passive: false });
+        // Add escape key listener for cancellation
+        document.addEventListener('keydown', handleVoiceRecordingKeydown);
+        window.voiceRecordingGlobalListenersAdded = true;
+    }
+    
+    // Prevent context menu on long press
+    voiceBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+/**
+ * Handle voice recording button press (start hold-to-record)
+ */
+function handleVoiceButtonDown(event) {
+    event.preventDefault();
+    
+    // Prevent multiple simultaneous recordings
+    if (isHolding || (mediaRecorder && mediaRecorder.state === 'recording')) {
+        return;
+    }
+    
+    isHolding = true;
+    isInCancelZone = false;
+    
+    // Store button reference and position for cancel detection
+    const button = event.currentTarget;
+    currentVoiceButton = button;
+    buttonRect = button.getBoundingClientRect(); // Store initial position
+    
+    // Add visual feedback
+    button.classList.add('recording');
+    
+    // Start recording
+    startVoiceRecording();
+}
+
+/**
+ * Handle voice recording button release (stop and send or cancel)
+ */
+function handleVoiceButtonUp(event) {
+    event.preventDefault();
+    
+    if (!isHolding) {
+        return;
+    }
+    
+    isHolding = false;
+    
+    // Remove visual feedback
+    const button = event.currentTarget || currentVoiceButton;
+    if (button) {
+        button.classList.remove('recording');
+        button.classList.remove('cancel-zone');
+    }
+    
+    // Clear stored button rect
+    buttonRect = null;
+    
+    // Check if we should send or cancel
+    const shouldSend = recordingDuration >= MIN_RECORDING_DURATION && !isInCancelZone;
+    
+    if (shouldSend) {
+        // Stop recording and wait for blob creation
+        stopVoiceRecordingAndSend();
+    } else {
+        // Cancel the recording
+        cancelVoiceRecording();
     }
 }
 
 /**
- * Toggle voice recording on/off
+ * Handle mouse leaving the button - cancel recording immediately
+ */
+function handleVoiceButtonLeave(event) {
+    if (!isHolding) {
+        return;
+    }
+    
+    // Cancel recording immediately
+    isHolding = false;
+    
+    // Remove visual feedback
+    if (currentVoiceButton) {
+        currentVoiceButton.classList.remove('recording');
+        currentVoiceButton.classList.remove('cancel-zone');
+    }
+    
+    // Cancel the recording
+    cancelVoiceRecording();
+    
+    // Clear stored button rect
+    buttonRect = null;
+}
+
+/**
+ * Handle mouse/touch movement during recording - backup cancellation method
+ */
+function handleVoiceButtonMove(event) {
+    if (!isHolding || !currentVoiceButton) {
+        return;
+    }
+    
+    // Get current button position
+    const currentRect = currentVoiceButton.getBoundingClientRect();
+    let clientX, clientY;
+    
+    // Get coordinates from mouse or touch event
+    if (event.type === 'mousemove') {
+        clientX = event.clientX;
+        clientY = event.clientY;
+    } else if (event.type === 'touchmove') {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+    } else {
+        return;
+    }
+    
+    // Simple check: if mouse is not over the button, cancel immediately
+    const isOverButton = clientX >= currentRect.left && 
+                        clientX <= currentRect.right && 
+                        clientY >= currentRect.top && 
+                        clientY <= currentRect.bottom;
+    
+    if (!isOverButton) {
+        // Cancel recording immediately
+        isHolding = false;
+        
+        // Remove visual feedback
+        currentVoiceButton.classList.remove('recording');
+        currentVoiceButton.classList.remove('cancel-zone');
+        
+        // Cancel the recording
+        cancelVoiceRecording();
+        
+        // Clear stored button rect
+        buttonRect = null;
+    }
+}
+
+/**
+ * Handle escape key to cancel recording
+ */
+function handleVoiceRecordingKeydown(event) {
+    if (event.key === 'Escape' && isHolding) {
+        isHolding = false;
+        
+        // Remove visual feedback
+        if (currentVoiceButton) {
+            currentVoiceButton.classList.remove('recording');
+            currentVoiceButton.classList.remove('cancel-zone');
+        }
+        
+        // Cancel the recording
+        cancelVoiceRecording();
+        
+        // Clear stored button rect
+        buttonRect = null;
+    }
+}
+
+/**
+ * Legacy toggle function - now redirects to hold functionality
  */
 function toggleVoiceRecording() {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-        // Stop recording
-        stopVoiceRecording();
-    } else {
-        // Start recording
-        startVoiceRecording();
-    }
+    // This function is kept for compatibility but now uses hold-to-record
+    // Legacy function - hold-to-record functionality is used instead
 }
 
 /**
@@ -118,8 +301,14 @@ async function startVoiceRecording() {
             const mimeType = mediaRecorder.mimeType || 'audio/webm';
             recordedAudioBlob = new Blob(audioChunks, { type: mimeType });
             
-            // Show preview and confirmation
-            showVoicePreview(recordingDuration);
+            // Check if we should auto-send or show preview
+            if (window.shouldAutoSendVoiceMessage) {
+                window.shouldAutoSendVoiceMessage = false;
+                sendVoiceMessage();
+            } else {
+                // Show preview and confirmation
+                showVoicePreview(recordingDuration);
+            }
         };
         
         // Start recording
@@ -205,6 +394,34 @@ function stopVoiceRecording() {
 }
 
 /**
+ * Stop voice recording and auto-send the message
+ */
+function stopVoiceRecordingAndSend() {
+    // Set flag to auto-send when recording stops
+    window.shouldAutoSendVoiceMessage = true;
+    
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        stopRecordingTimer();
+        hideRecordingUI();
+        
+        // Re-enable text input
+        const messageInput = document.getElementById('messageInput') || document.getElementById('message-input');
+        if (messageInput) {
+            messageInput.disabled = false;
+            messageInput.placeholder = 'Type your message...';
+        }
+        
+        // Reset voice button appearance
+        const voiceBtn = document.getElementById('voiceRecordBtn') || document.getElementById('voice-record-btn');
+        if (voiceBtn) {
+            voiceBtn.classList.remove('recording');
+            voiceBtn.title = 'Record voice message';
+        }
+    }
+}
+
+/**
  * Cancel voice recording without saving
  */
 function cancelVoiceRecording() {
@@ -223,6 +440,7 @@ function cancelVoiceRecording() {
         audioChunks = [];
         recordedAudioBlob = null;
         recordingDuration = 0;
+        buttonRect = null;
         
         stopRecordingTimer();
         hideRecordingUI();
@@ -308,7 +526,7 @@ function stopRecordingTimer() {
 }
 
 /**
- * Show voice preview with confirmation
+ * Show voice preview (no confirmation needed for hold-to-record)
  */
 function showVoicePreview(duration) {
     const voicePreview = document.getElementById('voicePreview') || document.getElementById('voice-preview');
@@ -323,14 +541,8 @@ function showVoicePreview(duration) {
         voiceDuration.textContent = durationString;
         voicePreview.style.display = 'block';
         
-        // Show confirmation dialog
-        setTimeout(() => {
-            if (confirm('Send this voice message?')) {
-                sendVoiceMessage();
-            } else {
-                removeVoicePreview();
-            }
-        }, 100);
+        // No confirmation dialog - message will be sent automatically
+        // The sendVoiceMessage() function is called directly from handleVoiceButtonUp
     }
 }
 
@@ -504,6 +716,16 @@ function createVoiceMessagePlayer(fileData, messageId) {
         return player;
     }
     
+    // Pre-load audio to get duration immediately
+    const preloadAudio = new Audio(audioUrl);
+    preloadAudio.addEventListener('loadedmetadata', () => {
+        const timeEl = document.getElementById(`voice-time-${messageId}`);
+        if (timeEl) {
+            timeEl.textContent = formatTime(preloadAudio.duration);
+        }
+    });
+    preloadAudio.load(); // Trigger metadata loading
+    
     // Play button
     const playBtn = document.createElement('button');
     playBtn.className = 'voice-play-btn';
@@ -524,15 +746,13 @@ function createVoiceMessagePlayer(fileData, messageId) {
     const progressFill = document.createElement('div');
     progressFill.className = 'voice-progress-fill';
     progressFill.id = `voice-progress-${messageId}`;
+    progressFill.style.width = '0%'; // Initialize progress bar as empty
     progressBar.appendChild(progressFill);
     
     // Time info
     const timeInfo = document.createElement('div');
     timeInfo.className = 'voice-time-info';
-    timeInfo.innerHTML = `
-        <span id="voice-current-${messageId}">00:00</span>
-        <span id="voice-duration-${messageId}">00:00</span>
-    `;
+    timeInfo.innerHTML = `<span id="voice-time-${messageId}">00:00</span>`;
     
     progressContainer.appendChild(progressBar);
     progressContainer.appendChild(timeInfo);
@@ -545,6 +765,8 @@ function createVoiceMessagePlayer(fileData, messageId) {
 
 // Store audio elements for playback
 const audioPlayers = {};
+// Track playback state for each voice message
+const voicePlaybackStates = {};
 
 /**
  * Toggle voice message playback
@@ -571,6 +793,14 @@ function toggleVoicePlayback(messageId, audioUrl) {
         const audio = new Audio(audioUrl);
         audioPlayers[messageId] = audio;
         
+        // Ensure duration is set when audio loads
+        audio.addEventListener('loadedmetadata', () => {
+            const timeEl = document.getElementById(`voice-time-${messageId}`);
+            if (timeEl && (!voicePlaybackStates[messageId] || !voicePlaybackStates[messageId].isPlaying)) {
+                timeEl.textContent = formatTime(audio.duration);
+            }
+        });
+        
         // Add error handling
         audio.addEventListener('error', (e) => {
         });
@@ -590,14 +820,23 @@ function toggleVoicePlayback(messageId, audioUrl) {
         audio.addEventListener('ended', () => {
             updatePlayButton(messageId, false);
             audio.currentTime = 0;
-            updateVoiceProgress(messageId);
-        });
-        
-        // Load metadata to get duration
-        audio.addEventListener('loadedmetadata', () => {
-            const durationEl = document.getElementById(`voice-duration-${messageId}`);
-            if (durationEl) {
-                durationEl.textContent = formatTime(audio.duration);
+            
+            // Mark as not playing
+            if (!voicePlaybackStates[messageId]) {
+                voicePlaybackStates[messageId] = {};
+            }
+            voicePlaybackStates[messageId].isPlaying = false;
+            
+            // Reset progress bar to empty
+            const progressFill = document.getElementById(`voice-progress-${messageId}`);
+            if (progressFill) {
+                progressFill.style.width = '0%';
+            }
+            
+            // Show total duration instead of 0:00
+            const timeEl = document.getElementById(`voice-time-${messageId}`);
+            if (timeEl) {
+                timeEl.textContent = formatTime(audio.duration);
             }
         });
     }
@@ -606,9 +845,24 @@ function toggleVoicePlayback(messageId, audioUrl) {
     
     // Toggle play/pause
     if (audio.paused) {
+        // Initialize or update playback state
+        if (!voicePlaybackStates[messageId]) {
+            voicePlaybackStates[messageId] = {};
+        }
+        voicePlaybackStates[messageId].isPlaying = true;
+        
         audio.play();
         updatePlayButton(messageId, true);
+        // When starting playback, show current time starting from 0:00
+        const timeEl = document.getElementById(`voice-time-${messageId}`);
+        if (timeEl) {
+            timeEl.textContent = formatTime(audio.currentTime);
+        }
     } else {
+        // Mark as not playing when paused
+        if (voicePlaybackStates[messageId]) {
+            voicePlaybackStates[messageId].isPlaying = false;
+        }
         audio.pause();
         updatePlayButton(messageId, false);
     }
@@ -638,15 +892,20 @@ function updateVoiceProgress(messageId) {
     if (!audio) return;
     
     const progressFill = document.getElementById(`voice-progress-${messageId}`);
-    const currentTime = document.getElementById(`voice-current-${messageId}`);
+    const timeEl = document.getElementById(`voice-time-${messageId}`);
     
     if (progressFill) {
         const progress = (audio.currentTime / audio.duration) * 100;
         progressFill.style.width = `${progress}%`;
     }
     
-    if (currentTime) {
-        currentTime.textContent = formatTime(audio.currentTime);
+    if (timeEl) {
+        // Only show current playback time if we're actively playing
+        // If playback has ended, we should show duration instead
+        if (voicePlaybackStates[messageId] && voicePlaybackStates[messageId].isPlaying) {
+            timeEl.textContent = formatTime(audio.currentTime);
+        }
+        // If not playing, keep showing duration (don't override it)
     }
 }
 
@@ -663,7 +922,18 @@ function seekVoiceMessage(event, messageId) {
     const percentage = clickX / rect.width;
     
     audio.currentTime = percentage * audio.duration;
-    updateVoiceProgress(messageId);
+    
+    // Update progress and time display immediately after seeking
+    const progressFill = document.getElementById(`voice-progress-${messageId}`);
+    const timeEl = document.getElementById(`voice-time-${messageId}`);
+    
+    if (progressFill) {
+        progressFill.style.width = `${percentage * 100}%`;
+    }
+    
+    if (timeEl) {
+        timeEl.textContent = formatTime(audio.currentTime);
+    }
 }
 
 /**
@@ -684,6 +954,10 @@ window.removeVoicePreview = removeVoicePreview;
 window.createVoiceMessagePlayer = createVoiceMessagePlayer;
 window.toggleVoicePlayback = toggleVoicePlayback;
 window.initializeVoiceRecording = initializeVoiceRecording;
+window.handleVoiceButtonDown = handleVoiceButtonDown;
+window.handleVoiceButtonUp = handleVoiceButtonUp;
+window.handleVoiceButtonMove = handleVoiceButtonMove;
+window.addHoldToRecordListeners = addHoldToRecordListeners;
 
 // Initialize voice recording when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
