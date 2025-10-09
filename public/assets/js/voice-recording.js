@@ -323,7 +323,7 @@ async function startVoiceRecording() {
         const messageInput = document.getElementById('messageInput') || document.getElementById('message-input');
         if (messageInput) {
             messageInput.disabled = true;
-            messageInput.placeholder = 'Recording voice message...';
+            messageInput.placeholder = 'Recording voice message...Release to send, drag away to cancel';
         }
         
         // Change voice button appearance (handle both customer and client interfaces)
